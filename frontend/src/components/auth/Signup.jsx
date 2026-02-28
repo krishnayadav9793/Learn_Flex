@@ -122,7 +122,9 @@ const AuthCard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const [status, setStatus] = useState(null); // 'success' | 'error' | null
+  const [passwordInstruction,setPasswordInstruction]=useState(null);
 
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -149,7 +151,6 @@ const AuthCard = () => {
 
     setTimeout(() => {
       setIsLoading(false);
-      // Simple validation for demo
       const isValid = name && email && password.length > 5;
 
       if (isValid) {
@@ -158,7 +159,7 @@ const AuthCard = () => {
         setStatus('error');
       }
     }, 1500);
-    console.log("data fetched")
+    
     navigate("/profile")
   };
 
@@ -239,6 +240,7 @@ const AuthCard = () => {
                 <Lock className={`w-5 h-5 transition-colors ${focusedField === 'password' ? 'text-violet-400' : 'text-slate-500'}`} />
               </div>
               <input
+                
                 type="password"
                 required
                 className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all"

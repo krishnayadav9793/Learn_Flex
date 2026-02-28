@@ -122,6 +122,7 @@ const LoginCard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const [status, setStatus] = useState(null); // 'success' | 'error' | null
+  const [statusMsg,setStatusMsg]=useState("Invalid Details");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -147,7 +148,7 @@ const LoginCard = () => {
     //   }
     // }, 1500);
       if(resData.msg==="Invalid email" || resData.msg==="Wrong password"){
-        
+        setStatusMsg(resData.msg)
         setTimeout(()=>{
           setIsLoading(false)
           setStatus('error')
@@ -237,7 +238,7 @@ const LoginCard = () => {
           {status === 'error' && (
             <div className="flex items-center gap-2 text-rose-400 text-sm bg-rose-500/10 p-3 rounded-lg border border-rose-500/20 animate-fadeIn">
               <AlertCircle className="w-4 h-4" />
-              <span>Invalid credentials. Please try again.</span>
+              <span>{statusMsg}</span>
             </div>
           )}
           {status === 'success' && (
