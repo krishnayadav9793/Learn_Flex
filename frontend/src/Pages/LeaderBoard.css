@@ -1,0 +1,49 @@
+.leaderboard {
+  width: 100%;
+}
+
+.leaderboard__title {
+  margin-bottom: 16px;
+}
+
+.leaderboard__controls {
+  margin-bottom: 16px;
+}
+
+.leaderboard__btn {
+  padding: 8px 12px;
+  margin-right: 10px;
+  border: none;
+  cursor: pointer;
+  background: #ddd;
+  color: #000;
+}
+
+.leaderboard__btn.active {
+  background: #444;
+  color: #fff;
+}
+
+.leaderboard__status {
+  margin-top: 10px;
+}
+
+.leaderboard__status.error {
+  color: red;
+}
+
+.leaderboard__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard__table th {
+  text-align: left;
+  border-bottom: 2px solid #ccc;
+  padding: 8px;
+}
+
+.leaderboard__table td {
+  border-bottom: 1px solid #eee;
+  padding: 8px;
+}

@@ -2,7 +2,9 @@ import mongoose from 'mongoose';
 
 const UserSchema = new mongoose.Schema({
     name:{
-        type:String
+        type:String,
+        trim: true,
+        required: true
     },
     email :{
         type : String,
@@ -26,10 +28,6 @@ const UserSchema = new mongoose.Schema({
     rating:{
         type:Number,
         default:0,
-    },
-    country:{
-        type:String,
-        default:"India",
     }
 },
 {

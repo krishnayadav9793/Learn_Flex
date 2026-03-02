@@ -1,19 +1,17 @@
-import express from "express"
-import User from "../models/user.js"
+import User from "../models/user.js";
 
-export const getUser=async(req,res)=>{
-    try{
-        const leaders=await User.find({})
-        .sort({score:-1})
-        .select("name score country")
-        if(!leaders){
-            console.log(error);
-        }
-        return res.json({success:true,leaders});
-    }
-    catch(error){
-        console.error(error.message);
-    return res.json({message:error.message, success:false})
+export const getUser = async (req, res) => {
+  try {
+    const sort = req.query.sort === "questions"
+      ? { questions: -1 }
+      : { rating: -1 };
 
-    }
-}
+    const users = await User.find({}, "name rating questions")
+      .sort(sort)
+      .limit(100);
+
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
