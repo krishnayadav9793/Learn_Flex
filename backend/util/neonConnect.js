@@ -9,7 +9,7 @@ const connectNeon = async ()=>{
     const [result] = await sql`SELECT 1`;
     console.log("PostgreSQL Connected ✅");
   } catch (error) {
-    console.error("Database connection failed ❌", error);
+    console.error("Database connection failed ", error);
     process.exit(1);
   }
 }

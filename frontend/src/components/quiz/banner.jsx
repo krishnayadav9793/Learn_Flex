@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Timer, Calendar, Clock, PlayCircle, AlertCircle, CheckCircle2, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-const Banner = () => {
+const Banner = ({quizList}) => {
   const navigate=useNavigate();
   const quizData = {
     name: "Advanced React & Systems Architecture",
