@@ -6,6 +6,7 @@ import Profile from "./components/profile/Profile"
 import LeaderBoard from "./Pages/LeaderBoard.jsx"
 import QuizPage from "./Pages/QuizPage.jsx"
 import QuizQuestions from "./Pages/QuizQuestions.jsx"
+import QuestionPage from "./components/quiz/QuestionPage.jsx"
 function App() {
   return (
     <Routes>
@@ -15,6 +16,7 @@ function App() {
       <Route path="/LeaderBoard" Component={LeaderBoard}/>
       <Route path="/Quiz" Component={QuizPage}/>
       <Route path="/Quiz/:id" Component={QuizQuestions}/>
+      <Route path="/Quiz/:id/:id1" Component={QuestionPage}/>
     </Routes>
   )
 }
