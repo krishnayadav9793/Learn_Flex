@@ -6,7 +6,7 @@ export const getUser = async (req, res) => {
       ? { questions: -1 }
       : { rating: -1 };
 
-    const users = await User.find({}, "name rating questions")
+    const users = await User.find({})
       .sort(sort)
       .limit(100);
 

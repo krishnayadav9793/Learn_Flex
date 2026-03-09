@@ -5,8 +5,12 @@ import authRoute from './routes/authRoute.js';
 import leaderRoutes from './routes/leaderBoardRoute.js';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
+import { connectNeon } from './util/neonConnect.js';
+import quizRoute from './routes/quizRoute.js';
+
 
 const app=express();
+
 configDotenv();
 
 app.use(cors(
@@ -20,12 +24,13 @@ app.use(cookieParser())
 
 app.use("/user",authRoute)
 app.use("/api",leaderRoutes)
+app.use("/quiz",quizRoute);
 
 mongoose.connect(process.env.MONGO_DB_URI,{dbName:"LearnFlex"})
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.log(err));
 
-
+await connectNeon();
 
 app.get("/",(req,res,next)=>{
     res.send("Server is working ✅")
