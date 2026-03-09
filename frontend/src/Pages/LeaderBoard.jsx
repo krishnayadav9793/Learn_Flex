@@ -15,7 +15,7 @@ export default function LeaderBoard(){
     try{
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `http://localhost:5000/leaderboard?sort=${sort}`,
+        `http://localhost:3000/leaderboard?sort=${sort}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUsers(res.data);
