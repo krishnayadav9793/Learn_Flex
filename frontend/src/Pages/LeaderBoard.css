@@ -1,49 +1,97 @@
 .leaderboard {
   width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif; 
 }
 
 .leaderboard__title {
-  margin-bottom: 16px;
-}
-
-.leaderboard__controls {
-  margin-bottom: 16px;
-}
-
-.leaderboard__btn {
-  padding: 8px 12px;
-  margin-right: 10px;
-  border: none;
-  cursor: pointer;
-  background: #ddd;
-  color: #000;
-}
-
-.leaderboard__btn.active {
-  background: #444;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 24px;
   color: #fff;
 }
 
+.leaderboard__controls {
+  margin-bottom: 24px;
+  display: flex;
+  gap: 12px;
+}
+
+.leaderboard__btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  color: #b0b0b0;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.leaderboard__btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.leaderboard__btn.active {
+  background: #a855f7; 
+  color: #fff;
+  border-color: #a855f7;
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+}
+
 .leaderboard__status {
-  margin-top: 10px;
+  margin-top: 20px;
+  font-style: italic;
+  color: #888;
 }
 
 .leaderboard__status.error {
-  color: red;
+  color: #ff4d4d;
 }
 
 .leaderboard__table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 8px; 
 }
 
 .leaderboard__table th {
   text-align: left;
-  border-bottom: 2px solid #ccc;
-  padding: 8px;
+  color: #888;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .leaderboard__table td {
-  border-bottom: 1px solid #eee;
-  padding: 8px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.leaderboard__table td:first-child {
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  font-weight: bold;
+  color: #a855f7;
+}
+
+.leaderboard__table td:last-child {
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.leaderboard__table tr:hover td {
+  background: rgba(255, 255, 255, 0.05);
+  transition: background 0.2s ease;
 }
