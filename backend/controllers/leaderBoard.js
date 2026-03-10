@@ -1,7 +1,7 @@
 import User from "../models/user.js";
 
 export const getUser = async (req, res) => {
-  try {
+  try{
     const sort = req.query.sort === "questions"
       ? { questions: -1 }
       : { rating: -1 };
