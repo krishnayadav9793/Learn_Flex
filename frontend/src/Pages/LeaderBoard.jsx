@@ -14,8 +14,10 @@ export default function LeaderBoard() {
 
     try {
       const res = await axios.get(
-        `http://localhost:3000/leaderboard?sort=${sort}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        `http://localhost:3000/api/leaderboard?sort=${sort}`,
+        {
+          withCredentials: true
+        }
       );
 
       setUsers(res.data);
