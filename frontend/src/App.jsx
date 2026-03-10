@@ -7,6 +7,8 @@ import LeaderBoard from "./Pages/LeaderBoard.jsx"
 import QuizPage from "./Pages/QuizPage.jsx"
 import QuizQuestions from "./Pages/QuizQuestions.jsx"
 import QuestionPage from "./components/quiz/QuestionPage.jsx"
+import DailyQuizPage from "./Pages/DailyQuizPage.jsx"
+
 function App() {
   return (
     <Routes>
@@ -18,6 +20,7 @@ function App() {
       <Route path="/Quiz" element={<QuizPage />} />
       <Route path="/Quiz/:id" element={<QuizQuestions />} />
       <Route path="/Quiz/:id/:id1" element={<QuestionPage />} />
+      <Route path="/DailyQuiz" element={<DailyQuizPage />} />
     </Routes>
   )
 }
