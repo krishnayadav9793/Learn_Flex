@@ -11,7 +11,8 @@ export const getUser = async (req, res) => {
       .limit(100);
 
     res.json(users);
-  } catch (err) {
+  }
+  catch (err){
     res.status(500).json({ message: "Server error" });
   }
 };
