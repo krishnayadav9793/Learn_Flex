@@ -1,16 +1,16 @@
 import bcyrpt from 'bcrypt'
-import User from '../models/user.js';
+import { sql } from '../util/neonConnect.js';
 import { getToken } from '../util/generateToken.js';
 const userLogin = async (req,res)=>{
     try{
         const { email, password } = req.body;
 
-        const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ msg: "Invalid email" });
+        const user = await sql`SELECT * from "User" where email=${email}`;
+        if (user.length==0) return res.status(400).json({ msg: "Invalid email" });
         console.log(user)
         const isMatch = await bcyrpt.compare(password,user.password);
         if (!isMatch) return res.status(400).json({ msg: "Wrong password" });
-        const token=getToken(user._id)
+        const token=getToken(user.email)
       
        res.cookie("token", token, {
         httpOnly: true,       
@@ -20,7 +20,6 @@ const userLogin = async (req,res)=>{
         });
 
         res.json({
-      _id: user._id,
       name: user.name,
       email: user.email
     });

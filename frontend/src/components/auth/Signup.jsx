@@ -132,18 +132,18 @@ const AuthCard = () => {
     // console.log(e.target.value);
     
     console.log(name, email, password)
-    const data = { name: name, email: email, password: password }
+    
 
 
     
     try {
-      const res = fetch("http://localhost:3000/user/signup", {
+      const res =await fetch("http://localhost:3000/user/signup", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
+        body: JSON.stringify({ name: name, email: email, password: password })
       })
-      const resData = (await res).json();
+      const resData = await res.json();
       console.log(resData);
     } catch (err) {
       console.log("error:", err)
