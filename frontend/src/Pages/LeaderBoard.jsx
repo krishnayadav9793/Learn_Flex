@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./LeaderBoard.css";
 
-export default function LeaderBoard(){
+export default function LeaderBoard() {
   const [users, setUsers] = useState([]);
   const [sortBy, setSortBy] = useState("rating");
   const [loading, setLoading] = useState(true);
@@ -12,18 +12,18 @@ export default function LeaderBoard(){
     setLoading(true);
     setError("");
 
-    try{
-      const token = localStorage.getItem("token");
+    try {
       const res = await axios.get(
         `http://localhost:3000/api/leaderboard?sort=${sort}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          withCredentials: true
+        }
       );
+
       setUsers(res.data);
-    }
-    catch {
+    } catch (err) {
       setError("Failed to load leaderboard");
-    }
-    finally {
+    } finally {
       setLoading(false);
     }
   };
