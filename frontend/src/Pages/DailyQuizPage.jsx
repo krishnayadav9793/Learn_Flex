@@ -3,80 +3,52 @@ import Navbar from "../components/quiz/Navbar.jsx";
 
 export default function LearnFlex() {
 
-  const dummyQuestions = [
-  {
-    id: 1,
-    topic: "DSA",
-    difficulty: "Easy",
-    question: "What is the time complexity of Binary Search?",
-    options: ["O(n)", "O(log n)", "O(n log n)", "O(1)"],
-    correct: 1
-  },
-  {
-    id: 2,
-    topic: "DBMS",
-    difficulty: "Medium",
-    question: "Which normal form removes transitive dependency?",
-    options: ["1NF", "2NF", "3NF", "BCNF"],
-    correct: 2
-  },
-  {
-    id: 3,
-    topic: "OS",
-    difficulty: "Easy",
-    question: "Which scheduling algorithm uses time slices?",
-    options: ["FCFS", "SJF", "Round Robin", "Priority"],
-    correct: 2
-  },
-  {
-    id: 4,
-    topic: "CN",
-    difficulty: "Medium",
-    question: "Which layer handles routing?",
-    options: ["Transport", "Network", "Data Link", "Session"],
-    correct: 1
-  }
-];
-
+ 
   const exam = "GATE"; 
 
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [status, setStatus] = useState({});
-  const [currentQuestion, setCurrentQuestion] = useState(0);
   const [streak,setStreak]=useState(0);
   const [lastSolvedDate,setLastSolvedDate]=useState(null);
   
   useEffect(()=>{
-    const today=new Date().toISOString().split("T")[0];
+    const fetchuser = async()=>{
+      try{
+        const res= await fetch(`http://localhost:3000/user/profile/${id}`);
+         const user = await res.json();
+        
+         setExam(user.exam);
+          setStreak(user.streak);
+           setLastSolvedDate(user.lastSolvedDate);
+      }
+      catch(error) {
+        console.error("Error fetching User:", error);
+    }}
+      fetchuser();
+    },[]);
 
-     if (lastSolvedDate) {
-
-    const last = new Date(lastSolvedDate);
-    const current = new Date(today);
-
-    const diffDays = Math.floor(
-      (current - last) / (1000 * 60 * 60 * 24)
-    );
-
-    if (diffDays > 1) {
-      setStreak(0);
-    }
-  }
+ useEffect(()=>{
+  
+     if (!exam) return;  
 
     const fetchDailyQuiz= async()=>{
       try{
-        // const res = await fetch(`http://localhost:3000/daily-quiz/${exam}`);
-        // const data = await res.json();
-        // setQuestions(data);
-        setQuestions(dummyQuestions);
+        const res = await fetch(`http://localhost:3000/daily-quiz/${exam}`);
+        const data = await res.json();
+        const formatted = data.map(q => ({
+            ...q,
+          options: [q.option1, q.option2, q.option3, q.option4]
+        }));
+       setQuestions(formatted);
+        
       }
       catch(error) {
         console.error("Error fetching quiz:", error);
     }
   }
   fetchDailyQuiz();
-},[exam,lastSolvedDate])
+},[exam])
 
   const selectOption = (qid, index) => {
     if (status[qid]==="correct") return;
@@ -86,7 +58,7 @@ export default function LearnFlex() {
     });
   };
 
-  const submitQuetion = (q) => {
+  const submitQuestion =(q) => {
     const selected=answers[q.id]
     if (selected === undefined) return;
 
@@ -122,9 +94,22 @@ const checkStreak = () => {
     );
 
     if (allSolved) {
+      let newStreak=1;
       const today = new Date().toISOString().split("T")[0];
-      setStreak(prev => prev + 1);
-      setLastSolvedDate(today);
+      if(lastSolvedDate){
+      const last=newDate(lastSolvedDate )
+      const diff=(today-last)/(1000 * 60 * 60 * 24)
+       if(diff==0)return;
+       else if (diff>1){
+        newStreak=1;
+       }
+       else if(diff===1){
+        newStreak=streak+1;
+       }
+    }
+    setStreak(newStreak);
+    lastSolvedDate(today);
+
 
     }
   };
@@ -143,17 +128,7 @@ const checkStreak = () => {
 
           <div key={q.id} className="border border-gray-200 rounded-lg p-6 mb-6">
 
-            <div className="flex gap-3 mb-4">
-
-              <span className="text-xs border border-gray-300 rounded px-2 py-1">
-                {q.topic}
-              </span>
-
-              <span className="text-xs border border-green-400 text-green-600 rounded px-2 py-1">
-                {q.difficulty}
-              </span>
-
-            </div>
+           
 
             <h3 className="font-semibold mb-4">
               Q{qIndex + 1}. {q.question}
