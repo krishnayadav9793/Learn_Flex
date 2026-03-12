@@ -19,7 +19,7 @@ const AnimatedBackground = () => {
 
     // Symbols appropriate for a quiz site
     const symbols = ['?', '!', '∑', 'π', 'A', 'B', 'C', '√', '%', '{ }'];
-    const colors = ['#818cf8', '#c084fc', '#f472b6', '#22d3ee']; // Tailwind indigo, purple, pink, cyan
+    const colors = ['#1e40af', '#2563eb', '#3b82f6', '#60a5fa']; // Tailwind indigo, purple, pink, cyan
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -79,8 +79,8 @@ const AnimatedBackground = () => {
       
       // Create a subtle gradient background
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, '#0f172a'); // Slate 900
-      gradient.addColorStop(1, '#1e1b4b'); // Indigo 950
+      gradient.addColorStop(0, '#f0f9ff'); // Sky 50 (Very light blue)
+      gradient.addColorStop(1, '#e0f2fe'); // Sky 100
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -168,18 +168,16 @@ const LoginCard = () => {
 
   return (
     <div className="w-full max-w-md p-1 relative z-10 mx-4">
-      {/* Glow effect behind the card */}
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl blur-xl opacity-50 animate-pulse"></div>
-      
-      <div className="relative bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+      {/* Light Glassmorphism Card */}
+      <div className="relative bg-white/70 backdrop-blur-2xl border border-white rounded-2xl shadow-2xl overflow-hidden">
         
         {/* Header Section */}
         <div className="px-8 pt-8 pb-6 text-center">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-tr from-violet-500 to-fuchsia-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg transform rotate-3 hover:rotate-6 transition-transform duration-300">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-tr from-blue-600 to-sky-400 rounded-2xl flex items-center justify-center mb-4 shadow-lg transform rotate-3 hover:rotate-6 transition-transform duration-300">
             <Brain className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">QuizMaster</h1>
-          <p className="text-slate-400 text-sm">Challenge yourself. Unlock your potential.</p>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2 tracking-tight">Welcome to Learnflex</h1>
+          <p className="text-slate-500 text-sm">Please login to continue</p>
         </div>
 
         {/* Form Section */}
@@ -187,17 +185,17 @@ const LoginCard = () => {
           
           {/* Email Input */}
           <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-300 uppercase tracking-wider ml-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">
               Email Address
             </label>
-            <div className={`relative group transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.02]' : ''}`}>
+            <div className={`relative group transition-all duration-300 ${focusedField === 'email' ? 'scale-[1.01]' : ''}`}>
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className={`w-5 h-5 transition-colors ${focusedField === 'email' ? 'text-violet-400' : 'text-slate-500'}`} />
+                <Mail className={`w-5 h-5 transition-colors ${focusedField === 'email' ? 'text-blue-500' : 'text-slate-400'}`} />
               </div>
               <input
                 type="email"
                 required
-                className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-sm"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -210,21 +208,21 @@ const LoginCard = () => {
           {/* Password Input */}
           <div className="space-y-2">
             <div className="flex justify-between items-center ml-1">
-              <label className="text-xs font-medium text-slate-300 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Password
               </label>
-              <a href="#" className="text-xs text-violet-400 hover:text-violet-300 transition-colors">
-                Forgot?
+              <a href="#" className="text-xs text-blue-600 hover:text-blue-700 transition-colors font-medium">
+                Forgot Password?
               </a>
             </div>
-            <div className={`relative group transition-all duration-300 ${focusedField === 'password' ? 'scale-[1.02]' : ''}`}>
+            <div className={`relative group transition-all duration-300 ${focusedField === 'password' ? 'scale-[1.01]' : ''}`}>
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className={`w-5 h-5 transition-colors ${focusedField === 'password' ? 'text-violet-400' : 'text-slate-500'}`} />
+                <Lock className={`w-5 h-5 transition-colors ${focusedField === 'password' ? 'text-blue-500' : 'text-slate-400'}`} />
               </div>
               <input
                 type="password"
                 required
-                className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-sm"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -236,15 +234,9 @@ const LoginCard = () => {
 
           {/* Status Messages */}
           {status === 'error' && (
-            <div className="flex items-center gap-2 text-rose-400 text-sm bg-rose-500/10 p-3 rounded-lg border border-rose-500/20 animate-fadeIn">
+            <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-100 animate-fadeIn">
               <AlertCircle className="w-4 h-4" />
               <span>{statusMsg}</span>
-            </div>
-          )}
-          {status === 'success' && (
-            <div className="flex items-center gap-2 text-emerald-400 text-sm bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20 animate-fadeIn">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Login successful! Redirecting...</span>
             </div>
           )}
 
@@ -252,58 +244,47 @@ const LoginCard = () => {
           <button
             type="submit"
             disabled={isLoading || status === 'success'}
-            className="w-full relative group overflow-hidden bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-violet-500/25 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full relative group overflow-hidden bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-blue-200 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               {isLoading ? (
                 <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Loading...</span>
+                  <span>Verifying...</span>
                 </>
               ) : (
                 <>
-                  Start Quiz <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  Login <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </span>
-            {/* Shimmer effect */}
-            <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent z-0"></div>
+            <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent z-0"></div>
           </button>
 
           {/* Footer */}
           <p className="text-center text-slate-500 text-sm mt-4">
             Don't have an account?{' '}
-            <a href="/signup" className="text-violet-400 font-medium hover:text-violet-300 hover:underline transition-all">
+            <a href="/signup" className="text-blue-600 font-bold hover:text-blue-700 hover:underline transition-all">
               Sign up for free
             </a>
           </p>
         </form>
 
-        {/* Decorative bottom bar */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-blue-600"></div>
+        {/* Decorative bottom bar - Blue to Sky gradient */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-sky-400 to-indigo-500"></div>
       </div>
     </div>
   );
 };
 
-/**
- * App Component
- * Combines the background and the login card.
- */
 export default function Login() {
   return (
-    <div className="relative min-h-screen w-full overflow-hidden font-sans flex items-center justify-center selection:bg-violet-500/30">
+    <div className="relative min-h-screen w-full overflow-hidden font-sans flex items-center justify-center selection:bg-blue-200/50">
       <AnimatedBackground />
       <LoginCard />
-      
-      {/* Additional interactive decorative elements */}
-      <div className="absolute bottom-4 right-4 text-slate-600/30 text-xs flex items-center gap-1 select-none pointer-events-none">
-        <Sparkles className="w-3 h-3" />
-        <span>Powered by Knowledge</span>
-      </div>
     </div>
   );
 }
