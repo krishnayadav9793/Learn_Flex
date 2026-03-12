@@ -8,7 +8,6 @@ export default function Sidebar({ questions, answers, current, setCurrent, onSub
   return (
     <aside className="w-60 bg-white border-l border-gray-200 flex flex-col gap-6 p-5 min-h-screen ">
 
-      {/* Stats */}
       <div className="flex gap-2">
         {[
           { label: "Total",     value: total,     color: "text-gray-800"  },
@@ -22,7 +21,6 @@ export default function Sidebar({ questions, answers, current, setCurrent, onSub
         ))}
       </div>
 
-      {/* Progress bar */}
       <div>
         <div className="flex justify-between mb-1.5">
           <span className="text-xs text-gray-500 font-medium">Progress</span>
@@ -36,7 +34,6 @@ export default function Sidebar({ questions, answers, current, setCurrent, onSub
         </div>
       </div>
 
-      {/* Question Grid */}
       <div>
         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">
           Jump to Question
@@ -67,7 +64,6 @@ export default function Sidebar({ questions, answers, current, setCurrent, onSub
         </div>
       </div>
 
-      {/* Legend */}
       <div>
         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">
           Color Guide
@@ -86,7 +82,6 @@ export default function Sidebar({ questions, answers, current, setCurrent, onSub
         </div>
       </div>
 
-      {/* Submit */}
       <div className="mt-auto">
         <button
           onClick={onSubmit}

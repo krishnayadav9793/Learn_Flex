@@ -1,4 +1,4 @@
-export default function Navbar({ timeLeft, totalTime, formatTime, answered, total }) {
+export default function Navbar({ exam,timeLeft, totalTime, formatTime, answered, total }) {
  
   const urgentThreshold = totalTime ? totalTime * 0.2 : timeLeft * 0.2;
   const urgent = timeLeft <= urgentThreshold;
@@ -14,7 +14,7 @@ export default function Navbar({ timeLeft, totalTime, formatTime, answered, tota
           Learn<span className="text-teal-500">Flex</span>
         </span>
         <span className="bg-teal-50 text-teal-600 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-widest">
-          Exam Name
+          {exam}
         </span>
       </div>
       

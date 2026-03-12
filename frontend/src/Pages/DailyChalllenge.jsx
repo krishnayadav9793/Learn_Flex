@@ -3,16 +3,8 @@ import Sidebar from "../components/DailyChallenge/SideBar.jsx";
 import Navbar from "../components/DailyChallenge/Navbar.jsx";
 import QuizQuestion from "../components/DailyChallenge/QuizQuestion.jsx"
 import ResultScreen from "../components/DailyChallenge/Result.jsx";
-// ─── Mock Data (fallback if API fails) ────────────────────────────────────────
-const MOCK = [
-  { id: 1, question: "Which data structure uses LIFO ordering?", option1: "Queue", option2: "Stack", option3: "Deque", option4: "Heap", correct: 1, subject: "Data Structures", difficulty: "Easy" },
-  { id: 2, question: "Worst-case time complexity of QuickSort?", option1: "O(n log n)", option2: "O(n)", option3: "O(n²)", option4: "O(log n)", correct: 2, subject: "Algorithms", difficulty: "Medium" },
-  { id: 3, question: "Which normal form eliminates transitive dependencies?", option1: "1NF", option2: "2NF", option3: "3NF", option4: "BCNF", correct: 2, subject: "DBMS", difficulty: "Medium" },
-  { id: 4, question: "Which OSI layer handles end-to-end error recovery?", option1: "Network", option2: "Data Link", option3: "Session", option4: "Transport", correct: 3, subject: "Networks", difficulty: "Medium" },
-  { id: 5, question: "What does the 'volatile' keyword do in C?", option1: "Prevents compiler optimisation on the variable", option2: "Makes variable thread-safe", option3: "Allocates on heap", option4: "Declares a constant", correct: 0, subject: "C Programming", difficulty: "Hard" },
-  { id: 6, question: "Which scheduling algorithm can lead to starvation?", option1: "Round Robin", option2: "FCFS", option3: "Priority Scheduling", option4: "SRTF", correct: 2, subject: "OS", difficulty: "Easy" },
-];
 
+const MOCK = [ { id: 1, question: "Which data structure uses LIFO ordering?", option1: "Queue", option2: "Stack", option3: "Deque", option4: "Heap", correct: 1, subject: "Data Structures", difficulty: "Easy" }, { id: 2, question: "Worst-case time complexity of QuickSort?", option1: "O(n log n)", option2: "O(n)", option3: "O(n²)", option4: "O(log n)", correct: 2, subject: "Algorithms", difficulty: "Medium" }, { id: 3, question: "Which normal form eliminates transitive dependencies?", option1: "1NF", option2: "2NF", option3: "3NF", option4: "BCNF", correct: 2, subject: "DBMS", difficulty: "Medium" }, { id: 4, question: "Which OSI layer handles end-to-end error recovery?", option1: "Network", option2: "Data Link", option3: "Session", option4: "Transport", correct: 3, subject: "Networks", difficulty: "Medium" }, { id: 5, question: "What does the 'volatile' keyword do in C?", option1: "Prevents compiler optimisation on the variable", option2: "Makes variable thread-safe", option3: "Allocates on heap", option4: "Declares a constant", correct: 0, subject: "C Programming", difficulty: "Hard" }, { id: 6, question: "Which scheduling algorithm can lead to starvation?", option1: "Round Robin", option2: "FCFS", option3: "Priority Scheduling", option4: "SRTF", correct: 2, subject: "OS", difficulty: "Easy" }, ];
 const OPTION_LABELS = ["A", "B", "C", "D"];
 
 const DIFFICULTY_STYLES = {
@@ -21,11 +13,6 @@ const DIFFICULTY_STYLES = {
   Hard:   "bg-red-50 text-red-600",
 };
 
-
-// ─── Result Screen ─────────────────────────────────────────────────────────────
-
-
-// ─── Loading ───────────────────────────────────────────────────────────────────
 function Loading() {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center gap-4">
@@ -35,19 +22,20 @@ function Loading() {
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function LearnFlex() {
-  const exam = "GATE";
-  const TOTAL_TIME = 900; // 15 minutes in seconds
-
-  const [questions,  setQuestions]  = useState([]);
-  const [answers,    setAnswers]    = useState({});
-  const [current,    setCurrent]    = useState(0);
-  const [timeLeft,   setTimeLeft]   = useState(TOTAL_TIME);
+  
+  const [exam ,setExam]=useState("JeeMains")
+  const [questions,setQuestions]  = useState([]);
+  const [answers,setAnswers] = useState({});
+  const [current, setCurrent] = useState(0);
   const [showResult, setShowResult] = useState(false);
-  const [score,      setScore]      = useState(0);
+  const [score, setScore] = useState(0);
 
-  // Calculate score and show result
+  const TOTAL_TIME = questions[0]?.time_limit || 1200;
+
+  const [timeLeft,setTimeLeft] = useState(TOTAL_TIME);
+
+
   const computeAndFinish = useCallback((qs, ans) => {
     let correct = 0;
     qs.forEach(q => { if (ans[q.id] === q.correct) correct++; });
@@ -55,20 +43,23 @@ export default function LearnFlex() {
     setShowResult(true);
   }, []);
 
-  // Fetch questions from API, fall back to mock data
+  //Api Call
   useEffect(() => {
-    (async () => {
+    const fetchQuestions=async () => {
       try {
-        const res = await fetch(`http://localhost:3000/daily-quiz/${exam}`);
-        if (!res.ok) throw new Error();
-        setQuestions(await res.json());
-      } catch {
+        const res = await fetch(`http://localhost:3000/dc/dailyChallenge/${exam}`);
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data=res.json();
+        setQuestions(data);
+      }
+       catch(error){
+        console.error(error.message)
         setQuestions(MOCK);
       }
-    })();
-  }, []);
+    };
+    fetchQuestions();
+  }, [exam]);
 
-  // Countdown timer
   useEffect(() => {
     if (!questions.length) return;
     if (timeLeft <= 0) { computeAndFinish(questions, answers); return; }
@@ -81,8 +72,7 @@ export default function LearnFlex() {
     setAnswers(prev => ({ ...prev, [qid]: idx }));
   };
 
-
-    const prevQuestion = () => {
+  const prevQuestion = () => {
       setCurrent(c => c - 1); 
   };
 
@@ -94,14 +84,12 @@ export default function LearnFlex() {
     }
   };
 
-  // Format seconds → "M:SS"
   const formatTime = () => {
     const m = Math.floor(timeLeft / 60);
     const s = timeLeft % 60;
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  // Reset everything for retry
   const reset = () => {
     setAnswers({});
     setCurrent(0);
@@ -116,8 +104,8 @@ export default function LearnFlex() {
   return (
     <div className="min-h-screen bg-slate-100">
 
-      {/* Navbar */}
       <Navbar
+        exam={exam}
         timeLeft={timeLeft}
         totalTime={TOTAL_TIME}
         formatTime={formatTime}
@@ -125,10 +113,8 @@ export default function LearnFlex() {
         total={questions.length}
       />
 
-      {/* Page layout */}
+    
       <div className="flex max-w-5xl mx-auto">
-
-        {/* Main content */}
         <main className="flex-1 p-8 min-w-0">
           <div className="mb-6">
             <h2 className="text-xl font-extrabold text-gray-800 tracking-tight">Daily Challenge</h2>
@@ -145,8 +131,6 @@ export default function LearnFlex() {
             prevQuestion={prevQuestion}
           />
         </main>
-
-        {/* Sidebar */}
         <Sidebar
           questions={questions}
           answers={answers}
