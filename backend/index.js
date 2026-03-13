@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 import { connectNeon } from './util/neonConnect.js';
 import quizRoute from './routes/quizRoute.js';
-
+import DailyRoute from './routes/DailyChallenge.js'
 
 const app=express();
 
@@ -25,6 +25,7 @@ app.use(cookieParser())
 app.use("/user",authRoute)
 app.use("/api",leaderRoutes)
 app.use("/quiz",quizRoute);
+app.use("/dc",DailyRoute)
 
 mongoose.connect(process.env.MONGO_DB_URI,{dbName:"LearnFlex"})
 .then(() => console.log("MongoDB Connected"))

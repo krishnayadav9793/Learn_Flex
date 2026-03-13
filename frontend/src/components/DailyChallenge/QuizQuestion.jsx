@@ -39,7 +39,7 @@ export default function QuizQuestion({ question, index, total, selectOption, sel
           {question.question}
         </p>
       </div>
-
+<div>{question.image}</div>
       {/* Options */}
       <div className="flex flex-col gap-2">
         {options.map((opt, i) => (

@@ -47,10 +47,12 @@ export default function LearnFlex() {
   useEffect(() => {
     const fetchQuestions=async () => {
       try {
-        const res = await fetch(`http://localhost:3000/dc/dailyChallenge/${exam}`);
+        const res=await fetch(`http://localhost:3000/dc/dailyChallenge/${exam}`, {
+  credentials: "include"
+});
         if (!res.ok) throw new Error("Failed to fetch");
-        const data=res.json();
-        setQuestions(data);
+        const data=await res.json();
+         setQuestions(Array.isArray(data) ? data : [data]);
       }
        catch(error){
         console.error(error.message)
@@ -118,7 +120,7 @@ export default function LearnFlex() {
         <main className="flex-1 p-8 min-w-0">
           <div className="mb-6">
             <h2 className="text-xl font-extrabold text-gray-800 tracking-tight">Daily Challenge</h2>
-            <p className="text-sm text-gray-500 mt-0.5">{exam} · {questions.length} questions · 15 minutes</p>
+            <p className="text-sm text-gray-500 mt-0.5">{exam} · {questions.length} questions · {TOTAL_TIME} minutes</p>
           </div>
 
           <QuizQuestion
