@@ -36,12 +36,6 @@ export default function LearnFlex() {
   const [timeLeft,setTimeLeft] = useState(TOTAL_TIME);
 
 
-  const computeAndFinish = useCallback((qs, ans) => {
-    let correct = 0;
-    qs.forEach(q => { if (ans[q.id] === q.correct) correct++; });
-    setScore(correct);
-    setShowResult(true);
-  }, []);
 
   //Api Call
   useEffect(() => {
@@ -52,7 +46,7 @@ export default function LearnFlex() {
 });
         if (!res.ok) throw new Error("Failed to fetch");
         const data=await res.json();
-         setQuestions(Array.isArray(data) ? data : [data]);
+         setQuestions(Array.isArray(data) ? data : [data])
       }
        catch(error){
         console.error(error.message)
@@ -62,13 +56,25 @@ export default function LearnFlex() {
     fetchQuestions();
   }, [exam]);
 
-  useEffect(() => {
+   useEffect(() => {
     if (!questions.length) return;
     if (timeLeft <= 0) { computeAndFinish(questions, answers); return; }
     const timer = setInterval(() => setTimeLeft(n => n - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft, questions.length]);
 
+  
+  const computeAndFinish = useCallback((qs, ans) => {
+    let correct = 0;
+
+    qs.forEach(q => {
+    if (ans[q.id]+1 === q.correct) correct++;
+  });
+    setScore(correct);
+    setShowResult(true);
+  }, []);
+
+ 
   
   const selectOption = (qid, idx) => {
     setAnswers(prev => ({ ...prev, [qid]: idx }));
@@ -95,7 +101,7 @@ export default function LearnFlex() {
   const reset = () => {
     setAnswers({});
     setCurrent(0);
-    setTimeLeft(TOTAL_TIME);
+    setTimeLeft(TOTAL_TIME*60);
     setShowResult(false);
     setScore(0);
   };
@@ -112,7 +118,7 @@ export default function LearnFlex() {
         totalTime={TOTAL_TIME}
         formatTime={formatTime}
         answered={Object.keys(answers).length}
-        total={questions.length}
+        total={questions.length}cd backen
       />
 
     
