@@ -23,11 +23,10 @@ const userLogin = async (req,res)=>{
       name: user.name,
       email: user.email
     });
-    }catch(err){
+    }
+    catch(err){
          res.status(500).json({ error: err.message });
     }
-
-    // res.send("from login")
 }
 
 
