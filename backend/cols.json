@@ -1,0 +1,82 @@
+[
+  {
+    "table_name": "ExamQuestion",
+    "column_name": "Ques_id",
+    "data_type": "integer"
+  },
+  {
+    "table_name": "ExamQuestion",
+    "column_name": "Exam_id",
+    "data_type": "text"
+  },
+  {
+    "table_name": "Questions",
+    "column_name": "Ques_id",
+    "data_type": "integer"
+  },
+  {
+    "table_name": "Questions",
+    "column_name": "Question_Statement",
+    "data_type": "text"
+  },
+  {
+    "table_name": "Questions",
+    "column_name": "Option_1",
+    "data_type": "text"
+  },
+  {
+    "table_name": "Questions",
+    "column_name": "Option_2",
+    "data_type": "text"
+  },
+  {
+    "table_name": "Questions",
+    "column_name": "Option_3",
+    "data_type": "text"
+  },
+  {
+    "table_name": "Questions",
+    "column_name": "Option_4",
+    "data_type": "text"
+  },
+  {
+    "table_name": "Questions",
+    "column_name": "Image",
+    "data_type": "text"
+  },
+  {
+    "table_name": "Questions",
+    "column_name": "Answer",
+    "data_type": "integer"
+  },
+  {
+    "table_name": "Questions",
+    "column_name": "subject_id",
+    "data_type": "integer"
+  },
+  {
+    "table_name": "Questions",
+    "column_name": "topic_id",
+    "data_type": "integer"
+  },
+  {
+    "table_name": "Questions",
+    "column_name": "difficulty",
+    "data_type": "text"
+  },
+  {
+    "table_name": "Topic",
+    "column_name": "topic_id",
+    "data_type": "integer"
+  },
+  {
+    "table_name": "Topic",
+    "column_name": "subject_id",
+    "data_type": "integer"
+  },
+  {
+    "table_name": "Topic",
+    "column_name": "topic_name",
+    "data_type": "text"
+  }
+]
