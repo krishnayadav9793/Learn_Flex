@@ -1,4 +1,5 @@
 import { sql } from "../util/neonConnect.js";
+
 export const getExams = async (req, res) => {
   try {
 

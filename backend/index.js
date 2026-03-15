@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import { connectNeon } from './util/neonConnect.js';
 import quizRoute from './routes/quizRoute.js';
 import DailyRoute from './routes/DailyChallenge.js'
+import ExamRoute from "./routes/ExamRoute.js"
 
 const app=express();
 
@@ -26,9 +27,9 @@ app.use("/user",authRoute)
 app.use("/api",leaderRoutes)
 app.use("/quiz",quizRoute);
 app.use("/dc",DailyRoute)
+app.use("/exam",ExamRoute)
 
 await connectNeon();
-
 app.get("/",(req,res,next)=>{
     res.send("Server is working ✅")
 })
