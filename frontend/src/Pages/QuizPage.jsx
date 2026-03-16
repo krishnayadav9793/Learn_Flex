@@ -1,4 +1,4 @@
-import { data } from "react-router-dom";
+// import { data } from "react-router-dom";
 import Banner from "../components/quiz/banner.jsx";
 import React, { useEffect, useState } from 'react'
 

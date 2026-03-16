@@ -19,7 +19,7 @@ function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/LeaderBoard" element={<LeaderBoard />} />
-      <Route path="/Quiz" element={<QuizPage />} />
+      <Route path="/WeeklyQuiz" element={<QuizPage />} />
       <Route path="/Quiz/:id" element={<QuizQuestions />} />
       <Route path="/Quiz/:id/:id1" element={<QuestionPage />} />
       <Route path="/DailyChallenge" element={<DailyChallengePage />} />
