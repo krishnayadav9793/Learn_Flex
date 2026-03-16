@@ -1,4 +1,5 @@
 import React from "react";
+import { Brain } from "lucide-react";
 
 const Navbar = ({
   examData,
@@ -16,10 +17,7 @@ const Navbar = ({
         <div className="flex items-center gap-2 group cursor-pointer">
           <div className="bg-[#001F3F] p-1.5 rounded-lg group-hover:rotate-[-10deg] transition-transform duration-300">
             {/* Simple Book Icon SVG */}
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
+            <Brain className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-2xl font-[1000] tracking-tighter flex items-center">
             <span className="text-blue-500">LEARN</span>
