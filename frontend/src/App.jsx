@@ -9,6 +9,7 @@ import QuizQuestions from "./Pages/QuizQuestions.jsx"
 import QuestionPage from "./components/quiz/QuestionPage.jsx"
 import DailyChallengePage from "./Pages/DailyChalllenge.jsx"
 import HomePage from "./Pages/HomePage.jsx"
+import PracticeMode from "./Pages/PracticeMode.jsx"
 
 
 function App() {
@@ -24,8 +25,11 @@ function App() {
       <Route path="/Quiz/:id/:id1" element={<QuestionPage />} />
       <Route path="/DailyChallenge" element={<DailyChallengePage />} />
       <Route path="/HomePage" element={<HomePage />} />
+      <Route path="/practice" element={<PracticeMode />} />
+
+
     </Routes>
-  )
+  )                                                                                  
 }
 
 export default App

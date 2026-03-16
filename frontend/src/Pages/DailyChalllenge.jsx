@@ -24,7 +24,7 @@ function Loading() {
 
 export default function LearnFlex() {
   
-  const [exam ,setExam]=useState("JeeMains")
+  const [exam ,setExam]=useState("")
   const [questions,setQuestions]  = useState([]);
   const [answers,setAnswers] = useState({});
   const [current, setCurrent] = useState(0);
@@ -41,12 +41,18 @@ export default function LearnFlex() {
   useEffect(() => {
     const fetchQuestions=async () => {
       try {
-        const res=await fetch(`http://localhost:3000/dc/dailyChallenge/${exam}`, {
+        const res=await fetch(`http://localhost:3000/dc/dailyChallenge`, {
   credentials: "include"
 });
         if (!res.ok) throw new Error("Failed to fetch");
         const data=await res.json();
-         setQuestions(Array.isArray(data) ? data : [data])
+         const q = Array.isArray(data) ? data : [data];
+
+          setQuestions(q);
+
+          if (q.length > 0) {
+            setExam(q[0].exam_name);
+          }
       }
        catch(error){
         console.error(error.message)
@@ -54,7 +60,7 @@ export default function LearnFlex() {
       }
     };
     fetchQuestions();
-  }, [exam]);
+  }, []);
 
    useEffect(() => {
     if (!questions.length) return;
@@ -118,7 +124,7 @@ export default function LearnFlex() {
         totalTime={TOTAL_TIME}
         formatTime={formatTime}
         answered={Object.keys(answers).length}
-        total={questions.length}cd backen
+        total={questions.length}
       />
 
     

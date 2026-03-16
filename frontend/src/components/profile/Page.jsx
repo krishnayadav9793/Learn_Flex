@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Trophy, 
   Flame, 
@@ -210,12 +211,17 @@ const SettingsPanel = ({ isOpen, onClose }) => {
  * Main Dashboard Component
  */
 const Dashboard = ({user}) => {
+  const navigate = useNavigate();
+  const safeUser = user && typeof user === "object" ? user : {};
+  const displayName = safeUser.name || "Learner";
+  const displayEmail = safeUser.email || "learner@learnflex.app";
+  const displayRating = safeUser.rating ?? 0;
+  const displayStreak = safeUser.streak ?? 0;
+  const displayQuestions = safeUser.questions ?? 0;
+
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
-  const [names,setName]=useState(user.name)
-  useEffect(()=>{
-      if(user.name)setName(user.name.split(" ")[0][0])
-  },user.name)
+  const names = displayName.split(" ")[0]?.[0]?.toUpperCase() || "L";
   // Mock User Data
 //   const user = {
 //     name: "Alex Johnson",
@@ -268,7 +274,7 @@ const Dashboard = ({user}) => {
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
               Dashboard
             </h1>
-            <p className="text-slate-400">Welcome back, <span className="text-violet-400 font-medium">{user.name}</span>. You're on fire today!</p>
+            <p className="text-slate-400">Welcome back, <span className="text-violet-400 font-medium">{displayName}</span>. You're on fire today!</p>
           </div>
           <div className="flex gap-2">
             <button className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-medium transition-all shadow-lg shadow-violet-500/25 flex items-center gap-2">
@@ -292,15 +298,15 @@ const Dashboard = ({user}) => {
                   </div>
                 </div>
                 
-                <h2 className="text-2xl font-bold text-white mb-1">{user.name}</h2>
+                <h2 className="text-2xl font-bold text-white mb-1">{displayName}</h2>
                 <div className="flex items-center gap-2 text-slate-400 text-sm mb-6">
-                  <Mail className="w-3.5 h-3.5" /> {user.email}
+                  <Mail className="w-3.5 h-3.5" /> {displayEmail}
                 </div>
 
                 <div className="w-full bg-slate-800/50 rounded-xl p-4 border border-white/5 mb-6">
                   <div className="flex justify-between items-center text-sm mb-2">
                     <span className="text-slate-400">Current Level</span>
-                    <span className="text-violet-400 font-bold">{user.rating}</span>
+                    <span className="text-violet-400 font-bold">{displayRating}</span>
                   </div>
                   <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
                     <div className="bg-gradient-to-r from-violet-500 to-fuchsia-500 h-full w-[75%] rounded-full shadow-[0_0_10px_rgba(167,139,250,0.5)]"></div>
@@ -333,7 +339,7 @@ const Dashboard = ({user}) => {
               <StatCard 
                 icon={Trophy} 
                 label="Global Rank" 
-                value={`#${user.rating}`} 
+                value={`#${displayRating}`} 
                 subtext="Top 5% of users"
                 colorClass="bg-amber-500 text-amber-500" 
                 delay={100}
@@ -341,7 +347,7 @@ const Dashboard = ({user}) => {
               <StatCard 
                 icon={Flame} 
                 label="Day Streak" 
-                value={user.streak} 
+                value={displayStreak} 
                 subtext="Keep it burning!"
                 colorClass="bg-orange-500 text-orange-500" 
                 delay={200}
@@ -349,7 +355,7 @@ const Dashboard = ({user}) => {
               <StatCard 
                 icon={Brain} 
                 label="Questions" 
-                value={user.questions} 
+                value={displayQuestions} 
                 subtext="Total Solved"
                 colorClass="bg-cyan-500 text-cyan-500" 
                 delay={300}
@@ -395,7 +401,9 @@ const Dashboard = ({user}) => {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-2 gap-4 animate-fadeIn" style={{ animationDelay: '500ms' }}>
-               <div className="bg-gradient-to-r from-violet-900/40 to-slate-900/40 border border-violet-500/10 p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-violet-500/30 transition-all">
+               <div
+               onClick={() => navigate("/DailyChallenge")}
+               className="bg-gradient-to-r from-violet-900/40 to-slate-900/40 border border-violet-500/10 p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-violet-500/30 transition-all">
                   <div className="flex flex-col">
                     <span className="text-white font-medium">Daily Challenge</span>
                     <span className="text-xs text-violet-300">Expires in 4h 20m</span>
@@ -405,7 +413,10 @@ const Dashboard = ({user}) => {
                   </div>
                </div>
                
-               <div className="bg-gradient-to-r from-blue-900/40 to-slate-900/40 border border-blue-500/10 p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-blue-500/30 transition-all">
+               <div 
+                  onClick={() => navigate("/practice")}
+                  className="bg-gradient-to-r from-blue-900/40 to-slate-900/40 border border-blue-500/10 p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-blue-500/30 transition-all"
+               >
                   <div className="flex flex-col">
                     <span className="text-white font-medium">Practice Mode</span>
                     <span className="text-xs text-blue-300">Hone your skills</span>
