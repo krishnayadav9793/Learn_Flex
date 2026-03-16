@@ -13,7 +13,7 @@ const quizLists = async (req,res) => {
                 }
             ]);
         }
-        const users = await sql`SELECT * FROM "Quiz"`;
+        const users = await sql`SELECT * FROM "Questions"`;
         res.json(users);
     } catch (error) {
         console.error(error);

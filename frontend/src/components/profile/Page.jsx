@@ -401,7 +401,9 @@ const Dashboard = ({user}) => {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-2 gap-4 animate-fadeIn" style={{ animationDelay: '500ms' }}>
-               <div className="bg-gradient-to-r from-violet-900/40 to-slate-900/40 border border-violet-500/10 p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-violet-500/30 transition-all">
+               <div
+               onClick={() => navigate("/DailyChallenge")}
+               className="bg-gradient-to-r from-violet-900/40 to-slate-900/40 border border-violet-500/10 p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-violet-500/30 transition-all">
                   <div className="flex flex-col">
                     <span className="text-white font-medium">Daily Challenge</span>
                     <span className="text-xs text-violet-300">Expires in 4h 20m</span>

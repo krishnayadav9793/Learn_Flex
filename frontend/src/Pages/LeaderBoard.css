@@ -1,49 +1,115 @@
+/* Container styling */
 .leaderboard {
-  width: 100%;
+  width: 95%;
+  max-width: 1000px;
+  margin: 2rem auto;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); /* Soft shadow for depth */
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1a1a1a;
 }
 
 .leaderboard__title {
-  margin-bottom: 16px;
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: 28px;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
 }
 
+/* Tab Controls */
 .leaderboard__controls {
-  margin-bottom: 16px;
+  margin-bottom: 32px;
+  display: flex;
+  gap: 8px;
+  background: #f3f4f6;
+  padding: 6px;
+  border-radius: 12px;
+  width: fit-content;
 }
 
 .leaderboard__btn {
-  padding: 8px 12px;
-  margin-right: 10px;
+  padding: 10px 24px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
-  background: #ddd;
-  color: #000;
+  background: transparent;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.leaderboard__btn:hover {
+  color: #a855f7;
 }
 
 .leaderboard__btn.active {
-  background: #444;
-  color: #fff;
+  background: #ffffff; 
+  color: #a855f7;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
 }
 
-.leaderboard__status {
-  margin-top: 10px;
-}
-
-.leaderboard__status.error {
-  color: red;
-}
-
+/* Table Styling */
 .leaderboard__table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 12px; /* Gap between rows */
 }
 
 .leaderboard__table th {
   text-align: left;
-  border-bottom: 2px solid #ccc;
-  padding: 8px;
+  color: #9ca3af;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0 20px 8px 20px;
 }
 
 .leaderboard__table td {
-  border-bottom: 1px solid #eee;
-  padding: 8px;
+  padding: 20px;
+  background: #ffffff;
+  border-top: 1px solid #f3f4f6;
+  border-bottom: 1px solid #f3f4f6;
+  transition: transform 0.2s ease;
+}
+
+/* Violet Accents for Rank */
+.leaderboard__table td:first-child {
+  border-left: 1px solid #f3f4f6;
+  border-top-left-radius: 16px;
+  border-bottom-left-radius: 16px;
+  font-weight: 700;
+  color: #a855f7;
+  width: 60px;
+  text-align: center;
+}
+
+.leaderboard__table td:last-child {
+  border-right: 1px solid #f3f4f6;
+  border-top-right-radius: 16px;
+  border-bottom-right-radius: 16px;
+  font-weight: 500;
+}
+
+/* Hover Effect: Rows lift up slightly */
+.leaderboard__table tr:hover td {
+  background: #fafafa;
+  border-color: #e5e7eb;
+  transform: translateY(-2px);
+  cursor: default;
+}
+
+/* Status Messages */
+.leaderboard__status {
+  margin-top: 24px;
+  font-size: 0.9rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.leaderboard__status.error {
+  color: #ef4444;
 }

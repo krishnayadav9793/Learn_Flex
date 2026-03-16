@@ -8,6 +8,7 @@ import authRoute from "./routes/authRoute.js";
 import leaderRoutes from "./routes/leaderBoardRoute.js";
 import quizRoute from "./routes/quizRoute.js";
 import practiceRoute from "./routes/practiceRoute.js";
+import ExamRoute from "./routes/ExamRoute.js"
 
 import { connectNeon } from "./util/neonConnect.js";
 import { hasMongoConfig } from "./util/envFlags.js";
@@ -36,7 +37,7 @@ app.use("/user", authRoute);
 app.use("/api", leaderRoutes);
 app.use("/quiz", quizRoute);
 app.use("/practice", practiceRoute);
-
+app.use("/exam",ExamRoute)
 /*
   Default JWT fallback
 */

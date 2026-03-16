@@ -1,63 +1,55 @@
-import User from "../models/user.js";
-import bcrypt from 'bcrypt'
+import { sql } from '../util/neonConnect.js';
+import bcrypt from 'bcrypt';
 import { getToken } from "../util/generateToken.js";
-import { hasMongoConfig } from "../util/envFlags.js";
-import { demoUsers, getPublicUser } from "../util/demoStore.js";
-const userSignUp= async (req,res)=>{
-    try {
+
+const userSignUp = async (req, res) => {
+
+  try {
+
+    
     const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ msg: "All fields are required" });
+    console.log(name, email, password);
+
+    const exists = await sql`
+      SELECT * FROM "User"
+      WHERE email = ${email}
+    `;
+
+    if (exists.length > 0) {
+      return res.status(400).json({ msg: "User already exists" });
     }
 
-    if (!hasMongoConfig()) {
-      const exists = demoUsers.find((u) => u.email === email.toLowerCase());
-      if (exists) return res.status(400).json({ msg: "User already exists" });
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-      const hashedPassword = await bcrypt.hash(password, Number(process.env.HASHING_SALT) || 10);
-      const user = {
-        _id: String(Date.now()),
-        name,
-        email: email.toLowerCase(),
-        password: hashedPassword,
-        rating: 0,
-        questions: 0
-      };
-      demoUsers.push(user);
-      const publicUser = getPublicUser(user);
-      const token = getToken(user._id, publicUser);
+    const user = await sql`
+      INSERT INTO "User" ("email","password","name")
+      VALUES (${email}, ${hashedPassword}, ${name})
+      RETURNING *
+    `;
 
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: false,
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000
-      });
+    const newUser = user[0];
+    console.log(newUser)
+    const token = getToken(newUser.email);
 
-      return res.json(publicUser);
-    }
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
 
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ msg: "User already exists" });
-    const hashedPassword = await bcrypt.hash(password, Number(process.env.HASHING_SALT) || 10);
-    const user = await User.create({ name, email, password:hashedPassword });
-    const publicUser = getPublicUser(user);
-
-    const token=getToken(user._id, publicUser)
-      
-       res.cookie("token", token, {
-        httpOnly: true,       
-        secure: false,       
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000
-        });
-
-        res.json(publicUser);
+    res.json({
+      name: newUser.name,
+      email: newUser.email
+    });
 
   } catch (err) {
+
     res.status(500).json({ error: err.message });
+
   }
+
 }
 
 export default userSignUp;

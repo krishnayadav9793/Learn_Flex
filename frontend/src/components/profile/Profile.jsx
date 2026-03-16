@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import App from './Page'
 function Profile() {
   const navigate=useNavigate();
-  const [ userDetail, setUserDetail ] = useState({})
+  const [ userDetail, setUserDetail ] = useState("Loading")
   useEffect(() => {
     const dataFetch = async () => {
       try {
@@ -23,7 +23,7 @@ function Profile() {
 
     }
     dataFetch();
-  }, [navigate])
+  }, [])
   return (
     <div>
       <App user={userDetail} />
