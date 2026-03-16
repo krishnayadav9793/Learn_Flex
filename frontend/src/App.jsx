@@ -25,7 +25,8 @@ function App() {
       <Route path="/DailyChallenge" element={<DailyChallengePage />} />
       <Route path="/HomePage" element={<HomePage />} />
     </Routes>
-  )
+  )                                                                                  
 }
 
 export default App
+zzzz
