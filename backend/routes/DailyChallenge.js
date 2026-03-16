@@ -4,7 +4,7 @@ import { getDailyChallenge } from "../controllers/DailyChallenge.js";
 
 
 const router=Router();
-router.get("/dailyChallenge/:exam",protect,getDailyChallenge);
+router.get("/dailyChallenge",protect,getDailyChallenge);
 export default router;
 
 ;
