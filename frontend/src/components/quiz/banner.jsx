@@ -149,7 +149,7 @@ const Banner = (quiz) => {
           <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-center">
             <button
               disabled={statusInfo.label !== 'LIVE'}
-              onClick={statusInfo.label === 'LIVE' && renderQuiz}
+              onClick={statusInfo.label === 'LIVE' ? renderQuiz : undefined}
               className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${statusInfo.label === 'LIVE'
                 ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-200'
                 : 'bg-slate-200 text-slate-400 cursor-not-allowed'
