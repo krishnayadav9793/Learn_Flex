@@ -41,6 +41,7 @@ export default function LearnFlex() {
   useEffect(() => {
     const fetchQuestions=async () => {
       try {
+        console.log("H")
         const res=await fetch(`http://localhost:3000/dc/dailyChallenge`, {
   credentials: "include"
 });
@@ -74,7 +75,9 @@ export default function LearnFlex() {
     let correct = 0;
 
     qs.forEach(q => {
-    if (ans[q.id]+1 === q.correct) correct++;
+      console.log("ans",ans[q.id])
+      console.log("correct",q.correct)
+   if (Number(ans[q.id]) + 1 === Number(q.correct)) correct++;
   });
     setScore(correct);
     setShowResult(true);

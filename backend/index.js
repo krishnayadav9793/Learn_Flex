@@ -12,7 +12,7 @@ import ExamRoute from "./routes/ExamRoute.js"
 
 import { connectNeon } from "./util/neonConnect.js";
 import { hasMongoConfig } from "./util/envFlags.js";
-
+import dailyRouter from "./routes/DailyChallenge.js"
 configDotenv();
 
 const app = express();
@@ -38,6 +38,7 @@ app.use("/api", leaderRoutes);
 app.use("/quiz", quizRoute);
 app.use("/practice", practiceRoute);
 app.use("/exam",ExamRoute)
+app.use("/dc",dailyRouter)
 /*
   Default JWT fallback
 */

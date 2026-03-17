@@ -1,22 +1,21 @@
-import {sql} from "../util/neonConnect.js"
+import { sql } from "../util/neonConnect.js";
 
 export const getDailyChallenge = async (req, res) => {
 
   try {
-    const { exam } = req.params;
 
     const result = await sql`
-SELECT 
-          q."Ques_id" AS id,
-          q."Question_Statement" AS question,
-          q."Option_1" AS option1,
-          q."Option_2" AS option2,
-          q."Option_3" AS option3,
-          q."Option_4" AS option4,
-          q."Answer" AS correct,
-          q."difficulty",
-          dc.time_limit,
-          e.exam_name
+      SELECT 
+        q."Ques_id" AS id,
+        q."Question_Statement" AS question,
+        q."Option_1" AS option1,
+        q."Option_2" AS option2,
+        q."Option_3" AS option3,
+        q."Option_4" AS option4,
+        q."Answer" AS correct,
+        q."difficulty",
+        dc.time_limit,
+        e.exam_name
       FROM "DailyChallenge" dc
       JOIN "Exam" e 
         ON dc.exam_id = e.exam_id
@@ -25,21 +24,22 @@ SELECT
       JOIN "Questions" q
         ON q."Ques_id" = dcq.ques_id
       WHERE dc.challenge_date = CURRENT_DATE
-`;
-    
+    `;
+
     if (!result.length) {
       return res.status(404).json({
         message: "No daily challenge found"
       });
     }
+
     res.json(result);
 
   } catch (error) {
 
     console.error("Daily Challenge Error:", error);
 
-    res.json({
-      message: "Failed to fetch daily challenge"
+    res.status(500).json({
+      error: "Failed to fetch daily challenge"
     });
 
   }
