@@ -12,7 +12,7 @@ export const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    console.log(decoded , "thtis is jwt decoded");
+    // console.log(decoded , "thtis is jwt decoded");
 
     const result = await sql`
       SELECT id, name, email

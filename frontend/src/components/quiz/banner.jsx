@@ -6,8 +6,8 @@ const Banner = (quiz) => {
   const navigate = useNavigate();
   const quizData = {
     name: quiz.data.Quiz_id,
-    startTime: new Date(quiz.data.Start_time), // Starts in 10 seconds for demo purposes
-    durationMinutes: quiz.data.Duration,
+    startTime: new Date(quiz.data.Start_time), 
+    durationMinutes: quiz.data.time_limit,
     description: quiz.data.Description,
     totalQuestions: quiz.data.Number_of_questions
   };
