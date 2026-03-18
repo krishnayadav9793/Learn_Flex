@@ -8,5 +8,5 @@ const quizRoute = Router();
 
 quizRoute.get("/list",protect,quizLists)
 quizRoute.get("/question/:quizId",questionsQuiz);
-quizRoute.post("/quiz/submit/:quizId",handleSubmition);
+quizRoute.post("/submit",protect,handleSubmition);
 export default quizRoute;

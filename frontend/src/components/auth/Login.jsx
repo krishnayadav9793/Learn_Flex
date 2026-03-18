@@ -162,6 +162,13 @@ const LoginCard = () => {
         navigate("/profile");
       }
     } catch (err) {
+      // setIsLoading(false);
+      setStatusMsg("Something went wrong");
+
+        setTimeout(() => {
+          setIsLoading(false);
+          setStatus("error");
+        }, 1500)
       console.log("error:", err);
     }
   };

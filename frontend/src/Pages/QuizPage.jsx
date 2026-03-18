@@ -1,10 +1,22 @@
 // import { data } from "react-router-dom";
 import Banner from "../components/quiz/banner.jsx";
 import React, { useEffect, useState } from 'react'
-
+import socket from "../socket.js";
+// import { data } from "react-router-dom";
 function QuizPage() {
   const [quizList, setQuizList] = useState();
+  // socket.on("connect",()=>{
+  //       console.log("connected",socket.id);
+  //   })
+  //   socket.on("message",(data)=>{
+  //     console.log(data.message)
+  //   })
+  //   socket.on("quiz",(data)=>{
+  //     console.log(data.quizData)
+  //   })
   useEffect(() => {
+    
+    
     const fetchQuiz = async () => {
       const res = await fetch("http://localhost:3000/quiz/list", {
         method: "GET",
