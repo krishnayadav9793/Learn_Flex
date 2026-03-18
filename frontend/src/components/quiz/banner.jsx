@@ -3,20 +3,21 @@ import { Timer, Calendar, Clock, PlayCircle, AlertCircle, CheckCircle2, Trophy }
 import { useNavigate } from 'react-router-dom';
 const Banner = (quiz) => {
   console.log(quiz)
+  // console.log(new Date(quiz.data.Start_time ))
   const navigate = useNavigate();
   const quizData = {
-    name: quiz.data.Quiz_id,
-    startTime: new Date(quiz.data.Start_time), 
+    name: quiz.data.test_id,
+    startTime: new Date(quiz.data.Start_Time), 
     durationMinutes: quiz.data.time_limit,
     description: quiz.data.Description,
     totalQuestions: quiz.data.Number_of_questions
   };
-
+  console.log(quizData)
   const [currentTime, setCurrentTime] = useState(new Date());
   const renderQuiz = () => {
-    navigate(`/quiz/${quiz.data.Quiz_id}`);
+    navigate(`/quiz/${quiz.data.test_id}`);
   }
-  // Update time every second
+  
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());

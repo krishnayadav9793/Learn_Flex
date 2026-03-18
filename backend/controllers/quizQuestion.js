@@ -14,8 +14,8 @@ const questionsQuiz = async (req, res) => {
         "Option_4",
         "Image",
         "Answer"
-      FROM "Questions"
-      WHERE "Ques_id" = ${quizId}
+      FROM "Questions" q JOIN "Weekly_test_ques" w on q."Ques_id" =w.ques_id 
+      WHERE "test_id" = ${quizId}
     `;
 
     console.log("Quiz Questions:", questions);

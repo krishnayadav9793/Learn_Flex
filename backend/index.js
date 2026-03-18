@@ -30,26 +30,20 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-/*
-  Routes
-*/
+
 app.use("/user", authRoute);
 app.use("/api", leaderRoutes);
 app.use("/quiz", quizRoute);
 app.use("/practice", practiceRoute);
 app.use("/exam",ExamRoute)
 app.use("/dc",dailyRouter)
-/*
-  Default JWT fallback
-*/
+
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.includes("your_jwt_secret")) {
   process.env.JWT_SECRET = "demo-jwt-secret";
   console.log("JWT_SECRET missing, using demo secret");
 }
 
-/*
-  MongoDB connection
-*/
+
 if (hasMongoConfig()) {
   mongoose
     .connect(process.env.MONGO_DB_URI, { dbName: "LearnFlex" })
@@ -59,21 +53,14 @@ if (hasMongoConfig()) {
   console.log("Mongo URI missing, running with demo auth store");
 }
 
-/*
-  Neon connection
-*/
+
 await connectNeon();
 
-/*
-  Default route
-*/
 app.get("/", (req, res) => {
   res.send("Server is working ✅");
 });
 
-/*
-  Start server
-*/
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {

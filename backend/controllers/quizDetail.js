@@ -1,8 +1,9 @@
 import { sql } from "../util/neonConnect.js";
 
-const quizLists = async (req,res) => {
+const quizLists = async (req, res) => {
     try {
-        const users = await sql`SELECT * FROM "WeeklyQuiz"`;
+        const users = await sql`SELECT * FROM "Weekly_Test"`;
+        
         res.json(users);
     } catch (error) {
         console.error(error);
