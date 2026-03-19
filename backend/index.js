@@ -34,7 +34,7 @@ app.use(cookieParser());
   Routes
 */
 app.use("/user", authRoute);
-app.use("/api", leaderRoutes);
+app.use("/lb", leaderRoutes);
 app.use("/quiz", quizRoute);
 app.use("/practice", practiceRoute);
 app.use("/exam",ExamRoute)
