@@ -6,7 +6,7 @@ import {
   Brain,
   AlertCircle,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , Link } from "react-router-dom";
 
 /*
 Animated background with neutral LearnFlex dashboard colors
@@ -159,7 +159,7 @@ const LoginCard = () => {
           setStatus("error");
         }, 1500);
       } else {
-        navigate("/profile");
+        navigate("/HomePage");
       }
     } catch (err) {
       // setIsLoading(false);
@@ -324,12 +324,12 @@ const LoginCard = () => {
           {/* Footer */}
           <p className="text-center text-slate-500 text-sm mt-4">
             Don't have an account?{" "}
-            <a
-              href="/signup"
-              className="text-[#0b2a4a] font-bold hover:text-[#123d6b] hover:underline"
-            >
-              Sign up for free
-            </a>
+<Link
+  to="/signup"
+  className="text-[#0b2a4a] font-bold hover:text-[#123d6b] hover:underline"
+>
+  Sign up for free
+</Link>
           </p>
         </form>
 

@@ -7,7 +7,7 @@ import {
   AlertCircle,
   User,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate ,Link } from "react-router-dom";
 
 /* SAME Animated Background as Login */
 const AnimatedBackground = () => {
@@ -153,7 +153,7 @@ const SignupCard = () => {
           setStatus("error");
         }, 1200);
       } else {
-        navigate("/profile");
+        navigate("/HomePage");
       }
     } catch (err) {
       console.log(err);
@@ -297,12 +297,13 @@ const SignupCard = () => {
 
           <p className="text-center text-slate-500 text-sm mt-4">
             Already have an account?{" "}
-            <a
-              href="/login"
-              className="text-[#0b2a4a] font-bold hover:text-[#123d6b] hover:underline"
-            >
-              Log in
-            </a>
+
+<Link
+  to="/login"
+  className="text-[#0b2a4a] font-bold hover:text-[#123d6b] hover:underline"
+>
+  Log in
+</Link>
           </p>
         </form>
 

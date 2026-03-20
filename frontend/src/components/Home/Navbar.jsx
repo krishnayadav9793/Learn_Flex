@@ -1,5 +1,6 @@
 import React from "react";
 import { Brain } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = ({
   examData,
@@ -7,8 +8,11 @@ const Navbar = ({
   setSelectedExam,
   isDropdownOpen,
   setIsDropdownOpen
+  
 }) => {
+  const navigate = useNavigate();
   return (
+    
     <nav className="sticky top-0 z-50 bg-[#FFFDF5]/95 backdrop-blur-md border-b border-[#E5E1D3] px-6 py-3 flex items-center justify-between shadow-sm">
       
       <div className="flex items-center gap-10">
@@ -96,9 +100,12 @@ const Navbar = ({
             <p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Elite Member</p>
             <p className="text-xs font-bold text-[#001F3F]">Abhishek D.</p>
           </div>
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#001F3F] to-blue-800 flex items-center justify-center text-white font-black text-sm shadow-lg ring-2 ring-white hover:scale-105 transition-transform cursor-pointer">
-            AD
-          </div>
+<div
+  onClick={() => navigate("/profile")}
+  className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#001F3F] to-blue-800 flex items-center justify-center text-white font-black text-sm shadow-lg ring-2 ring-white hover:scale-105 transition-transform cursor-pointer"
+>
+  AD
+</div>
         </div>
       </div>
 

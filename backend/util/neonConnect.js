@@ -7,16 +7,17 @@ dotenv.config();
 const sql = hasNeonConfig() ? neon(process.env.NEON_URL) : null;
 
 const connectNeon = async () => {
+  // console.log(process.env.NEON_URL)
   if (!sql) {
     console.log('Neon URL missing, running with demo quiz data');
     return;
   }
-
+  
   try {
-    await sql`SELECT 1`;
+    const res=await sql`SELECT 1 `;
     console.log('PostgreSQL Connected');
   } catch (error) {
-    console.error('Database connection failed', error);
+    console.log('Database connection failed', error);
   }
 }
 
