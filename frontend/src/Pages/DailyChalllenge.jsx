@@ -31,9 +31,11 @@ export default function LearnFlex() {
   const [current, setCurrent] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
-
   const TOTAL_TIME = questions[0]?.time_limit || 1200;
   const [timeLeft,setTimeLeft] = useState(TOTAL_TIME);
+  const [correct,setCorrect]=useState(0);
+  const [wrong,setWrong]=useState(0);
+  const [unattempted,setUnattempted]=useState(0);
 
   useEffect(() => {
     const fetchQuestions=async () => {
@@ -45,7 +47,12 @@ export default function LearnFlex() {
         const data=await res.json();
         const q = Array.isArray(data) ? data : [data];
         setQuestions(q);
-        if (q.length > 0) setExam(q[0].exam_name);
+        if (q.length > 0) {
+          setExam(q[0].exam_name);
+          setCorrect(q[0].correct_marks)
+          setWrong(q[0].wrong_marks)
+          setUnattempted(q[0].unattempted_marks)
+        }
       }
       catch(error){
         console.error(error.message)
@@ -63,13 +70,21 @@ export default function LearnFlex() {
   }, [timeLeft, questions.length]);
 
   const computeAndFinish = useCallback((qs, ans) => {
-    let correct = 0;
+    let totalScore = 0;
+
     qs.forEach(q => {
-      if (Number(ans[q.id]) + 1 === Number(q.correct)) correct++;
+      const selected=ans[q.id]
+      if (selected === undefined) {
+      totalScore += unattempted; 
+      return;
+    }
+      if (Number(ans[q.id]) + 1 === Number(q.correct)) totalScore+=correct;
+      else totalScore+=wrong;
+      
     });
-    setScore(correct);
+    setScore(totalScore);
     setShowResult(true);
-  }, []);
+  }, [correct,wrong,unattempted]);
 
   const selectOption = (qid, idx) => {
     setAnswers(prev => ({ ...prev, [qid]: idx }));
@@ -89,17 +104,17 @@ export default function LearnFlex() {
     const m = Math.floor(timeLeft / 60);
     const s = timeLeft % 60;
     return `${m}:${s.toString().padStart(2, "0")}`;
-  };
+  }
 
   const reset = () => {
     setAnswers({});
     setCurrent(0);
-    setTimeLeft(TOTAL_TIME);
+    setTimeLeft(TOTAL_TIME*60);
     setShowResult(false);
     setScore(0);
   };
 
-  if (showResult) return <ResultScreen score={score} total={questions.length} onRetry={reset} />;
+  if (showResult) return <ResultScreen score={score} total={questions.length*correct} onRetry={reset} />;
   if (!questions.length) return <Loading />;
 
   return (
@@ -112,7 +127,7 @@ export default function LearnFlex() {
         totalTime={TOTAL_TIME}
         formatTime={formatTime}
         answered={Object.keys(answers).length}
-        total={questions.length}
+        total={questions.length*correct}
       />
 
       <div className="flex max-w-6xl mx-auto">
