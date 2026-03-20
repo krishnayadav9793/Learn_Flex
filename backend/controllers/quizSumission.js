@@ -2,9 +2,11 @@ import { sql } from "../util/neonConnect.js";
 
 export async function handleSubmition(req, res) {
     const { data } = req.body;
-    const user_id = req.user?.id || 1; // ⚠️ replace with real auth
+    const user_id = req.user?.id || 1; 
     console.log(user_id)
     if (!data || Object.keys(data).length === 0) {
+        await sql `INSERT INTO "Weekly_Test_Submission" ( user_id )
+      VALUES ${user_id}`
         return res.status(400).json({ error: "No answers submitted" });
     }
 
