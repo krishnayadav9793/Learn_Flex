@@ -67,7 +67,7 @@ const LearnFlexHome = () => {
           </div>
 
           {/* Large Background Text Decoration */}
-          <div className="absolute right-[-20px] bottom-[-40px] opacity-10 text-[240px] font-black tracking-tighter select-none pointer-events-none">
+          <div className="absolute right-[20px] bottom-[-40px] opacity-10 text-[240px] font-black tracking-tighter select-none pointer-events-none">
             {selectedExam ? selectedExam.split(" ")[0] : "GOAL"}
           </div>
         </section>
