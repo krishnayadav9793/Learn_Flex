@@ -1,0 +1,200 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap');
+
+/* ── Root ─────────────────────────────────────────────────── */
+.chm-root {
+  font-family: 'Syne', sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  padding: 28px 32px 24px;
+  border-radius: 16px;
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow:
+    0 0 0 1px rgba(48, 54, 61, 0.8),
+    0 8px 40px rgba(0, 0, 0, 0.6);
+  position: relative;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+.chm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.chm-title-block {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.chm-count {
+  font-size: 26px;
+  font-weight: 800;
+  color: #58a6ff;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -1px;
+}
+.chm-subtitle {
+  font-size: 13px;
+  color: #8b949e;
+  font-weight: 400;
+}
+
+/* ── Stats ────────────────────────────────────────────────── */
+.chm-stats {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.chm-stat { text-align: right; }
+.chm-stat-label {
+  font-size: 11px;
+  color: #6e7681;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+.chm-stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: #e6edf3;
+  line-height: 1;
+  margin-top: 2px;
+}
+.chm-divider {
+  width: 1px;
+  height: 28px;
+  background: #21262d;
+}
+
+/* ── Scroll wrapper ───────────────────────────────────────── */
+.chm-scroll-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #2563eb #161b22;
+}
+.chm-scroll-wrap::-webkit-scrollbar {
+  height: 4px;
+}
+.chm-scroll-wrap::-webkit-scrollbar-track {
+  background: #161b22;
+  border-radius: 99px;
+}
+.chm-scroll-wrap::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+  border-radius: 99px;
+}
+.chm-scroll-wrap::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #2563eb, #60a5fa);
+}
+
+/* ── Outer grid: months side by side ─────────────────────── */
+.chm-grid {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;              /* gap between months */
+  align-items: flex-start;
+  width: max-content;
+}
+
+/* ── One month block ──────────────────────────────────────── */
+.chm-month-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Month name above its week columns */
+.chm-month-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #6e7681;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding-left: 1px;
+}
+
+/* Week-columns row inside a month */
+.chm-weeks-row {
+  display: flex;
+  flex-direction: row;
+  gap: 3px;              /* gap between week columns */
+}
+
+/* One week = a column of 7 cells (Sun → Sat) */
+.chm-week-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* ── Individual day cell ──────────────────────────────────── */
+.chm-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  cursor: default;
+  flex-shrink: 0;
+  transition: transform 0.1s ease, filter 0.1s ease;
+}
+.chm-cell:hover:not(.chm-cell--spacer) {
+  transform: scale(1.35);
+  z-index: 10;
+  filter: brightness(1.4);
+}
+
+/* Invisible spacer — preserves Sun-alignment for months that don't start on Sunday */
+.chm-cell--spacer {
+  background: transparent;
+  border: none;
+  pointer-events: none;
+}
+
+/* Not completed */
+.chm-cell--empty {
+  background: #161b22;
+  border: 1px solid #1e2530;
+}
+
+/* Completed — solid dark blue glow */
+.chm-cell--filled {
+  background: #1d4ed8;
+  border: 1px solid #2563eb;
+  box-shadow: 0 0 5px rgba(37, 99, 235, 0.55);
+}
+
+/* Today ring */
+.chm-cell--today {
+  outline: 2px solid #58a6ff;
+  outline-offset: 1px;
+}
+
+/* ── Tooltip ──────────────────────────────────────────────── */
+.chm-tooltip {
+  position: fixed;
+  background: #1c2128;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #e6edf3;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -120%);
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  font-family: 'JetBrains Mono', monospace;
+}
+.chm-tooltip-date {
+  color: #8b949e;
+  font-size: 10px;
+  display: block;
+  margin-top: 2px;
+}
