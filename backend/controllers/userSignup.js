@@ -5,13 +5,11 @@ import { getToken } from "../util/generateToken.js";
 const userSignUp = async (req, res) => {
 
   try {
-
-    
     const { name, email, password } = req.body;
 
     console.log(name, email, password);
 
-    const exists = await sql`
+    const exists = await sql `
       SELECT * FROM "User"
       WHERE email = ${email}
     `;
@@ -23,7 +21,7 @@ const userSignUp = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await sql`
-      INSERT INTO "User" ("email","password","name")
+      INSERT INTO "User" ("email","password","name") 
       VALUES (${email}, ${hashedPassword}, ${name})
       RETURNING *
     `;

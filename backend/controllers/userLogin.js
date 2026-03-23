@@ -7,7 +7,6 @@ const userLogin = async (req,res)=>{
 
         const user = await sql`SELECT * from "User" where email=${email}`;
         if (user.length==0) return res.status(400).json({ msg: "Invalid email" });
-        // console.log(user, password, user[0].password)
         const isMatch = await bcrypt.compare(password,user[0].password);
         if (!isMatch) return res.status(400).json({ msg: "Wrong password" });
         const token=getToken(user[0].email)
