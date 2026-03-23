@@ -190,7 +190,8 @@ export default function PracticeMode() {
           subject,
           topics: selectedTopics,
           questionCount: safeQuestionCount,
-          timeLimitMinutes: Math.max(1, Number(timeLimitMinutes) || 1)
+          timeLimitMinutes: Math.max(1, Number(timeLimitMinutes) || 1),
+          excludeIds: history.flatMap((h) => h.questionResults?.map((qr) => qr.questionId) || [])
         })
       });
 
@@ -209,6 +210,9 @@ export default function PracticeMode() {
       setResult(null);
       setQuestionIndex(0);
       setAnswers({});
+      setRemainingSeconds(
+        Math.max(0, Math.floor((new Date(data.expiresAt).getTime() - Date.now()) / 1000))
+      );
     } catch {
       setError("Unable to start practice session.");
     } finally {
@@ -529,7 +533,7 @@ export default function PracticeMode() {
                 </div>
 
                 <div className="rounded-2xl bg-slate-950/60 border border-slate-800 p-5 space-y-4">
-                  <h3 className="text-xl font-bold text-white">Q{currentQuestion.qno || questionIndex + 1}</h3>
+                  <h3 className="text-xl font-bold text-white">Q{questionIndex + 1}</h3>
                   <p className="whitespace-pre-wrap leading-relaxed text-slate-100 break-words">
                     {currentQuestion.statement}
                   </p>
