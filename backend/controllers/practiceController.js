@@ -131,23 +131,103 @@ export const createPracticeSession = async (req, res) => {
 
     const requestedCount = clamp(Number(req.body.questionCount) || 10, 1, 100);
     const timeLimitMinutes = clamp(Number(req.body.timeLimitMinutes) || 15, 1, 180);
+    
+    // Support excluding previously seen questions
+    const excludeIds = Array.isArray(req.body.excludeIds) 
+      ? req.body.excludeIds.filter(id => typeof id === 'string' || typeof id === 'number') 
+      : [];
 
-    // Fetch random questions directly from Neon DB for the selected subject
-    const dbQuestions = await sql`
-      SELECT 
-        "Ques_id",
-        "Question_Statement",
-        "Option_1",
-        "Option_2",
-        "Option_3",
-        "Option_4",
-        "Image",
-        "Answer"
-      FROM "Questions"
-      WHERE subject_id = ${subjectId}
-      ORDER BY RANDOM()
-      LIMIT ${requestedCount}
-    `;
+    let dbQuestions = [];
+    
+    // Attempt to fetch without previously seen questions first
+    if (excludeIds.length > 0) {
+      dbQuestions = await sql`
+        SELECT * FROM (
+          SELECT DISTINCT ON (
+            COALESCE(
+              NULLIF(SUBSTRING(REGEXP_REPLACE("Question_Statement", '\\W+', '', 'g'), 1, 50), ''),
+              "Image"
+            )
+          )
+            "Ques_id",
+            "Question_Statement",
+            "Option_1",
+            "Option_2",
+            "Option_3",
+            "Option_4",
+            "Image",
+            "Answer"
+          FROM "Questions"
+          WHERE subject_id = ${subjectId}
+            AND "Ques_id" != ALL(${excludeIds})
+        ) AS unique_questions
+        ORDER BY RANDOM()
+        LIMIT ${requestedCount}
+      `;
+    }
+
+    // If we didn't get enough unseen questions, grab some previously seen ones to meet the requested count
+    if (dbQuestions.length < requestedCount && excludeIds.length > 0) {
+      const remainingCount = requestedCount - dbQuestions.length;
+      
+      const excludeFromExtra = dbQuestions.length > 0 
+        ? dbQuestions.map(q => q.Ques_id) 
+        : [];
+
+      const extraQuestions = await sql`
+        SELECT * FROM (
+          SELECT DISTINCT ON (
+            COALESCE(
+              NULLIF(SUBSTRING(REGEXP_REPLACE("Question_Statement", '\\W+', '', 'g'), 1, 50), ''),
+              "Image"
+            )
+          )
+            "Ques_id",
+            "Question_Statement",
+            "Option_1",
+            "Option_2",
+            "Option_3",
+            "Option_4",
+            "Image",
+            "Answer"
+          FROM "Questions"
+          WHERE subject_id = ${subjectId}
+            AND "Ques_id" = ANY(${excludeIds})
+            ${excludeFromExtra.length > 0 ? sql`AND "Ques_id" != ALL(${excludeFromExtra})` : sql``}
+        ) AS unique_extra
+        ORDER BY RANDOM()
+        LIMIT ${remainingCount}
+      `;
+      
+      dbQuestions = [...dbQuestions, ...extraQuestions];
+      dbQuestions.sort(() => Math.random() - 0.5);
+    }
+
+    if (!dbQuestions || dbQuestions.length === 0) {
+      // Ultimate fallback if exclude logic completely fails or no excludeIds provided
+      dbQuestions = await sql`
+        SELECT * FROM (
+          SELECT DISTINCT ON (
+            COALESCE(
+              NULLIF(SUBSTRING(REGEXP_REPLACE("Question_Statement", '\\W+', '', 'g'), 1, 50), ''),
+              "Image"
+            )
+          )
+            "Ques_id",
+            "Question_Statement",
+            "Option_1",
+            "Option_2",
+            "Option_3",
+            "Option_4",
+            "Image",
+            "Answer"
+          FROM "Questions"
+          WHERE subject_id = ${subjectId}
+        ) AS unique_fallback
+        ORDER BY RANDOM()
+        LIMIT ${requestedCount}
+      `;
+    }
 
     if (!dbQuestions || dbQuestions.length === 0) {
       return res.status(400).json({ msg: "No questions found for selected subject" });
