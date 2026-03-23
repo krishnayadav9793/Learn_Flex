@@ -168,7 +168,7 @@ const LearnFlexHome = () => {
               <h3 className="text-3xl font-bold tracking-tight text-[#001F3F]">Practice by Subject</h3>
               <p className="text-slate-400 text-sm mt-1">Deep dive into specific topics</p>
             </div>
-            <button className="text-[#001F3F] font-bold text-sm hover:underline">View All</button>
+           
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">

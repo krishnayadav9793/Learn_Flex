@@ -23,7 +23,7 @@ function App() {
       <Route path="/WeeklyQuiz" element={<QuizPage />} />
       <Route path="/Quiz/:id" element={<QuizQuestions />} />
       <Route path="/Quiz/:id/:id1" element={<QuestionPage />} />
-      <Route path="/DailyChallenge" element={<DailyChallengePage />} />
+      <Route path="/DailyChallenge/:exam_id" element={<DailyChallengePage />} />
       <Route path="/HomePage" element={<HomePage />} />
       <Route path="/practice" element={<PracticeMode />} />
 
