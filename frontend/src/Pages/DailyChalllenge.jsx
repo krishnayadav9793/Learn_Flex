@@ -38,7 +38,7 @@ export default function LearnFlex() {
   const [correct,setCorrect]=useState(0);
   const [wrong,setWrong]=useState(0);
   const [unattempted,setUnattempted]=useState(0);
-
+ const [challengeId,setchallengedId]=useState(null);
   useEffect(() => {
     const fetchQuestions=async () => {
       try {
@@ -54,6 +54,7 @@ export default function LearnFlex() {
           setCorrect(q[0].correct_marks)
           setWrong(q[0].wrong_marks)
           setUnattempted(q[0].unattempted_marks)
+          setchallengedId(q[0].challenge_id)
         }
       }
       catch(error){
@@ -71,7 +72,7 @@ export default function LearnFlex() {
     return () => clearInterval(timer);
   }, [timeLeft, questions.length]);
 
-  const computeAndFinish = useCallback((qs, ans) => {
+  const computeAndFinish = useCallback(async(qs, ans) => {
     let totalScore = 0;
 
     qs.forEach(q => {
@@ -86,7 +87,24 @@ export default function LearnFlex() {
     });
     setScore(totalScore);
     setShowResult(true);
-  }, [correct,wrong,unattempted]);
+
+    try {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      await supabase
+        .from("DailyChallengeAttempt")
+        .upsert([
+        {
+          user_id: user.id,
+          challenge_id: challengeId
+        }
+        ]);
+    }
+  } catch (err) {
+    console.error("Attempt insert failed:", err.message);
+  }
+  }, [correct,wrong,unattempted,exam_id]);
 
   const selectOption = (qid, idx) => {
     setAnswers(prev => ({ ...prev, [qid]: idx }));
