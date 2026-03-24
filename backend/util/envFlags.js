@@ -10,7 +10,6 @@ const isPlaceholder = (value = "") => {
   );
 };
 
-export const hasMongoConfig = () => !isPlaceholder(process.env.MONGO_DB_URI);
 export const hasNeonConfig = () => !isPlaceholder(process.env.NEON_URL);
 export const hasJwtConfig = () => !isPlaceholder(process.env.JWT_SECRET);
 
