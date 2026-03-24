@@ -2,7 +2,7 @@ import React from "react"
 import { Routes, Route,  Navigate, Link, BrowserRouter } from "react-router-dom"
 import Login from "./components/auth/Login"
 import Signup from "./components/auth/Signup"
-import Profile from "./components/profile/Profile"
+import Profile from "./components/Profile/Profile.jsx"
 import LeaderBoard from "./Pages/LeaderBoard.jsx"
 import QuizPage from "./Pages/QuizPage.jsx"
 import QuizQuestions from "./Pages/QuizQuestions.jsx"
@@ -20,12 +20,12 @@ function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/LeaderBoard" element={<LeaderBoard />} />
-      <Route path="/WeeklyQuiz" element={<QuizPage />} />
+      <Route path="/WeeklyQuiz/:exam_id" element={<QuizPage />} />
       <Route path="/Quiz/:id" element={<QuizQuestions />} />
       <Route path="/Quiz/:id/:id1" element={<QuestionPage />} />
-      <Route path="/DailyChallenge" element={<DailyChallengePage />} />
+      <Route path="/DailyChallenge/:exam_id" element={<DailyChallengePage />} />
       <Route path="/HomePage" element={<HomePage />} />
-      <Route path="/practice" element={<PracticeMode />} />
+      <Route path="/practice/:exam_id" element={<PracticeMode />} />
 
 
     </Routes>

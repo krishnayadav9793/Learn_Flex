@@ -61,7 +61,7 @@ const LearnFlexHome = () => {
             </p>
             <div className="flex flex-wrap gap-4">
               <button 
-              onClick ={()=> navigate("/Practice")}
+              onClick={() => navigate(`/practice/${encodeURIComponent(selectedExam)}`)}
               className="bg-white text-[#001F3F] px-8 py-4 rounded-2xl font-bold shadow-lg hover:scale-105 transition-all flex items-center gap-2">
               Start Practice <ArrowRight size={18} />
               </button>
@@ -123,7 +123,7 @@ const LearnFlexHome = () => {
                 45 Qs • 60 Mins
               </span>
               <button
-              onClick={() => navigate("/WeeklyQuiz")}
+              onClick={() => navigate(`/WeeklyQuiz/${encodeURIComponent(selectedExam)}`)}
                className="bg-white border-2 border-[#001F3F] text-[#001F3F] px-7 py-3 rounded-xl font-bold text-sm hover:bg-[#001F3F] hover:text-white transition-all">
                 Start Quiz
               </button>

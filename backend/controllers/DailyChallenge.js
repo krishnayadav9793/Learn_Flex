@@ -1,11 +1,11 @@
 import { sql } from "../util/neonConnect.js";
 
 export const getDailyChallenge = async (req, res) => {
-
+const examId = req.params.exam_id;
   try {
 
     const result = await sql`
-    SELECT 
+   SELECT 
     q."Ques_id" AS id,
     q."Question_Statement" AS question,
     q."Option_1" AS option1,
@@ -18,27 +18,25 @@ export const getDailyChallenge = async (req, res) => {
     e.exam_name,
     em.correct_marks,
     em.wrong_marks,
-    em.unattempted_marks
+    em.unattempted_marks,
+    dc.challenge_id
 
-    FROM "DailyChallenge" dc
+FROM "DailyChallenge" dc
 
-    JOIN "Exam" e 
-        ON dc.exam_id = e.exam_id
+JOIN "Exam" e 
+    ON dc.exam_id = e.exam_id
 
-    JOIN "Exam_Marking" em
-        ON e.exam_id = em.exam_id
+JOIN "Exam_Marking" em
+    ON e.exam_id = em.exam_id
 
-    JOIN "DailyChallengeQuestions" dcq
-        ON dc.challenge_id = dcq.challenge_id
+JOIN "DailyChallengeQuestions" dcq
+    ON dc.challenge_id = dcq.challenge_id
 
-    JOIN "Questions" q
-        ON q."Ques_id" = dcq.ques_id
+JOIN "Questions" q
+    ON q."Ques_id" = dcq.ques_id
 
-    WHERE dc.challenge_id = (
-        SELECT challenge_id
-        FROM "DailyChallenge"
-        WHERE challenge_date = CURRENT_DATE
-);
+WHERE dc.challenge_date = CURRENT_DATE
+AND dc.exam_id = ${examId};
     `;
 
     if (!result.length) {

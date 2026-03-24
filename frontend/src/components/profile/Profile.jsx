@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import App from './Page'
+import App from '../../Pages/ProfilePage'
 function Profile() {
   const navigate=useNavigate();
   const [ userDetail, setUserDetail ] = useState("Loading")
