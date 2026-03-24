@@ -27,7 +27,14 @@ const userSignUp = async (req, res) => {
     `;
 
     const newUser = user[0];
-    console.log(newUser)
+    
+    // Initialize the profile stats for the new user
+    await sql`
+      INSERT INTO "User_Profile" ("User_id", total_solved, rating)
+      VALUES (${newUser.id}, 0, 0)
+    `;
+
+    console.log("Created user:", newUser.email);
     const token = getToken(newUser.email);
 
     res.cookie("token", token, {

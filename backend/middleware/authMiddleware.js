@@ -15,9 +15,11 @@ export const protect = async (req, res, next) => {
     // console.log(decoded , "thtis is jwt decoded");
 
     const result = await sql`
-      SELECT id, name, email
-      FROM "User"
-      WHERE email = ${decoded.id}
+      SELECT u.id, u.name, u.email, 
+             p.total_solved as questions, 0 as streak, p.rating
+      FROM "User" u
+      LEFT JOIN "User_Profile" p ON u.id = p."User_id"
+      WHERE u.email = ${decoded.id}
     `;
 
     if (result.length === 0) {
@@ -29,8 +31,7 @@ export const protect = async (req, res, next) => {
     next();
 
   } catch (err) {
-
+    console.error("Auth Middleware Error:", err);
     return res.status(401).json({ msg: "Invalid token" });
-
   }
 };
