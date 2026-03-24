@@ -97,7 +97,7 @@ const LearnFlexHome = () => {
               </div>
 <button
   onClick={() => navigate("/DailyChallenge")}
-  className="bg-white text-[#001F3F] border-2 border-[#001F3F] px-7 py-3 rounded-xl font-bold text-sm hover:bg-[#001F3F] hover:text-white transition-all active:scale-95"
+  className="bg-[#001F3F] text-white px-7 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition-all active:scale-95"
 >
   Solve Now
 </button>
@@ -130,42 +130,6 @@ const LearnFlexHome = () => {
             </div>
           </div>
         </section>
-
-
-        {/* Practice Mode */}
-<section className="w-full">
-  <div className="group relative bg-white border border-slate-200 p-10 rounded-[2.5rem] hover:shadow-2xl hover:shadow-green-900/10 transition-all duration-500 flex flex-col md:flex-row items-center justify-between overflow-hidden">
-    
-    {/* Decorative Background */}
-    <div className="absolute top-0 right-0 w-40 h-40 bg-green-50 rounded-bl-[6rem] -mr-10 -mt-10 group-hover:bg-green-100 transition-colors" />
-
-    <div className="relative z-10 max-w-xl">
-      <div className="p-4 w-fit bg-green-50 rounded-2xl text-green-600 group-hover:bg-[#001F3F] group-hover:text-white transition-all duration-300 mb-6">
-        <Target size={32} />
-      </div>
-
-      <h3 className="text-3xl font-bold text-[#001F3F] mb-3">
-        Practice Mode
-      </h3>
-
-      <p className="text-slate-500 text-base mb-6">
-        Practice topic-wise questions at your own pace. No timer, no pressure — just focused learning.
-      </p>
-
-      <button 
-      onClick ={()=> navigate("/Practice")}
-       className="bg-white text-[#001F3F] border-2 border-[#001F3F] px-8 py-3 rounded-xl font-bold hover:shadow-lg hover:bg-[#001F3F] hover:text-white transition-all active:scale-95 flex items-center gap-2">  
-        Start Practice <ArrowRight size={18} />
-      </button>
-    </div>
-
-    {/* Optional Illustration Area */}
-    <div className="hidden md:flex items-center justify-center w-40 h-40 bg-green-50 rounded-2xl text-green-600 text-5xl font-bold">
-      P
-    </div>
-  </div>
-</section>
-
 
         {/* 1v1 Arena - Enhanced with Glow and Glassmorphism */}
         <section className="w-full">
@@ -204,7 +168,7 @@ const LearnFlexHome = () => {
               <h3 className="text-3xl font-bold tracking-tight text-[#001F3F]">Practice by Subject</h3>
               <p className="text-slate-400 text-sm mt-1">Deep dive into specific topics</p>
             </div>
-            <button className="text-[#001F3F] font-bold text-sm hover:underline">View All</button>
+           
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
