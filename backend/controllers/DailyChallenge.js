@@ -18,7 +18,8 @@ const examId = req.params.exam_id;
     e.exam_name,
     em.correct_marks,
     em.wrong_marks,
-    em.unattempted_marks
+    em.unattempted_marks,
+    dc.challenge_id
 
 FROM "DailyChallenge" dc
 

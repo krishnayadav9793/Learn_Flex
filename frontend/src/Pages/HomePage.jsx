@@ -9,29 +9,32 @@ const LearnFlexHome = () => {
   const [examData, setExamData] = useState({});
   const [selectedExam, setSelectedExam] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const currentTopics = examData[selectedExam] || [];
+  const selectedExamId = examData[selectedExam]?.id;
+  const currentTopics = examData[selectedExam]?.subjects || [];
+
   
   useEffect(() => {
     const fetchExam = async () => {
       try {
         const res = await fetch(`http://localhost:3000/exam/subjects`);
-        if (!res.ok) throw new Error("Failed to fetch");
+        if(!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();
         const formatted = {};
-        
         data.forEach((row) => {
-          if (!formatted[row.exam_name]) {
-            formatted[row.exam_name] = [];
+          if(!formatted[row.exam_name]){
+            formatted[row.exam_name] = {
+              id: row.exam_id,
+              subjects: []
+            };
           }
-          if (!formatted[row.exam_name].includes(row.subject_name)) {
-            formatted[row.exam_name].push(row.subject_name);
-          }
+          if(row.subject_name && !formatted[row.exam_name].subjects.includes(row.subject_name))formatted[row.exam_name].subjects.push(row.subject_name);
         });
 
         setExamData(formatted);
         const firstExam = Object.keys(formatted)[0];
-        if (firstExam) setSelectedExam(firstExam);
-      } catch (error) {
+        if(firstExam) setSelectedExam(firstExam);
+      }
+      catch (error){
         console.log("Fetch error:", error.message);
       }
     };
@@ -95,12 +98,11 @@ const LearnFlexHome = () => {
                 {[1,2,3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200" />)}
                 <span className="pl-4 text-xs font-bold text-slate-400 flex items-center">+1.2k active</span>
               </div>
-<button
-  onClick={() => navigate(`/DailyChallenge/${encodeURIComponent(selectedExam)}`)}
-  className="bg-white text-[#001F3F] border-2 border-[#001F3F] px-7 py-3 rounded-xl font-bold text-sm hover:bg-[#001F3F] hover:text-white transition-all active:scale-95"
->
-  Solve Now
-</button>
+              <button
+              onClick={() =>navigate(`/DailyChallenge/${selectedExamId}`)}
+              className="bg-[#001F3F] text-white px-7 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition-all active:scale-95">
+                Solve Now
+              </button>
             </div>
           </div>
 
