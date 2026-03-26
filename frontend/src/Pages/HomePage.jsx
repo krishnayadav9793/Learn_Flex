@@ -12,34 +12,54 @@ const LearnFlexHome = () => {
   const selectedExamId = examData[selectedExam]?.id;
   const currentTopics = examData[selectedExam]?.subjects || [];
 
-  
   useEffect(() => {
-    const fetchExam = async () => {
-      try {
-        const res = await fetch(`http://localhost:3000/exam/subjects`);
-        if(!res.ok) throw new Error("Failed to fetch");
-        const data = await res.json();
-        const formatted = {};
-        data.forEach((row) => {
-          if(!formatted[row.exam_name]){
-            formatted[row.exam_name] = {
-              id: row.exam_id,
-              subjects: []
-            };
-          }
-          if(row.subject_name && !formatted[row.exam_name].subjects.includes(row.subject_name))formatted[row.exam_name].subjects.push(row.subject_name);
-        });
+  if (selectedExamId) {
+    localStorage.setItem("examId", selectedExamId);
+  }
+}, [selectedExamId]);
+useEffect(() => {
+  const fetchExam = async () => {
+    try {
+      const res = await fetch(`http://localhost:3000/exam/subjects`);
+      if (!res.ok) throw new Error("Failed to Fetch");
 
-        setExamData(formatted);
-        const firstExam = Object.keys(formatted)[0];
-        if(firstExam) setSelectedExam(firstExam);
-      }
-      catch (error){
-        console.log("Fetch error:", error.message);
-      }
-    };
-    fetchExam();
-  }, []);
+      const data = await res.json();
+
+      const formatted = {};
+      data.forEach((row) => {
+        if (!formatted[row.exam_name]) {
+          formatted[row.exam_name] = {
+            id: row.exam_id,
+            subjects: [],
+          };
+        }
+
+        if (
+          row.subject_name &&
+          !formatted[row.exam_name].subjects.includes(row.subject_name)
+        ) {
+          formatted[row.exam_name].subjects.push(row.subject_name);
+        }
+      });
+
+      setExamData(formatted);
+
+      const savedExamId = localStorage.getItem("examId");
+
+      const examName =
+        Object.keys(formatted).find(
+          (key) => formatted[key].id == savedExamId
+        ) || Object.keys(formatted)[0];
+
+      if (examName) setSelectedExam(examName);
+
+    } catch (error) {
+      console.log("Fetch error:", error.message);
+    }
+  };
+
+  fetchExam();
+}, []);
   
   return (
     <div className="min-h-screen bg-[#FFFDF5] text-[#1E293B] font-sans selection:bg-blue-100">
@@ -99,7 +119,11 @@ const LearnFlexHome = () => {
                 <span className="pl-4 text-xs font-bold text-slate-400 flex items-center">+1.2k active</span>
               </div>
               <button
-              onClick={() =>navigate(`/DailyChallenge/${selectedExamId}`)}
+              onClick={() => {if (!selectedExam) {
+                alert("⚠️ Please select an exam first");
+                   return;
+                   }
+                navigate(`/DailyChallenge/${selectedExamId}`)}}
               className="bg-[#001F3F] text-white px-7 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition-all active:scale-95">
                 Solve Now
               </button>
