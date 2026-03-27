@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@google/genai": "^1.46.0",
     "@neondatabase/serverless": "^1.0.2",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
