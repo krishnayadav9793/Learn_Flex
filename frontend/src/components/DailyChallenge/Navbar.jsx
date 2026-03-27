@@ -15,31 +15,30 @@ export default function Navbar({ exam, timeLeft, totalTime, formatTime, answered
 
       {/* ── Brand ── */}
       <div className="flex items-center gap-3">
-        {/* Logo mark with dot accent */}
-        <div className="relative w-10 h-10 bg-[#0B2447] rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/25">
+        {/* Logo mark - Removed the blue dot span here */}
+        <div className="relative w-10 h-10 bg-[#0B2447] rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/25 shrink-0">
           <Brain className="w-5 h-5 text-white" />
-          <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#7AB8D9] rounded-full border-2 border-white" />
         </div>
 
-        <div className="flex flex-col -space-y-0.5">
-          <span className="font-black text-[#0B2447] tracking-tight text-lg leading-tight">
-            LearnFlex
-          </span>
-          <span className="text-[9px] text-[#7AB8D9] font-bold uppercase tracking-[0.18em]">
+        {/* Text Container */}
+        <div className="flex flex-col justify-center">
+          <h1 className="text-xl font-[1000] tracking-tighter flex items-center leading-none">
+            <span className="text-blue-500">LEARN</span>
+            <span className="text-[#0B2447] ml-0.5 relative">
+              FLEX
+              {/* This is the underline from your homepage */}
+              <span className="absolute -bottom-1 left-0 w-full h-[2.5px] bg-blue-600/20 rounded-full"></span>
+            </span>
+          </h1>
+          <span className="text-[9px] text-[#7AB8D9] font-black uppercase tracking-[0.2em] mt-1.5 leading-none">
             Daily Challenge
           </span>
         </div>
 
         {/* Vertical divider */}
-        <div className="w-px h-7 bg-[#D6E6F4] mx-1" />
-
-        {/* Exam badge with icon */}
-        <div className="flex items-center gap-1.5 bg-[#EAF3FB] border border-[#D6E6F4] rounded-lg px-3 py-1.5">
-          <Zap className="w-3 h-3 text-[#1a5276]" />
-          <span className="text-[10px] font-bold text-[#1a5276] uppercase tracking-wider">
-            {exam || "Global"}
-          </span>
-        </div>
+        <div className="w-px h-8 bg-[#D6E6F4] mx-2" />
+        
+        {/* ... rest of your navbar (Exam badge, etc.) */}
       </div>
 
       {/* ── Right: Timer + Score ── */}

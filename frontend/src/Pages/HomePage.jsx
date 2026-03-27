@@ -9,34 +9,57 @@ const LearnFlexHome = () => {
   const [examData, setExamData] = useState({});
   const [selectedExam, setSelectedExam] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const currentTopics = examData[selectedExam] || [];
-  
-  useEffect(() => {
-    const fetchExam = async () => {
-      try {
-        const res = await fetch(`http://localhost:3000/exam/subjects`);
-        if (!res.ok) throw new Error("Failed to fetch");
-        const data = await res.json();
-        const formatted = {};
-        
-        data.forEach((row) => {
-          if (!formatted[row.exam_name]) {
-            formatted[row.exam_name] = [];
-          }
-          if (!formatted[row.exam_name].includes(row.subject_name)) {
-            formatted[row.exam_name].push(row.subject_name);
-          }
-        });
+  const selectedExamId = examData[selectedExam]?.id;
+  const currentTopics = examData[selectedExam]?.subjects || [];
 
-        setExamData(formatted);
-        const firstExam = Object.keys(formatted)[0];
-        if (firstExam) setSelectedExam(firstExam);
-      } catch (error) {
-        console.log("Fetch error:", error.message);
-      }
-    };
-    fetchExam();
-  }, []);
+  useEffect(() => {
+  if (selectedExamId) {
+    localStorage.setItem("examId", selectedExamId);
+  }
+}, [selectedExamId]);
+useEffect(() => {
+  const fetchExam = async () => {
+    try {
+      const res = await fetch(`http://localhost:3000/exam/subjects`);
+      if (!res.ok) throw new Error("Failed to Fetch");
+
+      const data = await res.json();
+
+      const formatted = {};
+      data.forEach((row) => {
+        if (!formatted[row.exam_name]) {
+          formatted[row.exam_name] = {
+            id: row.exam_id,
+            subjects: [],
+          };
+        }
+
+        if (
+          row.subject_name &&
+          !formatted[row.exam_name].subjects.includes(row.subject_name)
+        ) {
+          formatted[row.exam_name].subjects.push(row.subject_name);
+        }
+      });
+
+      setExamData(formatted);
+
+      const savedExamId = localStorage.getItem("examId");
+
+      const examName =
+        Object.keys(formatted).find(
+          (key) => formatted[key].id == savedExamId
+        ) || Object.keys(formatted)[0];
+
+      if (examName) setSelectedExam(examName);
+
+    } catch (error) {
+      console.log("Fetch error:", error.message);
+    }
+  };
+
+  fetchExam();
+}, []);
   
   return (
     <div className="min-h-screen bg-[#FFFDF5] text-[#1E293B] font-sans selection:bg-blue-100">
@@ -60,14 +83,16 @@ const LearnFlexHome = () => {
               Unlock personalized mock tests, real-time rank predictions, and deep performance analytics.
             </p>
             <div className="flex flex-wrap gap-4">
-               <button className="bg-white text-[#001F3F] px-8 py-4 rounded-2xl font-bold shadow-lg hover:scale-105 transition-all flex items-center gap-2">
-                Get Started <ArrowRight size={18} />
-               </button>
+              <button 
+              onClick={() => navigate(`/practice/${encodeURIComponent(selectedExam)}`)}
+              className="bg-white text-[#001F3F] px-8 py-4 rounded-2xl font-bold shadow-lg hover:scale-105 transition-all flex items-center gap-2">
+              Start Practice <ArrowRight size={18} />
+              </button>
             </div>
           </div>
 
           {/* Large Background Text Decoration */}
-          <div className="absolute right-[-20px] bottom-[-40px] opacity-10 text-[240px] font-black tracking-tighter select-none pointer-events-none">
+          <div className="absolute right-[20px] bottom-[-40px] opacity-10 text-[240px] font-black tracking-tighter select-none pointer-events-none">
             {selectedExam ? selectedExam.split(" ")[0] : "GOAL"}
           </div>
         </section>
@@ -93,12 +118,15 @@ const LearnFlexHome = () => {
                 {[1,2,3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200" />)}
                 <span className="pl-4 text-xs font-bold text-slate-400 flex items-center">+1.2k active</span>
               </div>
-<button
-  onClick={() => navigate("/DailyChallenge")}
-  className="bg-[#001F3F] text-white px-7 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition-all active:scale-95"
->
-  Solve Now
-</button>
+              <button
+              onClick={() => {if (!selectedExam) {
+                alert("⚠️ Please select an exam first");
+                   return;
+                   }
+                navigate(`/DailyChallenge/${selectedExamId}`)}}
+              className="bg-[#001F3F] text-white px-7 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition-all active:scale-95">
+                Solve Now
+              </button>
             </div>
           </div>
 
@@ -121,47 +149,13 @@ const LearnFlexHome = () => {
                 45 Qs • 60 Mins
               </span>
               <button
-              onClick={() => navigate("/WeeklyQuiz")}
+              onClick={() => navigate(`/WeeklyQuiz/${encodeURIComponent(selectedExam)}`)}
                className="bg-white border-2 border-[#001F3F] text-[#001F3F] px-7 py-3 rounded-xl font-bold text-sm hover:bg-[#001F3F] hover:text-white transition-all">
                 Start Quiz
               </button>
             </div>
           </div>
         </section>
-
-        {/* Practice Mode */}
-<section className="w-full">
-  <div className="group relative bg-white border border-slate-200 p-10 rounded-[2.5rem] hover:shadow-2xl hover:shadow-green-900/10 transition-all duration-500 flex flex-col md:flex-row items-center justify-between overflow-hidden">
-    
-    {/* Decorative Background */}
-    <div className="absolute top-0 right-0 w-40 h-40 bg-green-50 rounded-bl-[6rem] -mr-10 -mt-10 group-hover:bg-green-100 transition-colors" />
-
-    <div className="relative z-10 max-w-xl">
-      <div className="p-4 w-fit bg-green-50 rounded-2xl text-green-600 group-hover:bg-[#001F3F] group-hover:text-white transition-all duration-300 mb-6">
-        <Target size={32} />
-      </div>
-
-      <h3 className="text-3xl font-bold text-[#001F3F] mb-3">
-        Practice Mode
-      </h3>
-
-      <p className="text-slate-500 text-base mb-6">
-        Practice topic-wise questions at your own pace. No timer, no pressure — just focused learning.
-      </p>
-
-      <button 
-      onClick ={()=> navigate("/Practice")}
-       className="bg-[#001F3F] text-white px-8 py-3 rounded-xl font-bold hover:shadow-lg transition-all active:scale-95 flex items-center gap-2">  
-        Start Practice <ArrowRight size={18} />
-      </button>
-    </div>
-
-    {/* Optional Illustration Area */}
-    <div className="hidden md:flex items-center justify-center w-40 h-40 bg-green-50 rounded-2xl text-green-600 text-5xl font-bold">
-      P
-    </div>
-  </div>
-</section>
 
         {/* 1v1 Arena - Enhanced with Glow and Glassmorphism */}
         <section className="w-full">
@@ -200,7 +194,7 @@ const LearnFlexHome = () => {
               <h3 className="text-3xl font-bold tracking-tight text-[#001F3F]">Practice by Subject</h3>
               <p className="text-slate-400 text-sm mt-1">Deep dive into specific topics</p>
             </div>
-            <button className="text-[#001F3F] font-bold text-sm hover:underline">View All</button>
+           
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">

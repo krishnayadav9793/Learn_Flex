@@ -1,6 +1,4 @@
 import crypto from "crypto";
-import PracticeHistory from "../models/practiceHistory.js";
-import { hasMongoConfig } from "../util/envFlags.js";
 import { sql } from "../util/neonConnect.js";
 
 const sessions = new Map();
@@ -131,23 +129,102 @@ export const createPracticeSession = async (req, res) => {
 
     const requestedCount = clamp(Number(req.body.questionCount) || 10, 1, 100);
     const timeLimitMinutes = clamp(Number(req.body.timeLimitMinutes) || 15, 1, 180);
+    
+    // Support excluding previously seen questions
+    const excludeIdsRaw = Array.isArray(req.body.excludeIds) ? req.body.excludeIds : [];
+    const excludeIds = excludeIdsRaw.map(Number).filter(id => Number.isInteger(id) && id > 0);
 
-    // Fetch random questions directly from Neon DB for the selected subject
-    const dbQuestions = await sql`
-      SELECT 
-        "Ques_id",
-        "Question_Statement",
-        "Option_1",
-        "Option_2",
-        "Option_3",
-        "Option_4",
-        "Image",
-        "Answer"
-      FROM "Questions"
-      WHERE subject_id = ${subjectId}
-      ORDER BY RANDOM()
-      LIMIT ${requestedCount}
-    `;
+    let dbQuestions = [];
+    
+    // Attempt to fetch without previously seen questions first
+    if (excludeIds.length > 0) {
+      dbQuestions = await sql`
+        SELECT * FROM (
+          SELECT DISTINCT ON (
+            COALESCE(
+              NULLIF(SUBSTRING(REGEXP_REPLACE("Question_Statement", '\\W+', '', 'g'), 1, 50), ''),
+              "Image"
+            )
+          )
+            "Ques_id",
+            "Question_Statement",
+            "Option_1",
+            "Option_2",
+            "Option_3",
+            "Option_4",
+            "Image",
+            "Answer"
+          FROM "Questions"
+          WHERE subject_id = ${subjectId}
+            AND "Ques_id" != ALL(${excludeIds})
+        ) AS unique_questions
+        ORDER BY RANDOM()
+        LIMIT ${requestedCount}
+      `;
+    }
+
+    // If we didn't get enough unseen questions, grab some previously seen ones to meet the requested count
+    if (dbQuestions.length < requestedCount && excludeIds.length > 0) {
+      const remainingCount = requestedCount - dbQuestions.length;
+      
+      const excludeFromExtra = dbQuestions.length > 0 
+        ? dbQuestions.map(q => q.Ques_id) 
+        : [];
+
+      const extraQuestions = await sql`
+        SELECT * FROM (
+          SELECT DISTINCT ON (
+            COALESCE(
+              NULLIF(SUBSTRING(REGEXP_REPLACE("Question_Statement", '\\W+', '', 'g'), 1, 50), ''),
+              "Image"
+            )
+          )
+            "Ques_id",
+            "Question_Statement",
+            "Option_1",
+            "Option_2",
+            "Option_3",
+            "Option_4",
+            "Image",
+            "Answer"
+          FROM "Questions"
+          WHERE subject_id = ${subjectId}
+            AND "Ques_id" = ANY(${excludeIds})
+            ${excludeFromExtra.length > 0 ? sql`AND "Ques_id" != ALL(${excludeFromExtra})` : sql``}
+        ) AS unique_extra
+        ORDER BY RANDOM()
+        LIMIT ${remainingCount}
+      `;
+      
+      dbQuestions = [...dbQuestions, ...extraQuestions];
+      dbQuestions.sort(() => Math.random() - 0.5);
+    }
+
+    if (!dbQuestions || dbQuestions.length === 0) {
+      // Ultimate fallback if exclude logic completely fails or no excludeIds provided
+      dbQuestions = await sql`
+        SELECT * FROM (
+          SELECT DISTINCT ON (
+            COALESCE(
+              NULLIF(SUBSTRING(REGEXP_REPLACE("Question_Statement", '\\W+', '', 'g'), 1, 50), ''),
+              "Image"
+            )
+          )
+            "Ques_id",
+            "Question_Statement",
+            "Option_1",
+            "Option_2",
+            "Option_3",
+            "Option_4",
+            "Image",
+            "Answer"
+          FROM "Questions"
+          WHERE subject_id = ${subjectId}
+        ) AS unique_fallback
+        ORDER BY RANDOM()
+        LIMIT ${requestedCount}
+      `;
+    }
 
     if (!dbQuestions || dbQuestions.length === 0) {
       return res.status(400).json({ msg: "No questions found for selected subject" });
@@ -314,56 +391,122 @@ export const submitPracticeSession = async (req, res) => {
   session.result = result;
   session.submittedAt = result.submittedAt;
 
-  const userId = String(req.user?._id || "guest");
-  const historyEntry = {
-    userId,
-    subject: session.subject,
-    selectedTopics: session.selectedTopics,
-    questionCount: session.questionCount,
-    scoringMode: "+4/-1",
-    score,
-    maxScore,
-    percentage,
-    attempted,
-    correct,
-    wrong,
-    unanswered,
-    startedAt: new Date(session.startedAt),
-    submittedAt: new Date(result.submittedAt),
-    timeLimitMinutes: session.timeLimitMinutes,
-    byTopic: result.byTopic,
-    questionResults: result.questionResults
-  };
+  const userId = String(req.user?.id || req.user?._id || "guest");
 
-  if (hasMongoConfig()) {
+  if (userId !== "guest") {
     try {
-      await PracticeHistory.create(historyEntry);
-    } catch {
-      pushFallbackHistory(userId, historyEntry);
+      const subjectIdRes = await sql`SELECT subject_id FROM practice_subjects WHERE subject_label ILIKE ${session.subject} LIMIT 1`;
+      const subjectId = subjectIdRes.length ? subjectIdRes[0].subject_id : (DB_SUBJECT_MAP[normalizeSubject(session.subject)] || 1);
+
+      const dbSessionId = session.sessionId;
+
+      await sql`
+        INSERT INTO practice_sessions (session_id, user_id, subject_id, time_limit_minutes, scoring_mode, started_at, expires_at, submitted_at, status)
+        VALUES (${dbSessionId}, ${userId}, ${subjectId}, ${session.timeLimitMinutes}, '+4/-1', ${session.startedAt}, ${session.expiresAt}, ${result.submittedAt}, 'submitted')
+      `;
+
+      await sql`
+        INSERT INTO practice_session_results (session_id, total_questions, attempted, correct, wrong, unanswered, unevaluated, score, max_score, percentage)
+        VALUES (${dbSessionId}, ${session.questionCount}, ${attempted}, ${correct}, ${wrong}, ${unanswered}, ${unevaluated}, ${score}, ${maxScore}, ${percentage})
+      `;
+
+      for (const topicResult of result.byTopic) {
+         await sql`
+           INSERT INTO practice_session_topic_results (session_id, topic_id, total, attempted, correct, score)
+           VALUES (${dbSessionId}, 1, ${topicResult.total}, ${topicResult.attempted}, ${topicResult.correct}, ${topicResult.score})
+         `;
+      }
+
+      let qOrder = 1;
+      for (const qr of result.questionResults) {
+         await sql`
+           INSERT INTO practice_session_questions (session_id, question_id, question_order)
+           VALUES (${dbSessionId}, ${qr.qno}, ${qOrder++})
+           ON CONFLICT DO NOTHING
+         `;
+
+         await sql`
+           INSERT INTO practice_session_answers (session_id, question_id, user_answer, is_correct, marks_awarded, evaluated, answered_at)
+           VALUES (${dbSessionId}, ${qr.qno}, ${qr.userAnswer}, ${qr.isCorrect}, ${qr.marksAwarded}, ${qr.evaluated}, ${new Date()})
+           ON CONFLICT DO NOTHING
+         `;
+      }
+      
+      await sql`UPDATE "User_Profile" SET total_solved = total_solved + ${evaluated} WHERE "User_id" = ${userId}`;
+      
+    } catch (err) {
+      console.error("Failed to save practice session to Postgres", err);
+      pushFallbackHistory(userId, result);
     }
   } else {
-    pushFallbackHistory(userId, historyEntry);
+    pushFallbackHistory(userId, result);
   }
 
   return res.json(result);
 };
 
 export const getPracticeHistory = async (req, res) => {
-  const userId = String(req.user?._id || "guest");
+  const userId = String(req.user?.id || req.user?._id || "guest");
+  if (userId === "guest") return res.json({ history: historyFallback.get(userId) || [] });
 
-  if (hasMongoConfig()) {
-    try {
-      const history = await PracticeHistory.find({ userId })
-        .sort({ submittedAt: -1 })
-        .limit(30)
-        .lean();
-      return res.json({ history });
-    } catch {
-      // fall back to in-memory history
+  try {
+    const sessionsRows = await sql`
+      SELECT s.session_id, s.subject_id, ps.subject_label as subject,
+             s.time_limit_minutes, s.started_at, s.submitted_at, s.scoring_mode,
+             r.total_questions, r.attempted, r.correct, r.wrong, r.unanswered,
+             r.score, r.max_score, r.percentage
+      FROM practice_sessions s
+      JOIN practice_subjects ps ON s.subject_id = ps.subject_id
+      JOIN practice_session_results r ON s.session_id = r.session_id
+      WHERE s.user_id = ${userId} AND s.status = 'submitted'
+      ORDER BY s.submitted_at DESC
+      LIMIT 30
+    `;
+
+    const history = [];
+    for (const row of sessionsRows) {
+      const topicRows = await sql`
+        SELECT tr.total, tr.attempted, tr.correct, tr.score, pt.topic_name as topic
+        FROM practice_session_topic_results tr
+        JOIN practice_topics pt ON tr.topic_id = pt.topic_id
+        WHERE tr.session_id = ${row.session_id}
+      `;
+
+      const answerRows = await sql`
+        SELECT a.question_id as qno, a.question_id as "questionId", 
+               a.user_answer as "userAnswer", a.is_correct as "isCorrect", 
+               a.evaluated, a.marks_awarded as "marksAwarded",
+               'General' as topic
+        FROM practice_session_answers a
+        WHERE a.session_id = ${row.session_id}
+      `;
+
+      history.push({
+        userId,
+        subject: row.subject,
+        selectedTopics: topicRows.map(t => t.topic),
+        questionCount: row.total_questions,
+        scoringMode: row.scoring_mode,
+        score: row.score,
+        maxScore: row.max_score,
+        percentage: row.percentage,
+        attempted: row.attempted,
+        correct: row.correct,
+        wrong: row.wrong,
+        unanswered: row.unanswered,
+        startedAt: row.started_at,
+        submittedAt: row.submitted_at,
+        timeLimitMinutes: row.time_limit_minutes,
+        byTopic: topicRows,
+        questionResults: answerRows
+      });
     }
-  }
 
-  return res.json({ history: historyFallback.get(userId) || [] });
+    return res.json({ history });
+  } catch (err) {
+    console.error("Failed to fetch history from Postgres:", err);
+    return res.json({ history: historyFallback.get(userId) || [] });
+  }
 };
 
 export const getPracticeQuestionImage = async (req, res) => {

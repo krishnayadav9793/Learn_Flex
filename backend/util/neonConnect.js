@@ -21,4 +21,4 @@ const connectNeon = async () => {
   }
 }
 
-export { sql, connectNeon };
+export  { sql, connectNeon };

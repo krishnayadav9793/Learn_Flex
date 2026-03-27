@@ -7,14 +7,11 @@ export const getSubject = async (req, res) => {
       FROM "Exam" e
       LEFT JOIN "Subject" s
       ON e.exam_id = s.exam_id
-    `;
-
+      ORDER BY e.exam_id`;
     res.json(subject);
-
-  } catch (error) {
-
+  }
+  catch(error){
     console.log(error.message);
     res.status(500).json({ error: error.message });
-
   }
 };
