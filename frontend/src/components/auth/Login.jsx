@@ -150,7 +150,7 @@ const LoginCard = () => {
       });
 
       const resData = await res.json();
-
+      localStorage.setItem("name",resData?.name)
       if (resData.msg === "Invalid email" || resData.msg === "Wrong password") {
         setStatusMsg(resData.msg);
 

@@ -27,7 +27,7 @@ export const protect = async (req, res, next) => {
     }
 
     req.user = result[0];
-
+    // console.log(req.user);
     next();
 
   } catch (err) {

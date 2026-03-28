@@ -149,7 +149,7 @@ useEffect(() => {
                 45 Qs • 60 Mins
               </span>
               <button
-              onClick={() => navigate(`/WeeklyQuiz/${encodeURIComponent(selectedExam)}`)}
+              onClick={() => navigate(`/WeeklyQuiz/`,{state:{exam_id:localStorage.getItem("examId")}})}
                className="bg-white border-2 border-[#001F3F] text-[#001F3F] px-7 py-3 rounded-xl font-bold text-sm hover:bg-[#001F3F] hover:text-white transition-all">
                 Start Quiz
               </button>
@@ -180,7 +180,7 @@ useEffect(() => {
                 Real-time battle with other {selectedExam} aspirants. Winner takes the streak!
               </p>
 
-              <button className="bg-amber-400 text-[#001F3F] px-10 py-4 rounded-2xl font-extrabold shadow-xl shadow-amber-900/20 hover:bg-amber-300 hover:-translate-y-1 transition-all active:scale-95">
+              <button className="bg-amber-400 text-[#001F3F] px-10 py-4 rounded-2xl font-extrabold shadow-xl shadow-amber-900/20 hover:bg-amber-300 hover:-translate-y-1 transition-all active:scale-95" onClick={()=>navigate("/v")}>
                 Find an Opponent
               </button>
             </div>

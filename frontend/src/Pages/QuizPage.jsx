@@ -2,9 +2,12 @@
 import Banner from "../components/quiz/banner.jsx";
 import React, { useEffect, useState } from 'react'
 import socket from "../socket.js";
+import { useLocation } from "react-router-dom";
 // import { data } from "react-router-dom";
 function QuizPage() {
   const [quizList, setQuizList] = useState();
+  let params=useLocation()
+  console.log(params.state.exam_id)
   // socket.on("connect",()=>{
   //       console.log("connected",socket.id);
   //   })
@@ -18,7 +21,7 @@ function QuizPage() {
     
     
     const fetchQuiz = async () => {
-      const res = await fetch("http://localhost:3000/quiz/list", {
+      const res = await fetch(`http://localhost:3000/quiz/list/${params.state.exam_id}`, {
         method: "GET",
         credentials: "include"
       })

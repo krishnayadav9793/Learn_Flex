@@ -20,10 +20,14 @@ function QuizQuestions() {
     const fetchQuestions = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:3000/quiz/question/${id}`);
+        const res = await fetch(`http://localhost:3000/quiz/question/${id}?quizId=${id}`,{
+          method:"GET",
+          credentials:'include',
+        });
         if (!res.ok) throw new Error("Failed to fetch questions");
 
         const list = await res.json();
+        if(list?.msg==="already participated")navigate("/weeklyquiz",{state:{exam_id:localStorage.getItem("examId")}});
         setQuestionList(list);
       } catch (err) {
         console.error(err);
@@ -81,7 +85,7 @@ function QuizQuestions() {
         credentials: "include"
       });
 
-      navigate("/weeklyquiz"); // redirect after submit
+      navigate("/weeklyquiz",{state:{exam_id:localStorage.getItem("examId")}}); // redirect after submit
     } catch (e) {
       console.log("error:", e);
     }

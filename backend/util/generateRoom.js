@@ -10,7 +10,8 @@ export function generateRoomId(io, p1, p2) {
     };
     io.to(roomId).emit("match_found", {
         roomId,
-        players: rooms[roomId].players,
+        player: rooms[roomId].players[0],
+        opponent:rooms[roomId].players[1]
     })
     console.log(queue)
 }

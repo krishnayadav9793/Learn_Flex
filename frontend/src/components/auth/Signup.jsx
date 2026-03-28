@@ -146,7 +146,7 @@ const SignupCard = () => {
       });
 
       const resData = await res.json();
-
+      localStorage.setItem("name",resData?.name)
       if (!res.ok) {
         setTimeout(() => {
           setIsLoading(false);
