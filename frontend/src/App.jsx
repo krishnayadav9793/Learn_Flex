@@ -6,11 +6,11 @@ import Profile from "./components/Profile/Profile.jsx"
 import LeaderBoard from "./Pages/LeaderBoard.jsx"
 import QuizPage from "./Pages/QuizPage.jsx"
 import QuizQuestions from "./Pages/QuizQuestions.jsx"
-import QuestionPage from "./components/quiz/QuestionPage.jsx"
+
 import DailyChallengePage from "./Pages/DailyChalllenge.jsx"
 import HomePage from "./Pages/HomePage.jsx"
 import PracticeMode from "./Pages/PracticeMode.jsx"
-
+import CompitationPage from "./components/1v1/page.jsx"
 
 function App() {
   return (
@@ -22,11 +22,10 @@ function App() {
       <Route path="/LeaderBoard" element={<LeaderBoard />} />
       <Route path="/WeeklyQuiz/:exam_id" element={<QuizPage />} />
       <Route path="/Quiz/:id" element={<QuizQuestions />} />
-      <Route path="/Quiz/:id/:id1" element={<QuestionPage />} />
       <Route path="/DailyChallenge/:exam_id" element={<DailyChallengePage />} />
       <Route path="/HomePage" element={<HomePage />} />
       <Route path="/practice/:exam_id" element={<PracticeMode />} />
-
+      <Route path="/v" element={<CompitationPage/>}/>
 
     </Routes>
   )                                                                                  
