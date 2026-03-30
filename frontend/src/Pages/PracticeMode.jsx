@@ -250,11 +250,11 @@ export default function PracticeMode() {
         {/* ── Top bar ── */}
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate("/profile")}
+            onClick={() => navigate("/HomePage")}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-[#0b2a4a] border border-slate-200 hover:border-[#0b2a4a]/30 bg-white hover:bg-[#0b2a4a]/5 shadow-sm transition-all duration-200"
           >
             <ArrowLeft className="w-4 h-4" />
-            Dashboard
+            Back
           </button>
 
           <div className="flex items-center gap-2">
