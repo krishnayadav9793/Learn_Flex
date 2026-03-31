@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import socket from '../../socket.js'
-
+import { useNavigate } from 'react-router-dom'
 const PHASES = {
   FINDING: 'FINDING',
   MATCH_FOUND: 'MATCH_FOUND',
@@ -15,7 +15,7 @@ export default function CompetitionPage({ onQuizStart }) {
   const [count, setCount] = useState(3)
   const [dots, setDots] = useState('')
   const countRef = useRef(null)
-
+  const navigate=useNavigate();
   // ── Quiz state ─────────────────────────────────────────────────────────────
   const [currentQ, setCurrentQ] = useState(0)
   const [selected, setSelected] = useState(null)
@@ -29,6 +29,19 @@ export default function CompetitionPage({ onQuizStart }) {
 
   // ── socket logic ───────────────────────────────────────────────────────────
   useEffect(() => {
+    const dataFetch = async () => {
+      try {
+        const data = await fetch("http://localhost:3000/user/profile", {
+          credentials: "include"
+        })
+        const res=await data.json();
+        if(res.msg==="No token")navigate("/login")
+      } catch (err) {
+        console.log(err)
+      }
+
+    }
+    dataFetch();
     const examId = localStorage.getItem('examId') || 'demo'
     const name = localStorage.getItem('name')
     socket.emit('find_match', { exam_id: examId, name })

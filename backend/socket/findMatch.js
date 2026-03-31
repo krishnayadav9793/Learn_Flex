@@ -14,7 +14,6 @@ export function findMatch(io, socket, userData) {
 
     if (q && q.length >= 2) {
         const [p1, p2] = q.splice(0, 2);
-
         generateRoomId(io, p1, p2, exam_id, socket);
     }
 }

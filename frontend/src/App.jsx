@@ -6,7 +6,7 @@ import Profile from "./components/Profile/Profile.jsx"
 import LeaderBoard from "./Pages/LeaderBoard.jsx"
 import QuizPage from "./Pages/QuizPage.jsx"
 import QuizQuestions from "./Pages/QuizQuestions.jsx"
-
+import ForgotPasswordOTP from "./components/auth/forgetPassword.jsx"
 import DailyChallengePage from "./Pages/DailyChalllenge.jsx"
 import HomePage from "./Pages/HomePage.jsx"
 import PracticeMode from "./Pages/PracticeMode.jsx"
@@ -26,7 +26,7 @@ function App() {
       <Route path="/HomePage" element={<HomePage />} />
       <Route path="/practice/:exam_id" element={<PracticeMode />} />
       <Route path="/v" element={<CompitationPage/>}/>
-
+      <Route path="/resetPassword" element={<ForgotPasswordOTP/>}/>
     </Routes>
   )                                                                                  
 }

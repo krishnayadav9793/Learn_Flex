@@ -237,7 +237,7 @@ const LoginCard = () => {
               </label>
 
               <a
-                href="#"
+                href="/resetpassword"
                 className="text-xs text-[#0b2a4a] hover:text-[#123d6b] font-medium"
               >
                 Forgot Password?

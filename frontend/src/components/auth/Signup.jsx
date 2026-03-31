@@ -126,7 +126,7 @@ const SignupCard = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const [errorMsg,setErrorMsg]=useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
 
@@ -150,14 +150,16 @@ const SignupCard = () => {
       if (!res.ok) {
         setTimeout(() => {
           setIsLoading(false);
+          setErrorMsg(resData.msg)
           setStatus("error");
         }, 1200);
       } else {
         navigate("/HomePage");
       }
     } catch (err) {
-      console.log(err);
+      // setErrorMsg(resData)
       setStatus("error");
+      
       setIsLoading(false);
     }
   };
@@ -264,7 +266,7 @@ const SignupCard = () => {
           {status === "error" && (
             <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-100">
               <AlertCircle className="w-4 h-4" />
-              <span>Signup failed. Try again.</span>
+              <span>{errorMsg}</span>
             </div>
           )}
 
