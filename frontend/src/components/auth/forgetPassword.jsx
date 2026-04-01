@@ -579,7 +579,7 @@ export default function ForgotPasswordOTP({ onSendEmail, onVerify, onBack }) {
                 <span className="divider-text">or</span>
                 <div className="divider-line" />
               </div>
-              <button className="back-link" onClick={() => onBack?.()}>← Back to Login</button>
+              <button className="back-link" onClick={() => navigate('/login')}>← Back to Login</button>
             </div>
           )}
 
