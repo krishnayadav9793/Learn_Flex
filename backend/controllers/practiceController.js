@@ -310,6 +310,7 @@ export const submitPracticeSession = async (req, res) => {
   const questionResults = [];
 
   for (const question of session.questions) {
+    if (!question.id) console.error("QUESTION.ID IS MISSING!", question);
     const userAnswer = String(answers[question.id] ?? "").trim();
     const correctAnswer = question.correctAnswer;
     const evaluatedThisQuestion = !!(correctAnswer || correctAnswer === 0);
@@ -401,35 +402,37 @@ export const submitPracticeSession = async (req, res) => {
       const dbSessionId = session.sessionId;
 
       await sql`
-        INSERT INTO practice_sessions (session_id, user_id, subject_id, time_limit_minutes, scoring_mode, started_at, expires_at, submitted_at, status)
-        VALUES (${dbSessionId}, ${userId}, ${subjectId}, ${session.timeLimitMinutes}, '+4/-1', ${session.startedAt}, ${session.expiresAt}, ${result.submittedAt}, 'submitted')
+        INSERT INTO practice_submissions (
+          submission_id, user_id, subject_id, score, max_score, 
+          percentage, attempted, correct, wrong, started_at, submitted_at
+        ) VALUES (
+          ${dbSessionId}, ${userId}, ${subjectId}, ${score}, ${maxScore}, 
+          ${percentage}, ${attempted}, ${correct}, ${wrong}, 
+          ${session.startedAt}, ${result.submittedAt}
+        )
       `;
-
-      await sql`
-        INSERT INTO practice_session_results (session_id, total_questions, attempted, correct, wrong, unanswered, unevaluated, score, max_score, percentage)
-        VALUES (${dbSessionId}, ${session.questionCount}, ${attempted}, ${correct}, ${wrong}, ${unanswered}, ${unevaluated}, ${score}, ${maxScore}, ${percentage})
-      `;
-
-      for (const topicResult of result.byTopic) {
-         await sql`
-           INSERT INTO practice_session_topic_results (session_id, topic_id, total, attempted, correct, score)
-           VALUES (${dbSessionId}, 1, ${topicResult.total}, ${topicResult.attempted}, ${topicResult.correct}, ${topicResult.score})
-         `;
-      }
 
       let qOrder = 1;
       for (const qr of result.questionResults) {
-         await sql`
-           INSERT INTO practice_session_questions (session_id, question_id, question_order)
-           VALUES (${dbSessionId}, ${qr.qno}, ${qOrder++})
-           ON CONFLICT DO NOTHING
-         `;
-
-         await sql`
-           INSERT INTO practice_session_answers (session_id, question_id, user_answer, is_correct, marks_awarded, evaluated, answered_at)
-           VALUES (${dbSessionId}, ${qr.qno}, ${qr.userAnswer}, ${qr.isCorrect}, ${qr.marksAwarded}, ${qr.evaluated}, ${new Date()})
-           ON CONFLICT DO NOTHING
-         `;
+         try {
+           console.log("DEBUG: qr.questionId =", qr.questionId, "typeof", typeof qr.questionId);
+           await sql`
+             INSERT INTO practice_submission_answers (
+               submission_id, question_id, user_answer, correct_answer, 
+               is_correct, marks_awarded, question_order
+             ) VALUES (
+               ${dbSessionId}::text, ${qr.questionId || null}::text, ${qr.userAnswer || null}::text, ${qr.correctAnswer || null}::text, 
+               ${qr.isCorrect || false}::boolean, ${qr.marksAwarded || 0}::integer, ${qOrder++}::integer
+             )
+           `;
+         } catch (answerErr) {
+           console.error("FATAL: Failed to insert answer for question", qr.questionId, "Error:", answerErr);
+           try {
+             const fs = await import("fs");
+             fs.writeFileSync("last_db_error.txt", String(answerErr.message || answerErr) + "\n" + JSON.stringify(qr));
+           } catch(e) {}
+           throw answerErr;
+         }
       }
       
       await sql`UPDATE "User_Profile" SET total_solved = total_solved + ${evaluated} WHERE "User_id" = ${userId}`;
@@ -450,54 +453,46 @@ export const getPracticeHistory = async (req, res) => {
   if (userId === "guest") return res.json({ history: historyFallback.get(userId) || [] });
 
   try {
-    const sessionsRows = await sql`
-      SELECT s.session_id, s.subject_id, ps.subject_label as subject,
-             s.time_limit_minutes, s.started_at, s.submitted_at, s.scoring_mode,
-             r.total_questions, r.attempted, r.correct, r.wrong, r.unanswered,
-             r.score, r.max_score, r.percentage
-      FROM practice_sessions s
+    const submissionsRows = await sql`
+      SELECT s.submission_id, ps.subject_label as subject,
+             s.started_at, s.submitted_at, s.score, s.max_score, 
+             s.percentage, s.attempted, s.correct, s.wrong
+      FROM practice_submissions s
       JOIN practice_subjects ps ON s.subject_id = ps.subject_id
-      JOIN practice_session_results r ON s.session_id = r.session_id
-      WHERE s.user_id = ${userId} AND s.status = 'submitted'
+      WHERE s.user_id = ${userId}
       ORDER BY s.submitted_at DESC
       LIMIT 30
     `;
 
     const history = [];
-    for (const row of sessionsRows) {
-      const topicRows = await sql`
-        SELECT tr.total, tr.attempted, tr.correct, tr.score, pt.topic_name as topic
-        FROM practice_session_topic_results tr
-        JOIN practice_topics pt ON tr.topic_id = pt.topic_id
-        WHERE tr.session_id = ${row.session_id}
-      `;
-
+    for (const row of submissionsRows) {
       const answerRows = await sql`
         SELECT a.question_id as qno, a.question_id as "questionId", 
-               a.user_answer as "userAnswer", a.is_correct as "isCorrect", 
-               a.evaluated, a.marks_awarded as "marksAwarded",
+               a.user_answer as "userAnswer", a.correct_answer as "correctAnswer",
+               a.is_correct as "isCorrect", a.marks_awarded as "marksAwarded",
                'General' as topic
-        FROM practice_session_answers a
-        WHERE a.session_id = ${row.session_id}
+        FROM practice_submission_answers a
+        WHERE a.submission_id = ${row.submission_id}
+        ORDER BY a.question_order ASC
       `;
 
       history.push({
         userId,
         subject: row.subject,
-        selectedTopics: topicRows.map(t => t.topic),
-        questionCount: row.total_questions,
-        scoringMode: row.scoring_mode,
+        selectedTopics: ["General"],
+        questionCount: row.max_score / 4,
+        scoringMode: "+4/-1",
         score: row.score,
         maxScore: row.max_score,
-        percentage: row.percentage,
+        percentage: Number(row.percentage),
         attempted: row.attempted,
         correct: row.correct,
         wrong: row.wrong,
-        unanswered: row.unanswered,
+        unanswered: Math.max((row.max_score / 4) - (row.correct + row.wrong), 0),
         startedAt: row.started_at,
         submittedAt: row.submitted_at,
-        timeLimitMinutes: row.time_limit_minutes,
-        byTopic: topicRows,
+        timeLimitMinutes: 15,
+        byTopic: [{ topic: "General", score: row.score, total: row.max_score / 4, attempted: row.attempted, correct: row.correct }],
         questionResults: answerRows
       });
     }
