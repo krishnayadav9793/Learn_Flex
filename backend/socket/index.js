@@ -1,5 +1,6 @@
 import { findMatch } from "./findMatch.js";
 import { rooms,queue } from "./storeSocket.js";
+import { handleSubmit } from "./handleSubmit.js";
 export function initIO(io) {
     io.on("connection", socket => {
         console.log(`connected : ${socket.id}`)
@@ -8,7 +9,7 @@ export function initIO(io) {
             findMatch(io, socket, fullData)
         });
         socket.on("submit", (data) => {
-
+            handleSubmit(io,socket,data)
         })
         // socket.emit("match_found",)
         socket.on("disconnect", () => {

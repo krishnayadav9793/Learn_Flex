@@ -1,12 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react'
 import socket from '../../socket.js'
 import { useNavigate } from 'react-router-dom'
+
 const PHASES = {
   FINDING: 'FINDING',
   MATCH_FOUND: 'MATCH_FOUND',
   COUNTDOWN: 'COUNTDOWN',
   START: 'START',
   QUIZ: 'QUIZ',
+  WAITING: 'WAITING',
+  RESULT: 'RESULT',
 }
 
 export default function CompetitionPage({ onQuizStart }) {
@@ -15,10 +18,16 @@ export default function CompetitionPage({ onQuizStart }) {
   const [count, setCount] = useState(3)
   const [dots, setDots] = useState('')
   const countRef = useRef(null)
-  const navigate=useNavigate();
+  const navigate = useNavigate()
+
   // ── Quiz state ─────────────────────────────────────────────────────────────
   const [currentQ, setCurrentQ] = useState(0)
   const [selected, setSelected] = useState(null)
+  const [userAnswers, setUserAnswers] = useState([]) // Store user's answers [1-4 for each question]
+  const [timeLeft, setTimeLeft] = useState(600) // 10 minutes = 600 seconds
+  const [resultData, setResultData] = useState(null) // Store result from socket
+  const [waitingForOpponent, setWaitingForOpponent] = useState(false)
+  const timerRef = useRef(null)
 
   // ── pulsing dots ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -27,32 +36,50 @@ export default function CompetitionPage({ onQuizStart }) {
     return () => clearInterval(id)
   }, [phase])
 
+  // ── Quiz Timer (10 minutes) ────────────────────────────────────────────────
+  useEffect(() => {
+    if (phase !== PHASES.QUIZ) return
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current)
+          handleSubmit() // Auto-submit when time runs out
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timerRef.current)
+  }, [phase])
+
   // ── socket logic ───────────────────────────────────────────────────────────
   useEffect(() => {
-    const dataFetch = async () => {
-      try {
-        const data = await fetch("http://localhost:3000/user/profile", {
-          credentials: "include"
-        })
-        const res=await data.json();
-        if(res.msg==="No token")navigate("/login")
-      } catch (err) {
-        console.log(err)
-      }
+    // const dataFetch = async () => {
+    //   try {
+    //     const data = await fetch("http://localhost:3000/user/profile", {
+    //       credentials: "include"
+    //     })
+    //     const res = await data.json()
+    //     if (res.msg === "No token") navigate("/login")
+    //   } catch (err) {
+    //     console.log(err)
+    //   }
+    // }
+    // dataFetch()
 
-    }
-    dataFetch();
     const examId = localStorage.getItem('examId') || 'demo'
     const name = localStorage.getItem('name')
     socket.emit('find_match', { exam_id: examId, name })
-    socket.on("opponent_left", () => {
-      alert("Opponent disconnected 😢");
-      window.location.reload(); 
-    });
-    socket.on('match_found', (data) => {
-      // ── Identify who is "you" vs "opponent" by matching socket.id ──────────
-      const mySocketId = socket.id
 
+    socket.on("opponent_left", () => {
+      alert("Opponent disconnected 😢")
+      window.location.reload()
+    })
+
+    socket.on('match_found', (data) => {
+      const mySocketId = socket.id
       const me = data.player.socketId === mySocketId ? data.player : data.opponent
       const opponent = data.player.socketId === mySocketId ? data.opponent : data.player
 
@@ -67,7 +94,22 @@ export default function CompetitionPage({ onQuizStart }) {
       setTimeout(() => { setPhase(PHASES.COUNTDOWN); setCount(3) }, 1800)
     })
 
-    return () => socket.off('match_found')
+    socket.on("result", (data) => {
+      if (data.msg === "Waiting for Opponent") {
+        setWaitingForOpponent(true)
+        setPhase(PHASES.WAITING)
+      } else if (data.msg === "success") {
+        setResultData(data.result)
+        setWaitingForOpponent(false)
+        setPhase(PHASES.RESULT)
+      }
+    })
+
+    return () => {
+      socket.off('match_found')
+      socket.off('result')
+      socket.off('opponent_left')
+    }
   }, [])
 
   // ── countdown ──────────────────────────────────────────────────────────────
@@ -78,7 +120,6 @@ export default function CompetitionPage({ onQuizStart }) {
         if (prev <= 1) {
           clearInterval(countRef.current)
           setPhase(PHASES.START)
-          // Show GO! for 600 ms then enter quiz
           setTimeout(() => setPhase(PHASES.QUIZ), 600)
           return 0
         }
@@ -93,13 +134,37 @@ export default function CompetitionPage({ onQuizStart }) {
 
   function handleNext() {
     if (selected === null) return
+
+    // Store the answer (1-indexed: 1,2,3,4)
+    const answerIndex = selected + 1
+    setUserAnswers(prev => [...prev, answerIndex])
+
     if (currentQ + 1 >= questions.length) {
-      // All questions done — hand off to parent
-      onQuizStart?.()
+      // Last question - prepare for submission
+      const finalAnswers = [...userAnswers, answerIndex]
+      handleSubmit(finalAnswers)
       return
     }
+
     setCurrentQ(q => q + 1)
     setSelected(null)
+  }
+
+  function handleSubmit(answers = userAnswers) {
+    clearInterval(timerRef.current) // Stop the timer
+
+    const roomId = matchData?.roomId || localStorage.getItem('roomId')
+    socket.emit("submit", {
+      result: answers,
+      roomId: roomId
+    })
+  }
+
+  // Format time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
   const OPTION_LABELS = ['A', 'B', 'C', 'D']
@@ -133,6 +198,32 @@ export default function CompetitionPage({ onQuizStart }) {
           position: relative; z-index: 1;
           width: min(92vw, 560px);
           text-align: center;
+        }
+
+        /* ── TIMER ── */
+        .timer-display {
+          position: fixed;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 1.5rem;
+          letter-spacing: .1em;
+          padding: 10px 24px;
+          background: rgba(255,255,255,.05);
+          border: 1.5px solid rgba(255,255,255,.15);
+          border-radius: 8px;
+          color: #fac800;
+          z-index: 100;
+        }
+        .timer-display.warning {
+          color: #ff5050;
+          border-color: rgba(255,80,80,.4);
+          animation: timer-pulse 1s ease-in-out infinite;
+        }
+        @keyframes timer-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: .7; }
         }
 
         /* ── FINDING ── */
@@ -342,6 +433,134 @@ export default function CompetitionPage({ onQuizStart }) {
         .next-btn:hover  { transform: scale(1.02); }
         .next-btn:active { transform: scale(.97); }
 
+        /* ── WAITING ── */
+        .waiting-wrap {
+          display: flex; flex-direction: column; align-items: center; gap: 32px;
+          animation: fade-in .5s ease;
+        }
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .waiting-icon {
+          width: 100px; height: 100px;
+          border: 3px solid rgba(250,200,0,.3);
+          border-top-color: #fac800;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .waiting-title {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: clamp(1.8rem, 6vw, 2.5rem);
+          letter-spacing: .12em;
+          color: #fff;
+        }
+        .waiting-sub {
+          font-size: .9rem;
+          color: rgba(255,255,255,.5);
+          letter-spacing: .06em;
+          text-align: center;
+        }
+
+        /* ── RESULT ── */
+        .result-wrap {
+          display: flex; flex-direction: column; gap: 20px;
+          text-align: left;
+          animation: fade-in .5s ease;
+          max-height: 80vh;
+          overflow-y: auto;
+          padding-right: 8px;
+        }
+        .result-header {
+          text-align: center;
+          padding-bottom: 16px;
+          border-bottom: 1.5px solid rgba(255,255,255,.1);
+        }
+        .result-title {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: clamp(2rem, 7vw, 2.8rem);
+          letter-spacing: .12em;
+          color: #fff;
+          margin-bottom: 12px;
+        }
+        .result-scores {
+          display: flex;
+          justify-content: center;
+          gap: 40px;
+          margin-top: 16px;
+        }
+        .score-item {
+          text-align: center;
+        }
+        .score-label {
+          font-size: .75rem;
+          letter-spacing: .15em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,.4);
+          margin-bottom: 6px;
+        }
+        .score-value {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 2rem;
+          letter-spacing: .08em;
+        }
+        .score-value.you { color: #fac800; }
+        .score-value.opp { color: #00beff; }
+
+        .result-item {
+          background: rgba(255,255,255,.03);
+          border: 1.5px solid rgba(255,255,255,.1);
+          border-radius: 10px;
+          padding: 16px;
+        }
+        .result-q-num {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: .9rem;
+          letter-spacing: .12em;
+          color: rgba(255,255,255,.5);
+          margin-bottom: 8px;
+        }
+        .result-responses {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-bottom: 10px;
+        }
+        .result-response {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 12px;
+          background: rgba(255,255,255,.04);
+          border-radius: 6px;
+          font-size: .85rem;
+        }
+        .response-label {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: .8rem;
+          letter-spacing: .08em;
+          min-width: 50px;
+        }
+        .response-label.you { color: #fac800; }
+        .response-label.opp { color: #00beff; }
+        .response-answer {
+          color: rgba(255,255,255,.7);
+        }
+        .result-correct {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 12px;
+          background: rgba(0,232,135,.1);
+          border: 1px solid rgba(0,232,135,.3);
+          border-radius: 6px;
+          color: #00e887;
+          font-size: .85rem;
+        }
+
         /* ── corner deco ── */
         .corner { position: fixed; width: 48px; height: 48px; }
         .corner.tl { top:20px; left:20px;  border-top:1.5px solid rgba(250,200,0,.3); border-left:1.5px solid rgba(250,200,0,.3); }
@@ -353,6 +572,13 @@ export default function CompetitionPage({ onQuizStart }) {
       <div className="comp-root">
         <div className="corner tl" /><div className="corner tr" />
         <div className="corner bl" /><div className="corner br" />
+
+        {/* ── TIMER (shown during quiz) ─────────────────────────────── */}
+        {phase === PHASES.QUIZ && (
+          <div className={`timer-display${timeLeft <= 60 ? ' warning' : ''}`}>
+            ⏱️ {formatTime(timeLeft)}
+          </div>
+        )}
 
         <div className="comp-inner">
 
@@ -415,16 +641,12 @@ export default function CompetitionPage({ onQuizStart }) {
           )}
 
           {/* ── QUIZ ─────────────────────────────────────────────────────── */}
-          // ── QUIZ phase (replace the existing QUIZ block) ──────────────────────────
-
           {phase === PHASES.QUIZ && questions.length > 0 && (() => {
             const q = questions[currentQ]
             const options = [q.Option_1, q.Option_2, q.Option_3, q.Option_4]
-            const OPTION_LABELS = ['A', 'B', 'C', 'D']
 
             return (
               <div className="quiz-wrap" key={currentQ}>
-
                 {/* ── progress bar ── */}
                 <div className="quiz-meta">
                   <span className="quiz-progress">
@@ -441,7 +663,7 @@ export default function CompetitionPage({ onQuizStart }) {
                   />
                 </div>
 
-                {/* ── question statement (supports \n line breaks) ── */}
+                {/* ── question statement ── */}
                 <div className="quiz-question">
                   {q.Question_Statement.split('\n').map((line, i) =>
                     line.trim() === ''
@@ -477,55 +699,16 @@ export default function CompetitionPage({ onQuizStart }) {
 
                 {/* ── options ── */}
                 {options.map((opt, i) => {
-                  const optionNumber = i + 1  // Answer is 1-indexed
                   const isSelected = selected === i
-                  const isRevealed = selected !== null
-                  const isCorrect = optionNumber === q.Answer
-
-                  let extraClass = ''
-                  let extraStyle = {}
-
-                  if (isRevealed) {
-                    if (isCorrect) {
-                      extraClass = ' correct'
-                      extraStyle = {
-                        background: 'rgba(0,232,135,.12)',
-                        borderColor: '#00e887',
-                      }
-                    } else if (isSelected && !isCorrect) {
-                      extraClass = ' wrong'
-                      extraStyle = {
-                        background: 'rgba(255,80,80,.12)',
-                        borderColor: '#ff5050',
-                      }
-                    }
-                  } else if (isSelected) {
-                    extraClass = ' selected'
-                  }
 
                   return (
                     <button
                       key={i}
-                      className={`option-btn${isSelected ? ' selected' : ''}${extraClass}`}
-                      style={extraStyle}
-                      onClick={() => selected === null && setSelected(i)}
-                      disabled={isRevealed && !isSelected}
+                      className={`option-btn${isSelected ? ' selected' : ''}`}
+                      onClick={() =>  setSelected(i)}
                     >
-                      <span
-                        className="option-label"
-                        style={
-                          isRevealed && isCorrect
-                            ? { background: '#00e887', color: '#09090f' }
-                            : isRevealed && isSelected && !isCorrect
-                              ? { background: '#ff5050', color: '#fff' }
-                              : {}
-                        }
-                      >
-                        {isRevealed && isCorrect
-                          ? '✓'
-                          : isRevealed && isSelected && !isCorrect
-                            ? '✗'
-                            : OPTION_LABELS[i]}
+                      <span className="option-label">
+                        {OPTION_LABELS[i]}
                       </span>
                       <span className="option-text">{opt?.trim()}</span>
                     </button>
@@ -539,8 +722,159 @@ export default function CompetitionPage({ onQuizStart }) {
                 >
                   {currentQ + 1 >= questions.length ? 'Finish' : 'Next →'}
                 </button>
-
               </div>
+            )
+          })()}
+
+          {/* ── WAITING FOR OPPONENT ────────────────────────────────────── */}
+          {phase === PHASES.WAITING && (
+            <div className="waiting-wrap">
+              <div className="waiting-icon"></div>
+              <div>
+                <p className="waiting-title">Waiting for Opponent</p>
+                <p className="waiting-sub">
+                  {matchData?.opponent?.name || 'Your opponent'} is still completing the quiz...
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ── RESULT ──────────────────────────────────────────────────── */}
+          {phase === PHASES.RESULT && resultData && (() => {
+            // Map socket IDs to results
+            const mySocketId = socket.id
+            const myResult = resultData[mySocketId]
+            const opponentResult = resultData[Object.keys(resultData).find(id => id !== mySocketId)]
+
+            // Calculate scores
+            const myScore = myResult?.filter((ans, idx) => ans === questions[idx]?.Answer).length || 0
+            const oppScore = opponentResult?.filter((ans, idx) => ans === questions[idx]?.Answer).length || 0
+
+            return (
+              <div className="result-wrap">
+                // REPLACE WITH:
+                <div className="result-header">
+                  <p className="result-title">Quiz Complete!</p>
+
+                  {/* ── Winner Banner ── */}
+                  {myScore > oppScore ? (
+                    <div style={{
+                      margin: '12px 0 4px',
+                      padding: '10px 20px',
+                      background: 'rgba(250,200,0,.12)',
+                      border: '1.5px solid rgba(250,200,0,.5)',
+                      borderRadius: 10,
+                      fontFamily: "'Bebas Neue', sans-serif",
+                      fontSize: 'clamp(1.2rem,5vw,1.6rem)',
+                      letterSpacing: '.14em',
+                      color: '#fac800',
+                    }}>
+                      🏆 You Win!
+                    </div>
+                  ) : oppScore > myScore ? (
+                    <div style={{
+                      margin: '12px 0 4px',
+                      padding: '10px 20px',
+                      background: 'rgba(0,190,255,.1)',
+                      border: '1.5px solid rgba(0,190,255,.4)',
+                      borderRadius: 10,
+                      fontFamily: "'Bebas Neue', sans-serif",
+                      fontSize: 'clamp(1.2rem,5vw,1.6rem)',
+                      letterSpacing: '.14em',
+                      color: '#00beff',
+                    }}>
+                      😔 {matchData?.opponent?.name || 'Opponent'} Wins
+                    </div>
+                  ) : (
+                    <div style={{
+                      margin: '12px 0 4px',
+                      padding: '10px 20px',
+                      background: 'rgba(255,255,255,.06)',
+                      border: '1.5px solid rgba(255,255,255,.2)',
+                      borderRadius: 10,
+                      fontFamily: "'Bebas Neue', sans-serif",
+                      fontSize: 'clamp(1.2rem,5vw,1.6rem)',
+                      letterSpacing: '.14em',
+                      color: '#fff',
+                    }}>
+                      🤝 It's a Tie!
+                    </div>
+                  )}
+                  <div className="result-scores">
+                    <div className="score-item">
+                      <p className="score-label">Your Score</p>
+                      <p className="score-value you">{myScore}/{questions.length}</p>
+                    </div>
+                    <div className="score-item">
+                      <p className="score-label">{matchData?.opponent?.name || 'Opponent'}</p>
+                      <p className="score-value opp">{oppScore}/{questions.length}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {questions.map((q, idx) => {
+                  const myAnswer = myResult?.[idx]
+                  const oppAnswer = opponentResult?.[idx]
+                  const correctAnswer = q.Answer
+
+                  return (
+                    <div key={idx} className="result-item">
+                      <p className="result-q-num">Question {idx + 1}</p>
+
+                      <div className="result-responses">
+                        <div className="result-response">
+                          <span className="response-label you">You:</span>
+                          <span className="response-answer">
+                            Option {myAnswer} ({OPTION_LABELS[myAnswer - 1]})
+                          </span>
+                        </div>
+                        <div className="result-response">
+                          <span className="response-label opp">
+                            {matchData?.opponent?.name || 'Opponent'}:
+                          </span>
+                          <span className="response-answer">
+                            Option {oppAnswer} ({OPTION_LABELS[oppAnswer - 1]})
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="result-correct">
+                        <span>✓</span>
+                        <span>Correct Answer: Option {correctAnswer} ({OPTION_LABELS[correctAnswer - 1]})</span>
+                      </div>
+                    </div>
+                  )
+                })}
+                <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+                    <button
+                      onClick={() => navigate('/homepage')}
+                      style={{
+                        flex: 1, padding: '13px 0',
+                        background: '#fac800', border: 'none', borderRadius: 10,
+                        fontFamily: "'Bebas Neue', sans-serif",
+                        fontSize: '1.1rem', letterSpacing: '.14em',
+                        color: '#09090f', cursor: 'pointer',
+                      }}
+                    >
+                      🏠 Done
+                    </button>
+                    <button
+                      onClick={() => window.location.reload()}
+                      style={{
+                        flex: 1, padding: '13px 0',
+                        background: 'rgba(255,255,255,.06)',
+                        border: '1.5px solid rgba(255,255,255,.2)',
+                        borderRadius: 10,
+                        fontFamily: "'Bebas Neue', sans-serif",
+                        fontSize: '1.1rem', letterSpacing: '.14em',
+                        color: '#fff', cursor: 'pointer',
+                      }}
+                    >
+                      🔄 Find Other
+                    </button>
+                  </div>
+              </div>
+              
             )
           })()}
 
