@@ -79,6 +79,7 @@ function QuizPage(){
         );
 
         const data = await res.json();
+        console.log(data[0])
         setQuizList(data);
       } catch (err) {
         console.log("Quiz fetch error:", err.message);
