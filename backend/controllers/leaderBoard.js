@@ -63,7 +63,7 @@ FROM submission_stats
 ORDER BY rank;
 `;
 
-    console.log(users);
+    // console.log(users);
     res.json({data:users,userId:req.user});
 
   } catch (err) {
