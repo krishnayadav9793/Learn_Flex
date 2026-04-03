@@ -154,9 +154,17 @@ useEffect(() => {
                 45 Qs • 60 Mins
               </span>
               <button
-              onClick={() => navigate(`/WeeklyQuiz/`,{state:{exam_id:localStorage.getItem("examId")}})}
-               className="bg-white border-2 border-[#001F3F] text-[#001F3F] px-7 py-3 rounded-xl font-bold text-sm hover:bg-[#001F3F] hover:text-white transition-all">
-                Start Quiz
+              className="bg-white border-2 border-[#001F3F] text-[#001F3F] px-7 py-3 rounded-xl font-bold text-sm hover:bg-[#001F3F] hover:text-white transition-all"
+              onClick={() => {
+                if(!selectedExam){
+                  alert("⚠️ Please select an exam first");
+                  return;
+                }
+                navigate(`/WeeklyQuiz/`, {
+                  state: { exam_id: selectedExamId, exam_name: selectedExam }
+                });
+                }}>
+                  Start Quiz
               </button>
             </div>
           </div>
