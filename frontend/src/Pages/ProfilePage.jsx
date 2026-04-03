@@ -32,45 +32,18 @@ const Dashboard = () => {
       <main className="max-w-7xl mx-auto p-6 md:p-10 space-y-12">
         
         {/* TOP SECTION: PROFILE & HEATMAP */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div >
           
-          {/* LEFT: PROFILE CARD (Span 4) */}
-          <div className="lg:col-span-4">
-            <div className="bg-[#0B2447] rounded-[40px] p-8 shadow-xl relative overflow-hidden text-white h-full">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#BAD7F5] opacity-10 blur-[60px] rounded-full" />
-              <div className="relative z-10">
-                <div className="flex justify-between mb-8">
-                  <div className="p-3 bg-white/10 rounded-2xl border border-white/10">
-                    <ShieldCheck className="text-[#BAD7F5]" size={28} />
-                  </div>
-                  <span className="px-3 py-1 bg-[#BAD7F5]/20 rounded-full border border-[#BAD7F5]/30 text-[10px] font-black text-[#BAD7F5] uppercase tracking-widest">Pro</span>
-                </div>
-                <p className="text-[#BAD7F5]/60 text-[11px] font-black uppercase tracking-widest mb-1">Impact Velocity</p>
-                <h2 className="text-5xl font-black italic tracking-tighter mb-8">1,284</h2>
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                   <div className="bg-white/5 p-3 rounded-2xl border border-white/5">
-                      <p className="text-[9px] text-sky-200/40 uppercase font-bold">AIR Rank</p>
-                      <p className="text-lg font-black">#412</p>
-                   </div>
-                   <div className="bg-white/5 p-3 rounded-2xl border border-white/5">
-                      <p className="text-[9px] text-sky-200/40 uppercase font-bold">Percentile</p>
-                      <p className="text-lg font-black">99.2</p>
-                   </div>
-                </div>
-                
-              </div>
-            </div>
-          </div>
+          
 
           {/* RIGHT: HEATMAP (Span 8) */}
           <div className="lg:col-span-8">
             <SimpleYearlyHeatmap />
-            
           </div>
         </div>
 
         {/* BOTTOM SECTION: PRACTICE BY SUBJECT */}
-        <section className="space-y-8">
+        <section className="space-y-14">
           <div className="flex items-end justify-between px-2">
             <div>
               <h3 className="text-3xl font-bold tracking-tight text-[#0B2447]">Analysis Subject</h3>

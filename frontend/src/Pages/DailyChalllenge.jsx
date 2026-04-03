@@ -40,6 +40,7 @@ export default function LearnFlex() {
   const [unattempted, setUnattempted] = useState(0);
   const [challengeId, setchallengedId] = useState(null);
   const [submitted, setsubmitted]=useState(false)
+  
 
   useEffect(() => {
     // fetch question
@@ -49,7 +50,7 @@ export default function LearnFlex() {
           method: "GET",
           credentials: "include"
         });
-        if (!res.ok) throw new Error("Failed to fetch");
+        if (!res.ok) throw new Error("Failed to Fetch");
 
         const data = await res.json();
         const q = Array.isArray(data) ? data : [data];

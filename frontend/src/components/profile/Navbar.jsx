@@ -11,7 +11,7 @@ const Navbar = () => {
       <div className="flex items-center gap-10">
         
         {/* --- BRAND NAME WITH BOOK ICON --- */}
-        <div className="flex items-center gap-2 group cursor-pointer">
+        <div onClick={()=>navigate("/HomePage")}className="flex items-center gap-2 group cursor-pointer">
           <div className="bg-[#001F3F] p-1.5 rounded-lg group-hover:rotate-[-10deg] transition-transform duration-300">
             {/* Simple Book Icon SVG */}
             <Brain className="w-5 h-5 text-white" />
