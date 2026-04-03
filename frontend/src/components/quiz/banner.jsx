@@ -1,187 +1,442 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Timer, Calendar, Clock, PlayCircle, AlertCircle, CheckCircle2, Trophy } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-const Banner = (quiz) => {
-  // console.log(quiz)
-  // console.log(new Date(quiz.data.Start_time ))
-  const navigate = useNavigate();
-  const quizData = {
-    name: quiz.data.quizname,
-    startTime: new Date(quiz.data.Start_Time),
-    durationMinutes: quiz.data.time_limit,
-    description: quiz.data.description,
-    totalQuestions: quiz.data.totalQuestions
-  };
-  // console.log(quizData)
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const renderQuiz = () => {
-    // try{
+import React, { useEffect, useState } from "react";
 
-    // }catch(e){
-    //   console.log(e);
-    // }
-    navigate(`/quiz/${quiz.data.test_id}`, {
-      state: {
-        remainingTime: statusInfo.countdown
-      }
-    });
-  };
+const Banner = ({ data }) => {
+  const [timeLeft, setTimeLeft] = useState("--:--:--");
 
+  // ── Derive status from Start_Time ────────────────────────────────────────────
+  const status = (() => {
+    if (!data?.Start_Time) return "upcoming";
+    const start = new Date(data.Start_Time).getTime();
+    const end = start + (data.time_limit || 60) * 60 * 1000;
+    const now = Date.now();
+    if (now < start) return "upcoming";
+    if (now >= start && now <= end) return "live";
+    return "completed";
+  })();
+
+  const accentColor = {
+    completed: "#22C55E",
+    live: "#F59E0B",
+    upcoming: "#3B82F6",
+  }[status];
+
+  const badgeStyle = {
+    completed: { background: "#DCFCE7", color: "#16A34A" },
+    live: { background: "#FEF3C7", color: "#D97706" },
+    upcoming: { background: "#EFF6FF", color: "#2563EB" },
+  }[status];
+
+  const badgeLabel = {
+    completed: "Completed",
+    live: "Live Now",
+    upcoming: "Upcoming",
+  }[status];
+
+  // ── Countdown timer ──────────────────────────────────────────────────────────
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    if (!data?.Start_Time) return;
 
-  // Logic to determine status
-  const statusInfo = useMemo(() => {
-    const diff = quizData.startTime - currentTime;
-    const endTime = new Date(quizData.startTime.getTime() + quizData.durationMinutes * 60000);
+    const start = new Date(data.Start_Time).getTime();
+    const end = start + (data.time_limit || 60) * 60 * 1000;
 
-    if (currentTime < quizData.startTime) {
-      return {
-        label: "NOT STARTED",
-        color: "bg-amber-100 text-amber-700 border-amber-200",
-        indicator: "bg-amber-500",
-        icon: <Clock size={16} />,
-        countdown: diff
-      };
-    } else if (currentTime >= quizData.startTime && currentTime <= endTime) {
-      return {
-        label: "LIVE",
-        color: "bg-red-100 text-red-700 border-red-200 animate-pulse",
-        indicator: "bg-red-500",
-        icon: <PlayCircle size={16} />,
-        countdown: endTime - currentTime
-      };
-    } else {
-      return {
-        label: "COMPLETED",
-        color: "bg-emerald-100 text-emerald-700 border-emerald-200",
-        indicator: "bg-emerald-500",
-        icon: <CheckCircle2 size={16} />,
-        countdown: 0
-      };
+    if (status === "completed") {
+      setTimeLeft("00:00:00");
+      return;
     }
-  }, [currentTime, quizData]);
 
-  // Format countdown string
-  const formatCountdown = (ms) => {
-    if (ms <= 0) return "00:00:00";
-    const totalSeconds = Math.floor(ms / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return [hours, minutes, seconds]
-      .map(v => v < 10 ? "0" + v : v)
-      .join(":");
-  };
+    const target = status === "live" ? end : start;
+
+    const tick = () => {
+      const diff = Math.max(0, Math.floor((target - Date.now()) / 1000));
+      const h = Math.floor(diff / 3600);
+      const m = Math.floor((diff % 3600) / 60);
+      const s = diff % 60;
+      setTimeLeft([h, m, s].map((n) => String(n).padStart(2, "0")).join(":"));
+    };
+
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [data, status]);
+
+  // ── Formatted display date ───────────────────────────────────────────────────
+  const formattedDate = (() => {
+    if (!data?.Start_Time) return "";
+    const d = new Date(data.Start_Time);
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  })();
+
+  // ── Formatted scheduled time ─────────────────────────────────────────────────
+  const formattedTime = (() => {
+    if (!data?.Start_Time) return "—";
+    const d = new Date(data.Start_Time);
+    return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+  })();
+
+  const timerLabel = status === "live" ? "Ends In" : "Starts In";
 
   return (
-    <div className="min-w-fit bg-slate-50 p-4 md:p-8 flex flex-col items-center justify-center font-sans">
-      <div className="max-w-2xl w-full">
-        {/* Main Quiz Box */}
-        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden transform transition-all hover:scale-[1.01]">
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: "22px",
+        border: "1px solid #E5E1D3",
+        overflow: "hidden",
+        transition: "transform 0.2s, box-shadow 0.2s",
+        cursor: "pointer",
+        fontFamily: "'DM Sans', sans-serif",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = "0 10px 36px rgba(0,31,63,0.09)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "none";
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "stretch" }}>
+        {/* Left accent bar */}
+        <div style={{ width: "5px", flexShrink: 0, background: accentColor }} />
 
-          {/* Status Header */}
-          <div className="px-6 py-4 flex items-center justify-between border-b border-slate-50">
-            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${statusInfo.color}`}>
-              <span className={`w-2 h-2 rounded-full ${statusInfo.indicator} ${statusInfo.label === 'LIVE' ? 'animate-ping' : ''}`}></span>
-              {statusInfo.icon}
-              {statusInfo.label}
-            </div>
-            <div className="text-slate-400 flex items-center gap-2 text-sm">
-              <Calendar size={14} />
-              {quizData.startTime.toLocaleDateString('en-IN', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              })}
-            </div>
+        {/* Card content */}
+        <div style={{ flex: 1, padding: "1.6rem 1.75rem" }}>
+
+          {/* Top row: status badge + date */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "1rem",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                fontSize: "10px",
+                fontWeight: 800,
+                letterSpacing: "0.07em",
+                textTransform: "uppercase",
+                padding: "4px 10px",
+                borderRadius: "999px",
+                ...badgeStyle,
+              }}
+            >
+              <span
+                style={{
+                  width: "5px",
+                  height: "5px",
+                  borderRadius: "50%",
+                  background: "currentColor",
+                }}
+              />
+              {badgeLabel}
+            </span>
+
+            <span
+              style={{
+                fontSize: "12px",
+                color: "#94A3B8",
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M5 1v3M11 1v3M2 7h12" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+              {formattedDate}
+            </span>
           </div>
 
-          <div className="p-8">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-              <div className="flex-1">
-                <h2 className="text-2xl font-extrabold text-slate-800 mb-2 leading-tight">
-                  {quizData.name}
-                </h2>
-                <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-                  {quizData.description}
-                </p>
+          {/* Main row */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "1.5rem",
+            }}
+          >
+            {/* Left: title, description, stats */}
+            <div style={{ flex: 1 }}>
+              <div
+                style={{
+                  fontSize: "20px",
+                  fontWeight: 900,
+                  color: "#001F3F",
+                  letterSpacing: "-0.3px",
+                }}
+              >
+                {data?.quizname}
+              </div>
+              <div
+                style={{
+                  fontSize: "13px",
+                  color: "#64748B",
+                  fontWeight: 600,
+                  marginTop: "2px",
+                }}
+              >
+                {data?.description}
+              </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-2">
-                  <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block mb-1">Time scheduled</span>
-                    <span className="text-slate-700 font-semibold flex items-center gap-1.5">
-                      <Clock size={14} className="text-blue-500" />
-                      {quizData.startTime.toLocaleTimeString('en-IN', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+              {/* Stat chips */}
+              <div style={{ display: "flex", gap: "0.7rem", marginTop: "1rem" }}>
+                {/* Scheduled time */}
+                <div
+                  style={{
+                    background: "#F8FAFC",
+                    border: "1px solid #E5E1D3",
+                    borderRadius: "12px",
+                    padding: "8px 14px",
+                    minWidth: "80px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "9px",
+                      fontWeight: 800,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "#94A3B8",
+                    }}
+                  >
+                    Time Schedule
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 900,
+                      color: "#001F3F",
+                      marginTop: "2px",
+                    }}
+                  >
+                    {formattedTime}
+                  </div>
+                </div>
+
+                {/* Questions */}
+                <div
+                  style={{
+                    background: "#F8FAFC",
+                    border: "1px solid #E5E1D3",
+                    borderRadius: "12px",
+                    padding: "8px 14px",
+                    minWidth: "80px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "9px",
+                      fontWeight: 800,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "#94A3B8",
+                    }}
+                  >
+                    Questions
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 900,
+                      color: "#001F3F",
+                      marginTop: "2px",
+                    }}
+                  >
+                    {data?.totalQuestions}{" "}
+                    <span style={{ fontSize: "11px", fontWeight: 600, color: "#94A3B8" }}>
+                      items
                     </span>
                   </div>
-                  <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block mb-1">Questions</span>
-                    <span className="text-slate-700 font-semibold flex items-center gap-1.5">
-                      <Trophy size={14} className="text-amber-500" />
-                      {quizData.totalQuestions} Items
+                </div>
+
+                {/* Duration */}
+                <div
+                  style={{
+                    background: "#F8FAFC",
+                    border: "1px solid #E5E1D3",
+                    borderRadius: "12px",
+                    padding: "8px 14px",
+                    minWidth: "80px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "9px",
+                      fontWeight: 800,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "#94A3B8",
+                    }}
+                  >
+                    Duration
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 900,
+                      color: "#001F3F",
+                      marginTop: "2px",
+                    }}
+                  >
+                    {data?.time_limit}{" "}
+                    <span style={{ fontSize: "11px", fontWeight: 600, color: "#94A3B8" }}>
+                      mins
                     </span>
                   </div>
                 </div>
               </div>
-
-              {/* Dynamic Timer Box */}
-              <div className="flex flex-col items-center justify-center bg-slate-900 rounded-3xl p-6 text-white min-w-[200px] shadow-lg shadow-slate-300">
-                <Timer className={`mb-2 ${statusInfo.label === 'LIVE' ? 'text-red-400' : 'text-blue-400'}`} size={24} />
-                <span className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-1">
-                  {statusInfo.label === 'LIVE' ? 'Time Remaining' : 'Starts In'}
-                </span>
-                <div className="text-4xl font-mono font-bold tracking-tighter">
-                  {formatCountdown(statusInfo.countdown)}
-                </div>
-                {statusInfo.label === 'LIVE' && (
-                  <div className="mt-4 w-full">
-                    <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                      <div
-                        className="bg-red-500 h-full transition-all duration-1000"
-                        style={{ width: `${(statusInfo.countdown / (quizData.durationMinutes * 60000)) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
-          </div>
 
-          {/* Action Footer */}
-          {/* Action Footer */}
-          <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-center">
-            {statusInfo.label === 'COMPLETED' ? (
-              <button
-                onClick={() => navigate(`/leaderboard/${quiz.data.test_id}`)}
-                className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-200"
+            {/* Right: timer + CTA */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                gap: "0.75rem",
+                flexShrink: 0,
+              }}
+            >
+              {/* Timer */}
+              <div
+                style={{
+                  background: "#001F3F",
+                  borderRadius: "14px",
+                  padding: "10px 18px",
+                  textAlign: "center",
+                  minWidth: "140px",
+                }}
               >
-                <Trophy size={18} />
-                View Leaderboard
-              </button>
-            ) : (
-              <button
-                disabled={statusInfo.label !== 'LIVE'}
-                onClick={statusInfo.label === 'LIVE' ? renderQuiz : undefined}
-                className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${statusInfo.label === 'LIVE'
-                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-200'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                  }`}
-              >
-                {statusInfo.label === 'LIVE' ? 'Enter Quiz Lobby' : 'Quiz Not Yet Available'}
-              </button>
-            )}
+                <div
+                  style={{
+                    fontSize: "9px",
+                    fontWeight: 800,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: "#7CA4C8",
+                    marginBottom: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "4px",
+                  }}
+                >
+                  <svg width="9" height="9" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="9" r="5.5" stroke="#7CA4C8" strokeWidth="1.5" />
+                    <path d="M8 6v3l2 1.5" stroke="#7CA4C8" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M6 1h4" stroke="#7CA4C8" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  {timerLabel}
+                </div>
+                <div
+                  style={{
+                    fontSize: "22px",
+                    fontWeight: 900,
+                    color: "#fff",
+                    letterSpacing: "2px",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {timeLeft}
+                </div>
+              </div>
+
+              {/* CTA Button */}
+              {status === "completed" && (
+                <button
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    background: "linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)",
+                    color: "#78350F",
+                    fontSize: "13px",
+                    fontWeight: 800,
+                    padding: "11px 20px",
+                    borderRadius: "14px",
+                    border: "none",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    width: "100%",
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+                    <polygon
+                      points="10,2 12.6,7.4 18.5,8.3 14.2,12.5 15.2,18.4 10,15.7 4.8,18.4 5.8,12.5 1.5,8.3 7.4,7.4"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  View Leaderboard
+                </button>
+              )}
+
+              {status === "live" && (
+                <button
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    background: "#001F3F",
+                    color: "#fff",
+                    fontSize: "13px",
+                    fontWeight: 800,
+                    padding: "11px 20px",
+                    borderRadius: "14px",
+                    border: "none",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    width: "100%",
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
+                    <polygon points="5,3 17,10 5,17" />
+                  </svg>
+                  Attempt Now
+                </button>
+              )}
+
+              {status === "upcoming" && (
+                <button
+                  disabled
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    background: "#F1F5F9",
+                    color: "#94A3B8",
+                    fontSize: "13px",
+                    fontWeight: 800,
+                    padding: "11px 20px",
+                    borderRadius: "14px",
+                    border: "none",
+                    cursor: "not-allowed",
+                    whiteSpace: "nowrap",
+                    width: "100%",
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="9" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M8 6v3l1.5 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  Not Started Yet
+                </button>
+              )}
+            </div>
           </div>
         </div>
-
-
       </div>
     </div>
   );
