@@ -2,22 +2,22 @@ export default function OptionBtn({ label, text, selected, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`relative w-full flex items-center gap-4 text-left px-5 py-4 rounded-2xl border-2 transition-all duration-200 group overflow-hidden
+      className={`relative w-full flex items-center gap-4 text-left px-4 py-3.5 rounded-2xl border-2 transition-all duration-200 group overflow-hidden
         ${selected
-          ? "bg-[#EAF3FB] border-[#0B2447] shadow-lg shadow-blue-900/10"
-          : "bg-white border-[#D6E6F4] hover:border-[#7AB8D9] hover:bg-[#F7F9FC] hover:shadow-md hover:shadow-blue-900/5"
+          ? "bg-[#EAF3FB] border-[#0B2447]"
+          : "bg-white border-[#E2EDF6] hover:border-[#7AB8D9] hover:bg-[#F7F9FC]"
         }`}
     >
       {/* Selected left accent bar */}
-      <div className={`absolute left-0 top-3 bottom-3 w-1 rounded-r-full transition-all duration-200
-        ${selected ? "bg-[#0B2447] opacity-100" : "opacity-0"}`}
+      <div className={`absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-full transition-all duration-200
+        ${selected ? "opacity-100 bg-[#0B2447]" : "opacity-0"}`}
       />
 
       {/* Label badge */}
-      <span className={`min-w-[30px] h-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0 transition-all duration-200
+      <span className={`min-w-[32px] h-8 rounded-[9px] flex items-center justify-center text-xs font-black shrink-0 transition-all duration-200
         ${selected
-          ? "bg-[#0B2447] text-white shadow-md shadow-blue-900/25"
-          : "bg-[#EAF3FB] border border-[#D6E6F4] text-[#1a5276] group-hover:bg-[#0B2447] group-hover:text-white group-hover:border-[#0B2447] group-hover:shadow-sm"
+          ? "bg-[#0B2447] text-white"
+          : "bg-[#EAF3FB] border border-[#D6E6F4] text-[#1a5276] group-hover:bg-[#0B2447] group-hover:text-white group-hover:border-[#0B2447]"
         }`}>
         {label}
       </span>
@@ -31,10 +31,10 @@ export default function OptionBtn({ label, text, selected, onClick }) {
         {text}
       </span>
 
-      {/* Right side: check or arrow */}
+      {/* Right: check or arrow */}
       <span className="ml-auto shrink-0">
         {selected ? (
-          <span className="w-6 h-6 rounded-full bg-[#0B2447] flex items-center justify-center shadow-sm shadow-blue-900/30">
+          <span className="w-6 h-6 rounded-full bg-[#0B2447] flex items-center justify-center">
             <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
               <path d="M1 4.5L4 7.5L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
