@@ -160,7 +160,6 @@ export default function PracticeMode() {
   const startPractice = async () => {
     setError("");
     if (!subject) { setError("Please select a subject."); return; }
-    if (!selectedTopics.length) { setError("Please select at least one topic."); return; }
     setStarting(true);
     try {
       const safeCount = Math.max(1, Math.min(Number(questionCount) || 1, availableBySelectedTopics || 1));
@@ -168,7 +167,7 @@ export default function PracticeMode() {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          subject, topics: selectedTopics,
+          subject, topics: ["General"],
           questionCount: safeCount,
           timeLimitMinutes: Math.max(1, Number(timeLimitMinutes) || 1),
           excludeIds: history.flatMap((h) => h.questionResults?.map((qr) => qr.questionId) || []),
@@ -335,46 +334,6 @@ export default function PracticeMode() {
                       </div>
                     </div>
 
-                    {/* Topics */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between ml-1">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Topics</label>
-                        <button
-                          onClick={toggleAllTopics}
-                          className="text-xs text-[#0b2a4a] hover:text-[#123d6b] font-semibold"
-                        >
-                          {allTopicsSelected ? "Clear all" : "Select all"}
-                        </button>
-                      </div>
-                      <div className="max-h-[220px] overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-1.5 space-y-0.5">
-                        {topicList.map((topic) => {
-                          const checked = selectedTopics.includes(topic.name);
-                          return (
-                            <label
-                              key={topic.name}
-                              className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 ${
-                                checked ? "bg-white border border-[#0b2a4a]/15 shadow-sm" : "hover:bg-white border border-transparent"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2.5">
-                                <div className={`w-3.5 h-3.5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                                  checked ? "bg-[#0b2a4a] border-[#0b2a4a]" : "bg-white border-slate-300"
-                                }`}>
-                                  {checked && (
-                                    <svg viewBox="0 0 8 6" className="w-2 h-2 fill-none stroke-white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M1 3l2 2 4-4" />
-                                    </svg>
-                                  )}
-                                </div>
-                                <span className={`text-sm ${checked ? "font-medium text-[#0b2a4a]" : "text-slate-600"}`}>{topic.name}</span>
-                              </div>
-                              <span className="text-xs font-mono font-semibold text-[#2e6bb3]">{topic.count}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-
                     {/* Count + Time inputs — match login input style */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
@@ -410,7 +369,7 @@ export default function PracticeMode() {
                     {/* Start button — exact same style as login button */}
                     <button
                       onClick={startPractice}
-                      disabled={starting || loadingMeta || !subject || !selectedTopics.length || availableBySelectedTopics <= 0}
+                      disabled={starting || loadingMeta || !subject || availableBySelectedTopics <= 0}
                       className="w-full bg-[#0b2a4a] hover:bg-[#123d6b] text-white font-semibold py-3.5 rounded-xl transition-all duration-200 shadow-lg active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                     >
                       {starting ? <><Spinner />Starting…</> : <><PlayCircle className="w-4 h-4" />Start Session</>}
@@ -433,38 +392,7 @@ export default function PracticeMode() {
               <div className="h-1.5 w-full bg-[#0b2a4a]" />
             </div>
 
-            {/* History card */}
-            {history.length > 0 && (
-              <div className="relative bg-white border border-[#e5dfd5] rounded-2xl shadow-xl overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#0b2a4a] flex items-center justify-center shadow-md">
-                    <BarChart3 className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-800">Recent Sessions</h2>
-                    <p className="text-[11px] text-slate-400">Last {Math.min(5, history.length)} attempts</p>
-                  </div>
-                </div>
-                <div className="p-3 space-y-2 max-h-[200px] overflow-y-auto">
-                  {history.slice(0, 5).map((item, idx) => (
-                    <div
-                      key={`${item.submittedAt}-${idx}`}
-                      className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-100 px-3 py-2.5 hover:border-slate-200 transition-colors"
-                    >
-                      <div>
-                        <div className="text-xs font-semibold text-slate-700">{subjectLabel(item.subject)}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">{item.score}/{item.maxScore}</div>
-                      </div>
-                      <div className={`text-sm font-bold font-mono ${
-                        item.percentage >= 70 ? "text-emerald-600" :
-                        item.percentage >= 40 ? "text-amber-600" : "text-red-500"
-                      }`}>{formatPercent(item.percentage)}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="h-1.5 w-full bg-[#0b2a4a]" />
-              </div>
-            )}
+            {/* History card removed from here */}
 
             {/* Error */}
             {error && (
@@ -478,26 +406,76 @@ export default function PracticeMode() {
           {/* ═══ RIGHT PANEL ═══ */}
           <div className="relative bg-white border border-[#e5dfd5] rounded-2xl shadow-xl overflow-hidden flex flex-col min-h-[600px]">
 
-            {/* Empty state */}
+            {/* Empty state & Dashboard */}
             {!session && (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-12 fade-up">
-                <div className="w-16 h-16 bg-[#0b2a4a] rounded-2xl flex items-center justify-center mb-5 shadow-lg mx-auto">
-                  <BookOpen className="w-8 h-8 text-white" />
+              <div className="flex-1 flex flex-col p-8 fade-up h-full bg-slate-50/50">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-[#0b2a4a] rounded-xl flex items-center justify-center shadow-lg">
+                    <BarChart3 className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-800">Recent Sessions</h2>
+                    <p className="text-sm text-slate-500">Track your practice performance and history</p>
+                  </div>
                 </div>
-                <h2 className="text-xl font-bold text-slate-800 mb-2">Ready to practise?</h2>
-                <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
-                  Configure your session on the left and hit{" "}
-                  <span className="text-[#0b2a4a] font-semibold">Start Session</span>.
-                  Each correct answer earns +4 marks; wrong answers cost −1.
-                </p>
-                <div className="mt-8 grid grid-cols-3 gap-3 max-w-xs">
-                  {[["Select Subject", "01"], ["Pick Topics", "02"], ["Start Timer", "03"]].map(([label, num]) => (
-                    <div key={num} className="rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
-                      <div className="text-xs font-bold font-mono text-[#0b2a4a] mb-1">{num}</div>
-                      <div className="text-[11px] text-slate-400 font-medium">{label}</div>
+
+                {history.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-5 border border-slate-200">
+                      <BookOpen className="w-8 h-8 text-slate-300" />
                     </div>
-                  ))}
-                </div>
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">No history yet</h2>
+                    <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
+                      Configure your session on the left and hit{" "}
+                      <span className="text-[#0b2a4a] font-semibold">Start Session</span> to begin your first practice!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {history.map((item, idx) => (
+                      <div key={`${item.submittedAt}-${idx}`} className="group relative bg-white border border-slate-200 rounded-2xl p-5 hover:shadow-lg transition-all hover:-translate-y-1 hover:border-[#0b2a4a]/20">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="inline-flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg">
+                            <Brain className="w-4 h-4 text-[#0b2a4a]" />
+                            <span className="text-xs font-bold text-slate-700">{subjectLabel(item.subject)}</span>
+                          </div>
+                          <div className={`px-3 py-1 rounded-lg text-xs font-bold font-mono ${
+                            item.percentage >= 70 ? "bg-emerald-50 text-emerald-700" :
+                            item.percentage >= 40 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"
+                          }`}>
+                            {formatPercent(item.percentage)}
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="text-center p-2 rounded-xl bg-slate-50 border border-slate-100">
+                            <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Score</div>
+                            <div className="text-sm font-mono font-bold text-slate-700">{item.score} <span className="opacity-50 text-xs text-slate-400">/ {item.maxScore}</span></div>
+                          </div>
+                          <div className="text-center p-2 rounded-xl bg-emerald-50 border border-emerald-100">
+                            <div className="text-[10px] text-emerald-600 uppercase font-bold mb-1">Correct</div>
+                            <div className="text-sm font-mono font-bold text-emerald-700">{item.correct}</div>
+                          </div>
+                          <div className="text-center p-2 rounded-xl bg-red-50 border border-red-100">
+                            <div className="text-[10px] text-red-500 uppercase font-bold mb-1">Wrong</div>
+                            <div className="text-sm font-mono font-bold text-red-600">{item.wrong}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-400 font-medium">
+                          <div className="flex items-center gap-1.5">
+                            <Clock3 className="w-3.5 h-3.5" />
+                            {new Date(item.submittedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Target className="w-3.5 h-3.5" />
+                            {item.attempted} attempted
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

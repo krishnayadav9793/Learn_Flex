@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Banner from "../components/quiz/banner.jsx";
 import Navbar from "../components/Home/Navbar.jsx";
 import { useLocation } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 
-function QuizPage() {
+function QuizPage(){
+  const navigate = useNavigate();
   const [quizList, setQuizList] = useState([]);
-
   const [examData, setExamData] = useState({});
   const [selectedExam, setSelectedExam] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -119,6 +120,12 @@ function QuizPage() {
               Attempt curated quizzes designed to test your knowledge,
               sharpen accuracy and track performance in real-time.
             </p>
+            <button
+            onClick={() => navigate("/HomePage")}
+            className="mt-6 inline-flex items-center gap-2 bg-white text-[#001F3F] text-sm font-bold px-5 py-2.5 rounded-full hover:bg-blue-50 transition"
+            >
+              ← Back to Home
+            </button>
           </div>
 
           {/* Background decoration */}
@@ -156,13 +163,10 @@ function QuizPage() {
           {quizList.length > 0 ? (
             quizList.map((quiz) => (
               <div
-                key={quiz.test_id}
-                className="group relative rounded-[2.2rem] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-900/10"
+              key={quiz.test_id}
+              className="group relative rounded-[2.2rem] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-900/10"
               >
-                <div className="absolute inset-0 rounded-[2.2rem] bg-gradient-to-b from-transparent to-blue-50 opacity-0 group-hover:opacity-100 transition"></div>
-
                 <Banner data={quiz} />
-
               </div>
             ))
           ) : (
