@@ -12,7 +12,7 @@ import practiceRoute from "./routes/practiceRoute.js";
 import ExamRoute from "./routes/ExamRoute.js";
 import dailyRouter from "./routes/DailyChallenge.js";
 import { initIO } from "./socket/index.js";
-
+import leaderBoardrouter from "./routes/leaderBoardRoute.js";
 import { connectNeon } from "./util/neonConnect.js";
 
 configDotenv();
@@ -47,7 +47,7 @@ app.use("/quiz", quizRoute);
 app.use("/practice", practiceRoute);
 app.use("/exam", ExamRoute);
 app.use("/dc", dailyRouter);
-
+app.use("/leaderboard",leaderBoardrouter)
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.includes("your_jwt_secret")) {
   process.env.JWT_SECRET = "demo-jwt-secret";
