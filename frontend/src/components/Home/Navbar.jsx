@@ -85,26 +85,19 @@ const Navbar = ({
 
       {/* --- RIGHT SIDE: ACTIONS & USER --- */}
       <div className="flex items-center gap-6">
-        {/* Simple Notification Bell */}
-        <button className="relative p-2 text-slate-400 hover:text-blue-600 transition-colors group">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-          </svg>
-          <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-        </button>
+        
 
         {/* Profile Section */}
         <div className="flex items-center gap-3 pl-4 border-l border-[#E5E1D3]">
           <div className="hidden lg:block text-right">
             <p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Elite Member</p>
-            <p className="text-xs font-bold text-[#001F3F]">Abhishek D.</p>
+            <p className="text-xs font-bold text-[#001F3F]">{localStorage.getItem("name").toUpperCase()}</p>
           </div>
 <div
   onClick={() => navigate("/profile")}
   className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#001F3F] to-blue-800 flex items-center justify-center text-white font-black text-sm shadow-lg ring-2 ring-white hover:scale-105 transition-transform cursor-pointer"
 >
-  AD
+{localStorage.getItem("name")[0].toUpperCase()}
 </div>
         </div>
       </div>

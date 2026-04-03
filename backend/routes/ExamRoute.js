@@ -5,5 +5,5 @@ import { getSubject } from "../controllers/Subject.js";
 
 const router=Router();
 router.get("/exams", protect, getExams);
-router.get("/subjects",getSubject);
+router.get("/subjects",protect,getSubject);
 export default router;

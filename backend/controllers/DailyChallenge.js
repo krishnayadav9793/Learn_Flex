@@ -1,7 +1,7 @@
 import { sql } from "../util/neonConnect.js";
 
 export const getDailyChallenge = async (req, res) => {
-const examId = req.params.exam_id;
+  const examId = req.params.exam_id;
   try {
 
     const result = await sql`
@@ -44,17 +44,63 @@ AND dc.exam_id = ${examId};
         message: "No daily challenge found"
       });
     }
-
     res.json(result);
 
   } catch (error) {
-
     console.error("Daily Challenge Error:", error);
-
     res.status(500).json({
       error: "Failed to fetch daily challenge"
     });
 
   }
+};
 
+export const addAttempts = async (req, res) => {
+  try {
+    const attempts = req.body;
+    const user_id = req.user.id; //(cookie)
+   
+    if (!attempts || attempts.length == 0) {
+      
+      return res.status(400).json({
+        error: "No attempt provided"
+      })
+    }
+    const values = [];
+    const placeholder = [];
+
+    attempts.forEach((a, i) => {
+      const base = i * 5;
+
+      placeholder.push(
+        `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`
+      );
+      values.push(
+        user_id,
+        a.challenge_id,
+        a.ques_id,
+        a.marked_option,
+        a.attempt_at
+      );
+    });
+    await sql.query(`
+      INSERT INTO "DailyChallengeAttempt"
+      (user_id, challenge_id, ques_id, marked_option, attempt_at)
+      VALUES ${placeholder.join(",")}
+      ON CONFLICT (user_id, challenge_id, ques_id)
+      DO UPDATE SET
+        marked_option = EXCLUDED.marked_option,
+        attempt_at = EXCLUDED.attempt_at
+    `, values);
+
+    return res.status(200).json({
+      message: "Attempts saved successfully"
+    });
+
+  } catch (error) {
+    console.error("Add Attempts Error:", error);
+    return res.status(500).json({
+      error: "Failed to save attempts"
+    });
+  }
 };

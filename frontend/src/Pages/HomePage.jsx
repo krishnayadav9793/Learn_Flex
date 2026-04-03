@@ -18,9 +18,14 @@ const LearnFlexHome = () => {
   }
 }, [selectedExamId]);
 useEffect(() => {
+ 
   const fetchExam = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/exam/subjects`);
+      const res = await fetch(`http://localhost:3000/exam/subjects`,{
+      method: "GET",
+      credentials: "include"
+    }
+  );
       if (!res.ok) throw new Error("Failed to Fetch");
 
       const data = await res.json();
