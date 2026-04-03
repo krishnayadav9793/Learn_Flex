@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Trophy, Medal, Star, Zap } from "lucide-react";
-
+import { useLocation } from "react-router-dom";
 const MEDAL = {
   1: { icon: "🥇", bg: "bg-amber-50",   border: "border-amber-200", rank: "text-amber-500" },
   2: { icon: "🥈", bg: "bg-slate-50",   border: "border-slate-200", rank: "text-slate-400" },
@@ -24,13 +24,15 @@ const RankBadge = ({ rank }) => {
 };
 
 const Leaderboard = () => {
+  const location=useLocation();
+  const {quizId,quizName}=location.state;
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/leaderboard");
+        const res = await fetch(`http://localhost:3000/api/leaderboard/${quizId}`);
         const result = await res.json();
         setData(result);
       } catch (err) {

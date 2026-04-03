@@ -1,9 +1,10 @@
 import { sql } from "../util/neonConnect.js";
 
 export const getUser = async (req, res) => {
+  const quiz_id=req.params.id;
   try {
   
-     const users = await sql`
+     const users = await sql `
         SELECT 
         u.name,
         e.exam_name,

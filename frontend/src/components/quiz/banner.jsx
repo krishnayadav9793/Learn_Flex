@@ -160,7 +160,12 @@ const Banner = (quiz) => {
           <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-center">
             {statusInfo.label === 'COMPLETED' ? (
               <button
-                onClick={() => navigate(`/leaderboard/${quiz.data.test_id}`)}
+                onClick={() => navigate(`/leaderboard/`, {
+                  state: {
+                    quizId: quiz.data.test_id,
+                    quizName: quizData.name
+                  }
+                })}
                 className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-200"
               >
                 <Trophy size={18} />
@@ -171,8 +176,8 @@ const Banner = (quiz) => {
                 disabled={statusInfo.label !== 'LIVE'}
                 onClick={statusInfo.label === 'LIVE' ? renderQuiz : undefined}
                 className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${statusInfo.label === 'LIVE'
-                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-200'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-200'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                   }`}
               >
                 {statusInfo.label === 'LIVE' ? 'Enter Quiz Lobby' : 'Quiz Not Yet Available'}
