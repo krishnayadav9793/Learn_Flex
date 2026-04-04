@@ -24,7 +24,7 @@ function App() {
       <Route path="/Quiz/:id" element={<QuizQuestions />} />
       <Route path="/DailyChallenge/:exam_id" element={<DailyChallengePage />} />
       <Route path="/HomePage" element={<HomePage />} />
-      <Route path="/practice/:exam_id" element={<PracticeMode />} />
+      <Route path="/practice/:exam_name" element={<PracticeMode />} />
       <Route path="/v" element={<CompitationPage/>}/>
       <Route path="/resetPassword" element={<ForgotPasswordOTP/>}/>
     </Routes>
