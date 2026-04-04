@@ -16,9 +16,10 @@ const MOCK = [
 
 function Loading() {
   return (
-    <div className="min-h-screen bg-[#EEF3FB] flex flex-col items-center justify-center gap-4">
-      <div className="w-9 h-9 border-4 border-[#EAF3FB] border-t-[#0B2447] rounded-full animate-spin" />
-      <p className="text-sm text-slate-500 font-medium">Loading your quiz…</p>
+    // Applied Light Cream background. Light Blue & Dark Blue spinner.
+    <div className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center gap-5">
+      <div className="w-10 h-10 border-4 border-[#E1EFFF] border-t-[#0B2447] rounded-full animate-spin shadow-sm" />
+      <p className="text-sm text-[#0B2447]/70 font-bold uppercase tracking-widest">Loading your quiz…</p>
     </div>
   );
 }
@@ -148,7 +149,8 @@ export default function LearnFlex() {
   if (!questions.length) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-[#EEF3FB]">
+    // Base wrapper with Light Cream (#FAF8F5) background and Dark Blue text default
+    <div className="min-h-screen bg-[#FAF8F5] text-[#0B2447] font-sans selection:bg-[#E1EFFF] selection:text-[#0B2447]">
 
       <Navbar
         exam={exam}
@@ -159,26 +161,34 @@ export default function LearnFlex() {
         total={questions.length}
       />
 
-      <div className="flex min-h-[calc(100vh-60px)]">
+      <div className="flex min-h-[calc(100vh-60px)] max-w-[1600px] mx-auto w-full">
 
-        {/* Main */}
-        <main className="flex-1 min-w-0 px-8 py-7 flex flex-col gap-5">
+        {/* Main Content Area */}
+        <main className="flex-1 min-w-0 px-6 sm:px-10 lg:px-16 xl:px-24 py-10 flex flex-col items-center gap-8 relative">
+          
+          {/* Decorative subtle top-border accent using Light Blue */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#E1EFFF] via-[#0B2447] to-[#E1EFFF] opacity-20"></div>
 
           {/* Header */}
-          <div>
-            <h2 className="text-[22px] font-extrabold text-[#0B2447] tracking-tight">Daily Challenge</h2>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] font-bold px-2.5 py-1 bg-[#DBEAFE] text-[#1e40af] rounded-md uppercase tracking-wider">
+          <div className="w-full max-w-4xl pt-4">
+            <h2 className="text-3xl font-black text-[#0B2447] tracking-tight">Daily Challenge</h2>
+            
+            <div className="flex items-center gap-3 mt-3">
+              {/* Badge: Light Blue background with Dark Blue text */}
+              <span className="text-[11px] font-bold px-3 py-1.5 bg-[#E1EFFF] text-[#0B2447] rounded border border-[#0B2447]/10 uppercase tracking-widest shadow-sm">
                 {exam}
               </span>
-              <p className="text-sm text-slate-500">
-                {questions.length} questions · {Math.floor(TOTAL_TIME / 60)} minutes
-              </p>
+              
+              <div className="flex items-center gap-2 text-sm font-medium text-[#0B2447]/60">
+                <span>{questions.length} questions</span>
+                <span className="w-1 h-1 rounded-full bg-[#0B2447]/30"></span>
+                <span>{Math.floor(TOTAL_TIME / 60)} minutes</span>
+              </div>
             </div>
           </div>
 
-          {/* Question */}
-          <div className="max-w-3xl">
+          {/* Question Component Wrapper */}
+          <div className="w-full max-w-4xl">
             <QuizQuestion
               question={questions[current]}
               index={current}
@@ -191,17 +201,21 @@ export default function LearnFlex() {
           </div>
         </main>
 
-        {/* Sidebar — pinned to right edge */}
-        <aside className="w-72 hidden lg:flex flex-col gap-3.5 px-5 py-7 border-l border-[#D6E6F4] bg-[#F7F9FC] shrink-0">
-          <Sidebar
-            questions={questions}
-            answers={answers}
-            current={current}
-            setCurrent={setCurrent}
-            onSubmit={() => computeAndFinish(questions, answers)}
-          />
-        </aside>
+        {/* Sidebar — Very light airy blue background to contrast with the cream main section */}
+       <aside className="sticky top-0 h-screen overflow-y-auto w-80 xl:w-[340px] hidden lg:flex flex-col gap-6 px-6 xl:px-8 py-10 border-l-2 border-[#0B2447]/5 bg-gradient-to-b from-[#F4F9FF]/50 to-white shrink-0 shadow-[-12px_0_40px_#0B244708] z-10 scrollbar-hide">
+  
+  {/* Subtle decorative gradient at the top right to anchor it */}
+  <div className="absolute top-0 right-0 w-full h-32 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#0B2447]/[0.02] to-transparent pointer-events-none" />
 
+  <Sidebar
+    questions={questions}
+    answers={answers}
+    current={current}
+    setCurrent={setCurrent}
+    onSubmit={() => computeAndFinish(questions, answers)}
+  />
+
+</aside>
       </div>
     </div>
   );

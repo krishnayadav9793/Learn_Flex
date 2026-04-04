@@ -3,11 +3,17 @@ export const getSubject = async (req, res) => {
   try {
 
     const subject = await sql`
-      SELECT e.exam_id, e.exam_name, s.subject_name
-      FROM "Exam" e
-      LEFT JOIN "Subject" s
-      ON e.exam_id = s.exam_id
-      ORDER BY e.exam_id`;
+  SELECT DISTINCT 
+    e.exam_id, 
+    e.exam_name, 
+    s.subject_name
+  FROM "Exam" e
+  LEFT JOIN "Questions" q 
+    ON e.exam_id = q."Exam_id"
+  LEFT JOIN "Subject" s 
+    ON q.subject_id = s.subject_id
+  ORDER BY e.exam_id;
+`;
     res.json(subject);
   }
   catch(error){

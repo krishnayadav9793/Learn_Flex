@@ -1,10 +1,11 @@
 import { Brain, Clock, Zap } from "lucide-react";
-
+import { use } from "react";
+import { useNavigate } from "react-router-dom";
 export default function Navbar({ exam, timeLeft, totalTime, formatTime, answered, total }) {
   const urgentThreshold = totalTime ? totalTime * 0.2 : 240;
   const urgent = timeLeft <= urgentThreshold;
   const timeProgressPct = totalTime ? Math.round(((totalTime - timeLeft) / totalTime) * 100) : 0;
-
+  const navigate=useNavigate()
   return (
     <nav className="sticky top-0 z-50 h-15 px-6 flex items-center justify-between bg-white border-b border-[#D6E6F4] shadow-[0_1px_12px_0_rgba(11,36,71,0.08)]" style={{ height: "60px" }}>
 
@@ -12,7 +13,7 @@ export default function Navbar({ exam, timeLeft, totalTime, formatTime, answered
       <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#0B2447] via-[#3B82F6] to-[#BFDBFE]" />
 
       {/* Brand */}
-      <div className="flex items-center gap-3">
+      <div onClick={()=>navigate("/HomePage")} className="flex items-center gap-3">
         <div className="w-9 h-9 bg-[#0B2447] rounded-xl flex items-center justify-center shadow-md shadow-blue-900/20 shrink-0">
           <Brain className="w-[18px] h-[18px] text-white" />
         </div>

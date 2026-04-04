@@ -113,17 +113,14 @@ useEffect(() => {
               <div className="p-4 w-fit bg-amber-50 rounded-2xl text-amber-600 group-hover:bg-[#001F3F] group-hover:text-white transition-all duration-300 mb-6">
                 <Zap size={32} fill="currentColor" />
               </div>
-              <h3 className="text-3xl font-bold text-[#001F3F] mb-2">Daily Sprint</h3>
+              <h3 className="text-3xl font-bold text-[#001F3F] mb-2">Daily Challenge</h3>
               <p className="text-slate-500 text-base mb-8 max-w-[250px]">
                 10 high-impact questions to keep your {selectedExam} prep sharp.
               </p>
             </div>
 
             <div className="mt-auto flex items-center justify-between pt-6 border-t border-slate-100">
-              <div className="flex -space-x-2">
-                {[1,2,3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200" />)}
-                <span className="pl-4 text-xs font-bold text-slate-400 flex items-center">+1.2k active</span>
-              </div>
+              
               <button
               onClick={() => {if (!selectedExam) {
                 alert("⚠️ Please select an exam first");
@@ -151,9 +148,7 @@ useEffect(() => {
             </div>
 
             <div className="mt-auto flex items-center justify-between pt-6 border-t border-slate-100">
-              <span className="px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-500">
-                45 Qs • 60 Mins
-              </span>
+             
               <button
               className="bg-white border-2 border-[#001F3F] text-[#001F3F] px-7 py-3 rounded-xl font-bold text-sm hover:bg-[#001F3F] hover:text-white transition-all"
               onClick={() => {
