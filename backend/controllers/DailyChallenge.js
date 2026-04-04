@@ -14,12 +14,14 @@ export const getDailyChallenge = async (req, res) => {
     q."Option_4" AS option4,
     q."Answer" AS correct,
     q."difficulty",
+    q."Image" AS image,
     dc.time_limit,
     e.exam_name,
     em.correct_marks,
     em.wrong_marks,
     em.unattempted_marks,
     dc.challenge_id
+    
 
 FROM "DailyChallenge" dc
 

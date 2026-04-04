@@ -90,7 +90,7 @@ useEffect(() => {
             </p>
             <div className="flex flex-wrap gap-4">
               <button 
-              onClick={() => navigate(`/practice/${encodeURIComponent(selectedExam)}`)}
+              onClick={() => navigate(`/practice/${encodeURIComponent(selectedExam.replace(/\s+/g, ''))}`)}
               className="bg-white text-[#001F3F] px-8 py-4 rounded-2xl font-bold shadow-lg hover:scale-105 transition-all flex items-center gap-2">
               Start Practice <ArrowRight size={18} />
               </button>
