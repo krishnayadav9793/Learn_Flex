@@ -27,10 +27,10 @@ useEffect(() => {
     }
   );
       
-      // if (!res.ok) throw new Error("Failed to Fetch");
+      if (!res.ok) throw new Error("Failed to Fetch");
 
       const data = await res.json();
-      if(data?.msg==="No token"||data?.msg==="User not found")navigate("/login")
+      // if(data?.msg==="No token"||data?.msg==="User not found")navigate("/login")
       const formatted = {};
       data.forEach((row) => {
         if (!formatted[row.exam_name]) {
