@@ -90,20 +90,40 @@ const pushFallbackHistory = (userId, entry) => {
   historyFallback.set(userId, current.slice(0, 30));
 };
 
-export const getPracticeMeta = async (_req, res) => {
+export const getPracticeMeta = async (req, res) => {
   try {
-    const stats = await sql`
-      SELECT subject_id, COUNT(*) as count 
-      FROM "Questions" 
-      GROUP BY subject_id
-    `;
+    const examName = req.query.examName ? String(req.query.examName).trim() : null;
+    let examId = null;
+    
+    if (examName) {
+      const examRes = await sql`SELECT exam_id FROM "Exam" WHERE REPLACE(exam_name, ' ', '') ILIKE REPLACE(${examName}, ' ', '') LIMIT 1`;
+      if (examRes.length > 0) examId = examRes[0].exam_id;
+    }
+
+    let stats;
+    if (examId) {
+      stats = await sql`
+        SELECT q.subject_id, s.subject_name as subject_name, COUNT(*) as count 
+        FROM "Questions" q
+        LEFT JOIN "Subject" s ON q.subject_id = s.subject_id
+        WHERE q."Exam_id" = ${examId}
+        GROUP BY q.subject_id, s.subject_name
+      `;
+    } else {
+      stats = await sql`
+        SELECT q.subject_id, s.subject_name as subject_name, COUNT(*) as count 
+        FROM "Questions" q
+        LEFT JOIN "Subject" s ON q.subject_id = s.subject_id
+        GROUP BY q.subject_id, s.subject_name
+      `;
+    }
 
     const details = stats.map(row => {
-      const subjKey = REVERSE_SUBJECT_MAP[row.subject_id] || `subject_${row.subject_id}`;
+      const subjKey = row.subject_name || `subject_${row.subject_id}`;
       const count = Number(row.count) || 0;
       return {
         key: subjKey,
-        label: SUBJECT_LABELS[subjKey] || subjKey,
+        label: row.subject_name || `Subject ${row.subject_id}`,
         availableQuestions: count,
         topics: [
           { name: "General", count: count }
@@ -120,8 +140,16 @@ export const getPracticeMeta = async (_req, res) => {
 
 export const createPracticeSession = async (req, res) => {
   try {
+    const examName = req.body.examName ? String(req.body.examName).trim() : null;
+    let examId = null;
+    if (examName) {
+      const examRes = await sql`SELECT exam_id FROM "Exam" WHERE REPLACE(exam_name, ' ', '') ILIKE REPLACE(${examName}, ' ', '') LIMIT 1`;
+      if (examRes.length > 0) examId = examRes[0].exam_id;
+    }
+
     const subject = normalizeSubject(req.body.subject);
-    const subjectId = DB_SUBJECT_MAP[subject];
+    const subjectRes = await sql`SELECT subject_id FROM "Subject" WHERE subject_name ILIKE ${subject} LIMIT 1`;
+    const subjectId = subjectRes.length > 0 ? subjectRes[0].subject_id : DB_SUBJECT_MAP[subject];
 
     if (!subjectId) {
       return res.status(400).json({ msg: "Invalid subject selected" });
@@ -156,6 +184,7 @@ export const createPracticeSession = async (req, res) => {
             "Answer"
           FROM "Questions"
           WHERE subject_id = ${subjectId}
+            AND (${examId || null}::uuid IS NULL OR "Exam_id" = ${examId || null}::uuid)
             AND "Ques_id" != ALL(${excludeIds})
         ) AS unique_questions
         ORDER BY RANDOM()
@@ -189,6 +218,7 @@ export const createPracticeSession = async (req, res) => {
             "Answer"
           FROM "Questions"
           WHERE subject_id = ${subjectId}
+            AND (${examId || null}::uuid IS NULL OR "Exam_id" = ${examId || null}::uuid)
             AND "Ques_id" = ANY(${excludeIds})
             ${excludeFromExtra.length > 0 ? sql`AND "Ques_id" != ALL(${excludeFromExtra})` : sql``}
         ) AS unique_extra
@@ -220,6 +250,7 @@ export const createPracticeSession = async (req, res) => {
             "Answer"
           FROM "Questions"
           WHERE subject_id = ${subjectId}
+            AND (${examId || null}::uuid IS NULL OR "Exam_id" = ${examId || null}::uuid)
         ) AS unique_fallback
         ORDER BY RANDOM()
         LIMIT ${requestedCount}
@@ -396,7 +427,7 @@ export const submitPracticeSession = async (req, res) => {
 
   if (userId !== "guest") {
     try {
-      const subjectIdRes = await sql`SELECT subject_id FROM practice_subjects WHERE subject_label ILIKE ${session.subject} LIMIT 1`;
+      const subjectIdRes = await sql`SELECT subject_id FROM "Subject" WHERE subject_name ILIKE ${session.subject} LIMIT 1`;
       const subjectId = subjectIdRes.length ? subjectIdRes[0].subject_id : (DB_SUBJECT_MAP[normalizeSubject(session.subject)] || 1);
 
       const dbSessionId = session.sessionId;
@@ -454,11 +485,11 @@ export const getPracticeHistory = async (req, res) => {
 
   try {
     const submissionsRows = await sql`
-      SELECT s.submission_id, ps.subject_label as subject,
+      SELECT s.submission_id, ps.subject_name as subject,
              s.started_at, s.submitted_at, s.score, s.max_score, 
              s.percentage, s.attempted, s.correct, s.wrong
       FROM practice_submissions s
-      JOIN practice_subjects ps ON s.subject_id = ps.subject_id
+      JOIN "Subject" ps ON s.subject_id = ps.subject_id
       WHERE s.user_id = ${userId}
       ORDER BY s.submitted_at DESC
       LIMIT 30

@@ -18,7 +18,7 @@ import {
   AlertCircle,
   Zap,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const API_BASE = "http://localhost:3000";
 
@@ -65,6 +65,7 @@ const QuestionDot = ({ index, answered, correct, wrong, current, onClick }) => {
 
 export default function PracticeMode() {
   const navigate = useNavigate();
+  const { exam_name: examName } = useParams();
 
   const [subjects, setSubjects]             = useState([]);
   const [subject, setSubject]               = useState("");
@@ -129,7 +130,8 @@ export default function PracticeMode() {
     const fetchMeta = async () => {
       setLoadingMeta(true); setError("");
       try {
-        const res = await fetch(`${API_BASE}/practice/meta`, { credentials: "include" });
+        const query = examName ? `?examName=${encodeURIComponent(examName)}` : "";
+        const res = await fetch(`${API_BASE}/practice/meta${query}`, { credentials: "include" });
         if (res.status === 401) { navigate("/login"); return; }
         const data = await res.json();
         const subjectList = data.subjects || [];
@@ -140,7 +142,7 @@ export default function PracticeMode() {
     };
     fetchMeta();
     fetchHistory();
-  }, [fetchHistory, navigate]);
+  }, [fetchHistory, navigate, examName]);
 
   useEffect(() => {
     if (!subject) return;
@@ -167,7 +169,7 @@ export default function PracticeMode() {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          subject, topics: ["General"],
+          examName, subject, topics: ["General"],
           questionCount: safeCount,
           timeLimitMinutes: Math.max(1, Number(timeLimitMinutes) || 1),
           excludeIds: history.flatMap((h) => h.questionResults?.map((qr) => qr.questionId) || []),
@@ -311,6 +313,11 @@ export default function PracticeMode() {
                       <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.3 0 0 5.3 0 12h4z" />
                     </svg>
                     <span className="text-sm text-slate-500">Loading subjects…</span>
+                  </div>
+                ) : subjects.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
+                    <AlertCircle className="w-8 h-8 text-slate-300" />
+                    <p className="text-sm text-slate-500 font-semibold max-w-[200px]">No questions are currently available for this exam.</p>
                   </div>
                 ) : (
                   <>
