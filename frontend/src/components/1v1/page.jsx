@@ -879,8 +879,8 @@ export default function CompetitionPage({ onQuizStart }) {
             const mySocketId  = socket.id
             const myResult    = resultData[mySocketId]
             const oppResult   = resultData[Object.keys(resultData).find(id => id !== mySocketId)]
-            const myScore     = myResult?.filter((a, i) => a === questions[i]?.Answer).length || 0
-            const oppScore    = oppResult?.filter((a, i) => a === questions[i]?.Answer).length || 0
+            const myScore  = myResult?.filter((a, i) => Number(a) === Number(questions[i]?.Answer)).length || 0
+            const oppScore = oppResult?.filter((a, i) => Number(a) === Number(questions[i]?.Answer)).length || 0
             const outcome     = myScore > oppScore ? 'win' : oppScore > myScore ? 'lose' : 'tie'
 
             return (
@@ -916,27 +916,27 @@ export default function CompetitionPage({ onQuizStart }) {
                     <div key={idx} className="rcard">
                       <p className="rcard-num">Question {idx + 1}</p>
                       <div className="rcard-responses">
-                        <div className="rcard-resp">
-                          <span className="resp-who you">You</span>
-                          <span className="resp-ans">
-                            {OPTION_LABELS[myAns - 1]} — {q[`Option_${myAns}`]?.trim()}
-                          </span>
-                          <span className={`resp-correct-tag ${myAns === correct ? 'right' : 'wrong'}`}>
-                            {myAns === correct ? '✓ Correct' : '✗ Wrong'}
-                          </span>
-                        </div>
-                        <div className="rcard-resp">
-                          <span className="resp-who opp">
-                            {matchData?.opponent?.name?.split(' ')[0] || 'Opponent'}
-                          </span>
-                          <span className="resp-ans">
-                            {OPTION_LABELS[oppAns - 1]} — {q[`Option_${oppAns}`]?.trim()}
-                          </span>
-                          <span className={`resp-correct-tag ${oppAns === correct ? 'right' : 'wrong'}`}>
-                            {oppAns === correct ? '✓ Correct' : '✗ Wrong'}
-                          </span>
-                        </div>
-                      </div>
+  <div className="rcard-resp">
+    <span className="resp-who you">You</span>
+    <span className="resp-ans">
+      {OPTION_LABELS[myAns - 1]} — {q[`Option_${myAns}`]?.trim()}
+    </span>
+    <span className={`resp-correct-tag ${Number(myAns) === Number(correct) ? 'right' : 'wrong'}`}>
+      {Number(myAns) === Number(correct) ? '✓ Correct' : '✗ Wrong'}
+    </span>
+  </div>
+  <div className="rcard-resp">
+    <span className="resp-who opp">
+      {matchData?.opponent?.name?.split(' ')[0] || 'Opponent'}
+    </span>
+    <span className="resp-ans">
+      {OPTION_LABELS[oppAns - 1]} — {q[`Option_${oppAns}`]?.trim()}
+    </span>
+    <span className={`resp-correct-tag ${Number(oppAns) === Number(correct) ? 'right' : 'wrong'}`}>
+      {Number(oppAns) === Number(correct) ? '✓ Correct' : '✗ Wrong'}
+    </span>
+  </div>
+</div>
                       <div className="correct-row">
                         <span>✓</span>
                         <span>
