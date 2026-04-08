@@ -213,6 +213,17 @@ export default function PracticeMode() {
     if (isSessionLocked) return;
     setAnswers((prev) => ({ ...prev, [qId]: val }));
   };
+
+  // Clear the answer for a given question
+  const clearAnswer = (qId) => {
+    if (isSessionLocked) return;
+    setAnswers((prev) => {
+      const next = { ...prev };
+      delete next[qId];
+      return next;
+    });
+  };
+
   const resetSessionView = () => { setSession(null); setResult(null); setAnswers({}); setQuestionIndex(0); };
 
   const Spinner = () => (
@@ -595,6 +606,21 @@ export default function PracticeMode() {
                         {currentQuestion.optionSource === "generated" && currentQuestion.imageUrl && (
                           <p className="text-xs text-slate-400 mb-2">Option text is image-based — match option number from the image.</p>
                         )}
+
+                        {/* Clear response button — only shown when an answer is selected and session is live */}
+                        {answers[currentQuestion.id] && !isSessionLocked && (
+                          <div className="flex justify-end mb-1">
+                            <button
+                              onClick={() => clearAnswer(currentQuestion.id)}
+                              className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-red-500 border border-slate-200 hover:border-red-200 hover:bg-red-50 rounded-lg px-2.5 py-1 transition-all duration-150"
+                              title="Clear selected answer"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              Clear Response
+                            </button>
+                          </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                           {currentQuestion.options.map((option) => {
                             const selectedValue  = answers[currentQuestion.id] || "";
@@ -625,6 +651,10 @@ export default function PracticeMode() {
                               <label
                                 key={`${currentQuestion.id}-${option.key}`}
                                 data-locked={isSessionLocked}
+                                onDoubleClick={() => {
+                                  if (!isSessionLocked && isSelected) clearAnswer(currentQuestion.id);
+                                }}
+                                title={isSelected && !isSessionLocked ? "Double-click to clear" : undefined}
                                 className={`option-card flex items-start gap-3 rounded-xl px-4 py-3.5 border cursor-pointer shadow-sm ${borderCls} ${bgCls}`}
                               >
                                 <div className={`flex-shrink-0 mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${radioCls}`}>
@@ -693,52 +723,52 @@ export default function PracticeMode() {
                 </div>
 
                 {/* Nav footer */}
-<div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3">
-  {/* Previous Button */}
-  <button
-    onClick={() => setQuestionIndex((p) => Math.max(0, p - 1))}
-    disabled={questionIndex === 0}
-    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
-  >
-    <ChevronLeft className="w-4 h-4" />
-    Previous
-  </button>
+                <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => setQuestionIndex((p) => Math.max(0, p - 1))}
+                    disabled={questionIndex === 0}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Previous
+                  </button>
 
-  {/* Middle Section: Submit Button (only on last question) OR Question Counter */}
-  {questionIndex === session.questionCount - 1 && !result ? (
-    <button
-      onClick={submitPractice}
-      disabled={submitting}
-      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg transition-all active:scale-[0.98] disabled:opacity-60"
-    >
-      {submitting ? (
-        <>
-          <Spinner />
-          Submitting...
-        </>
-      ) : (
-        <>
-          <Send className="w-4 h-4" />
-          Submit
-        </>
-      )}
-    </button>
-  ) : (
-    <span className="text-xs font-mono font-semibold text-slate-400">
-      {questionIndex + 1} / {session.questionCount}
-    </span>
-  )}
+                  {/* Middle Section: Submit Button (only on last question) OR Question Counter */}
+                  {questionIndex === session.questionCount - 1 && !result ? (
+                    <button
+                      onClick={submitPractice}
+                      disabled={submitting}
+                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg transition-all active:scale-[0.98] disabled:opacity-60"
+                    >
+                      {submitting ? (
+                        <>
+                          <Spinner />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          Submit
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <span className="text-xs font-mono font-semibold text-slate-400">
+                      {questionIndex + 1} / {session.questionCount}
+                    </span>
+                  )}
 
-  {/* Next Button */}
-  <button
-    onClick={() => setQuestionIndex((p) => Math.min(session.questionCount - 1, p + 1))}
-    disabled={questionIndex >= session.questionCount - 1}
-    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#0b2a4a] hover:bg-[#123d6b] text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-md active:scale-[0.98]"
-  >
-    Next
-    <ChevronRight className="w-4 h-4" />
-  </button>
-</div>
+                  {/* Next Button */}
+                  <button
+                    onClick={() => setQuestionIndex((p) => Math.min(session.questionCount - 1, p + 1))}
+                    disabled={questionIndex >= session.questionCount - 1}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#0b2a4a] hover:bg-[#123d6b] text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-md active:scale-[0.98]"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             )}
 

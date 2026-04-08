@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 const Banner = ({ data }) => {
   const [timeLeft, setTimeLeft] = useState("--:--:--");
-  const navigate=useNavigate();
-  // ── Derive status from Start_Time ────────────────────────────────────────────
+  const navigate = useNavigate();
+
   const status = (() => {
     if (!data?.Start_Time) return "upcoming";
     const start = new Date(data.Start_Time).getTime();
@@ -32,10 +33,8 @@ const Banner = ({ data }) => {
     upcoming: "Upcoming",
   }[status];
 
-  // ── Countdown timer ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!data?.Start_Time) return;
-
     const start = new Date(data.Start_Time).getTime();
     const end = start + (data.time_limit || 60) * 60 * 1000;
 
@@ -59,14 +58,12 @@ const Banner = ({ data }) => {
     return () => clearInterval(id);
   }, [data, status]);
 
-  // ── Formatted display date ───────────────────────────────────────────────────
   const formattedDate = (() => {
     if (!data?.Start_Time) return "";
     const d = new Date(data.Start_Time);
     return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   })();
 
-  // ── Formatted scheduled time ─────────────────────────────────────────────────
   const formattedTime = (() => {
     if (!data?.Start_Time) return "—";
     const d = new Date(data.Start_Time);
@@ -76,404 +73,334 @@ const Banner = ({ data }) => {
   const timerLabel = status === "live" ? "Ends In" : "Starts In";
 
   return (
+    /* Outer centering wrapper — 90% width, centered */
     <div
       style={{
-        background: "#fff",
-        borderRadius: "22px",
-        border: "1px solid #E5E1D3",
-        overflow: "hidden",
-        transition: "transform 0.2s, box-shadow 0.2s",
-        cursor: "pointer",
+        width: "90%",
+        margin: "0 auto",
         fontFamily: "'DM Sans', sans-serif",
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = "0 10px 36px rgba(0,31,63,0.09)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "none";
-      }}
     >
-      <div style={{ display: "flex", alignItems: "stretch" }}>
-        {/* Left accent bar */}
-        <div style={{ width: "5px", flexShrink: 0, background: accentColor }} />
+      <div
+        style={{
+          background: "#fff",
+          borderRadius: "22px",
+          border: "1px solid #E5E1D3",
+          overflow: "hidden",
+          transition: "transform 0.2s, box-shadow 0.2s",
+          cursor: "pointer",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-2px)";
+          e.currentTarget.style.boxShadow = "0 10px 36px rgba(0,31,63,0.09)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow = "none";
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "stretch" }}>
+          {/* Left accent bar */}
+          <div style={{ width: "5px", flexShrink: 0, background: accentColor }} />
 
-        {/* Card content */}
-        <div style={{ flex: 1, padding: "1.6rem 1.75rem" }}>
+          {/* Card content */}
+          <div style={{ flex: 1, padding: "1.4rem 1.5rem" }}>
 
-          {/* Top row: status badge + date */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "1rem",
-            }}
-          >
-            <span
+            {/* Top row: status badge + date */}
+            <div
               style={{
-                display: "inline-flex",
+                display: "flex",
                 alignItems: "center",
-                gap: "5px",
-                fontSize: "10px",
-                fontWeight: 800,
-                letterSpacing: "0.07em",
-                textTransform: "uppercase",
-                padding: "4px 10px",
-                borderRadius: "999px",
-                ...badgeStyle,
+                justifyContent: "space-between",
+                marginBottom: "1rem",
+                flexWrap: "wrap",
+                gap: "0.5rem",
               }}
             >
               <span
                 style={{
-                  width: "5px",
-                  height: "5px",
-                  borderRadius: "50%",
-                  background: "currentColor",
-                }}
-              />
-              {badgeLabel}
-            </span>
-
-            <span
-              style={{
-                fontSize: "12px",
-                color: "#94A3B8",
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-                <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M5 1v3M11 1v3M2 7h12" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
-              {formattedDate}
-            </span>
-          </div>
-
-          {/* Main row */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "1.5rem",
-            }}
-          >
-            {/* Left: title, description, stats */}
-            <div style={{ flex: 1 }}>
-              <div
-                style={{
-                  fontSize: "20px",
-                  fontWeight: 900,
-                  color: "#001F3F",
-                  letterSpacing: "-0.3px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  fontSize: "10px",
+                  fontWeight: 800,
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                  padding: "4px 10px",
+                  borderRadius: "999px",
+                  ...badgeStyle,
                 }}
               >
-                {data?.quizname}
-              </div>
-              <div
+                <span
+                  style={{
+                    width: "5px",
+                    height: "5px",
+                    borderRadius: "50%",
+                    background: "currentColor",
+                  }}
+                />
+                {badgeLabel}
+              </span>
+
+              <span
                 style={{
-                  fontSize: "13px",
-                  color: "#64748B",
+                  fontSize: "12px",
+                  color: "#94A3B8",
                   fontWeight: 600,
-                  marginTop: "2px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
                 }}
               >
-                {data?.description}
-              </div>
-
-              {/* Stat chips */}
-              <div style={{ display: "flex", gap: "0.7rem", marginTop: "1rem" }}>
-                {/* Scheduled time */}
-                <div
-                  style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E5E1D3",
-                    borderRadius: "12px",
-                    padding: "8px 14px",
-                    minWidth: "80px",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "9px",
-                      fontWeight: 800,
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                      color: "#94A3B8",
-                    }}
-                  >
-                    Time Schedule
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "15px",
-                      fontWeight: 900,
-                      color: "#001F3F",
-                      marginTop: "2px",
-                    }}
-                  >
-                    {formattedTime}
-                  </div>
-                </div>
-
-                {/* Questions */}
-                <div
-                  style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E5E1D3",
-                    borderRadius: "12px",
-                    padding: "8px 14px",
-                    minWidth: "80px",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "9px",
-                      fontWeight: 800,
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                      color: "#94A3B8",
-                    }}
-                  >
-                    Questions
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "15px",
-                      fontWeight: 900,
-                      color: "#001F3F",
-                      marginTop: "2px",
-                    }}
-                  >
-                    {data?.totalQuestions}{" "}
-                    <span style={{ fontSize: "11px", fontWeight: 600, color: "#94A3B8" }}>
-                      items
-                    </span>
-                  </div>
-                </div>
-
-                {/* Duration */}
-                <div
-                  style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E5E1D3",
-                    borderRadius: "12px",
-                    padding: "8px 14px",
-                    minWidth: "80px",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "9px",
-                      fontWeight: 800,
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                      color: "#94A3B8",
-                    }}
-                  >
-                    Duration
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "15px",
-                      fontWeight: 900,
-                      color: "#001F3F",
-                      marginTop: "2px",
-                    }}
-                  >
-                    {data?.time_limit}{" "}
-                    <span style={{ fontSize: "11px", fontWeight: 600, color: "#94A3B8" }}>
-                      mins
-                    </span>
-                  </div>
-                </div>
-              </div>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M5 1v3M11 1v3M2 7h12" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+                {formattedDate}
+              </span>
             </div>
 
-            {/* Action Footer */}
-            {/* Action Footer */}
-            {/* <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-center">
-            {statusInfo.label === 'COMPLETED' ? (
-              <button
-                onClick={() => navigate(`/leaderboard/`, {
-                  state: {
-                    quizId: quiz.data.test_id,
-                    quizName: quizData.name
-                  }
-                })}
-                className="w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-200"
-              >
-                <Trophy size={18} />
-                View Leaderboard
-              </button>
-            ) : (
-              <button
-                disabled={statusInfo.label !== 'LIVE'}
-                onClick={statusInfo.label === 'LIVE' ? renderQuiz : undefined}
-                className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 ${statusInfo.label === 'LIVE'
-                  ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-200'
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                  }`}
-              >
-                {statusInfo.label === 'LIVE' ? 'Enter Quiz Lobby' : 'Quiz Not Yet Available'}
-              </button>
-            )} */}
-            {/* Right: timer + CTA */}
+            {/* Main row — stacks vertically on small screens */}
             <div
               style={{
                 display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-end",
-                gap: "0.75rem",
-                flexShrink: 0,
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: "1.25rem",
+                flexWrap: "wrap",
               }}
             >
-              {/* Timer */}
-              <div
-                style={{
-                  background: "#001F3F",
-                  borderRadius: "14px",
-                  padding: "10px 18px",
-                  textAlign: "center",
-                  minWidth: "140px",
-                }}
-              >
+              {/* Left: title, description, stats */}
+              <div style={{ flex: "1 1 220px", minWidth: 0 }}>
                 <div
                   style={{
-                    fontSize: "9px",
-                    fontWeight: 800,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: "#7CA4C8",
-                    marginBottom: "4px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "4px",
+                    fontSize: "clamp(15px, 2.5vw, 20px)",
+                    fontWeight: 900,
+                    color: "#001F3F",
+                    letterSpacing: "-0.3px",
+                    wordBreak: "break-word",
                   }}
                 >
-                  <svg width="9" height="9" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="9" r="5.5" stroke="#7CA4C8" strokeWidth="1.5" />
-                    <path d="M8 6v3l2 1.5" stroke="#7CA4C8" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M6 1h4" stroke="#7CA4C8" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                  {timerLabel}
+                  {data?.quizname}
                 </div>
                 <div
                   style={{
-                    fontSize: "22px",
-                    fontWeight: 900,
-                    color: "#fff",
-                    letterSpacing: "2px",
-                    fontVariantNumeric: "tabular-nums",
+                    fontSize: "13px",
+                    color: "#64748B",
+                    fontWeight: 600,
+                    marginTop: "2px",
+                    wordBreak: "break-word",
                   }}
                 >
-                  {timeLeft}
+                  {data?.description}
+                </div>
+
+                {/* Stat chips — wrap naturally on small screens */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "0.6rem",
+                    marginTop: "1rem",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  {[
+                    { label: "Time Schedule", value: formattedTime, unit: null },
+                    { label: "Questions", value: data?.totalQuestions, unit: "items" },
+                    { label: "Duration", value: data?.time_limit, unit: "mins" },
+                  ].map(({ label, value, unit }) => (
+                    <div
+                      key={label}
+                      style={{
+                        background: "#F8FAFC",
+                        border: "1px solid #E5E1D3",
+                        borderRadius: "12px",
+                        padding: "8px 12px",
+                        flex: "1 1 70px",
+                        minWidth: "70px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: "9px",
+                          fontWeight: 800,
+                          letterSpacing: "0.08em",
+                          textTransform: "uppercase",
+                          color: "#94A3B8",
+                        }}
+                      >
+                        {label}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "clamp(13px, 2vw, 15px)",
+                          fontWeight: 900,
+                          color: "#001F3F",
+                          marginTop: "2px",
+                        }}
+                      >
+                        {value}{" "}
+                        {unit && (
+                          <span style={{ fontSize: "11px", fontWeight: 600, color: "#94A3B8" }}>
+                            {unit}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* CTA Button */}
-              {status === "completed" && (
-                <button
+              {/* Right: timer + CTA */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "stretch",
+                  gap: "0.75rem",
+                  flex: "0 1 150px",
+                  minWidth: "130px",
+                }}
+              >
+                {/* Timer */}
+                <div
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px",
-                    background: "linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)",
-                    color: "#78350F",
-                    fontSize: "13px",
-                    fontWeight: 800,
-                    padding: "11px 20px",
-                    borderRadius: "14px",
-                    border: "none",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    width: "100%",
-                  }}
-                  onClick={() => navigate(`/leaderboard/`, {
-                    state: {
-                      quizId: data.test_id,
-                      quizName: data.name
-                    }
-                  })}
-                >
-                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
-                    <polygon
-                      points="10,2 12.6,7.4 18.5,8.3 14.2,12.5 15.2,18.4 10,15.7 4.8,18.4 5.8,12.5 1.5,8.3 7.4,7.4"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  View Leaderboard
-                </button>
-              )}
-
-              {status === "live" && (
-                <button
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px",
                     background: "#001F3F",
-                    color: "#fff",
-                    fontSize: "13px",
-                    fontWeight: 800,
-                    padding: "11px 20px",
                     borderRadius: "14px",
-                    border: "none",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    width: "100%",
+                    padding: "10px 14px",
+                    textAlign: "center",
                   }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
-                    <polygon points="5,3 17,10 5,17" />
-                  </svg>
-                  Attempt Now
-                </button>
-              )}
+                  <div
+                    style={{
+                      fontSize: "9px",
+                      fontWeight: 800,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      color: "#7CA4C8",
+                      marginBottom: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <svg width="9" height="9" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="9" r="5.5" stroke="#7CA4C8" strokeWidth="1.5" />
+                      <path d="M8 6v3l2 1.5" stroke="#7CA4C8" strokeWidth="1.5" strokeLinecap="round" />
+                      <path d="M6 1h4" stroke="#7CA4C8" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                    {timerLabel}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "clamp(16px, 3vw, 22px)",
+                      fontWeight: 900,
+                      color: "#fff",
+                      letterSpacing: "2px",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {timeLeft}
+                  </div>
+                </div>
 
-              {status === "upcoming" && (
-                <button
-                  disabled
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px",
-                    background: "#F1F5F9",
-                    color: "#94A3B8",
-                    fontSize: "13px",
-                    fontWeight: 800,
-                    padding: "11px 20px",
-                    borderRadius: "14px",
-                    border: "none",
-                    cursor: "not-allowed",
-                    whiteSpace: "nowrap",
-                    width: "100%",
-                  }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="9" r="5.5" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="M8 6v3l1.5 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                  Not Started Yet
-                </button>
-              )}
+                {/* CTA Button */}
+                {status === "completed" && (
+                  <button
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      background: "linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)",
+                      color: "#78350F",
+                      fontSize: "13px",
+                      fontWeight: 800,
+                      padding: "11px 16px",
+                      borderRadius: "14px",
+                      border: "none",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      width: "100%",
+                    }}
+                    onClick={() =>
+                      navigate(`/leaderboard/`, {
+                        state: { quizId: data.test_id, quizName: data.name },
+                      })
+                    }
+                  >
+                    <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+                      <polygon
+                        points="10,2 12.6,7.4 18.5,8.3 14.2,12.5 15.2,18.4 10,15.7 4.8,18.4 5.8,12.5 1.5,8.3 7.4,7.4"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    View Leaderboard
+                  </button>
+                )}
+
+                {status === "live" && (
+                  <button
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      background: "#001F3F",
+                      color: "#fff",
+                      fontSize: "13px",
+                      fontWeight: 800,
+                      padding: "11px 16px",
+                      borderRadius: "14px",
+                      border: "none",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      width: "100%",
+                    }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
+                      <polygon points="5,3 17,10 5,17" />
+                    </svg>
+                    Attempt Now
+                  </button>
+                )}
+
+                {status === "upcoming" && (
+                  <button
+                    disabled
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      background: "#F1F5F9",
+                      color: "#94A3B8",
+                      fontSize: "13px",
+                      fontWeight: 800,
+                      padding: "11px 16px",
+                      borderRadius: "14px",
+                      border: "none",
+                      cursor: "not-allowed",
+                      whiteSpace: "nowrap",
+                      width: "100%",
+                    }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="9" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M8 6v3l1.5 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                    Not Started Yet
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-
   );
 };
 
