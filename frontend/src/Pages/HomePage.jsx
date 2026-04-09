@@ -28,18 +28,18 @@ const LearnFlexHome = () => {
         });
         
         console.log("res_maa", res);
-        if (!res.ok) throw new Error("Failed to Fetch");
+        if (!res.ok) navigate("/login");
 
-        const data = await res.json();
-        
-        const formatted = {};
-        data.forEach((row) => {
-          if (!formatted[row.exam_name]) {
-            formatted[row.exam_name] = {
-              id: row.exam_id,
-              subjects: [],
-            };
-          }
+      const data = await res.json();
+      if(data?.msg==="No token"||data?.msg==="User not found"|| data?.msg==="Invalid token")navigate("/login")
+      const formatted = {};
+      data.forEach((row) => {
+        if (!formatted[row.exam_name]) {
+          formatted[row.exam_name] = {
+            id: row.exam_id,
+            subjects: [],
+          };
+        }
 
           if (
             row.subject_name &&
@@ -194,10 +194,7 @@ const LearnFlexHome = () => {
                 Real-time battle with other {selectedExam} aspirants. Winner takes the streak!
               </p>
 
-              <button 
-                className="bg-amber-400 text-[#001F3F] px-10 py-4 rounded-2xl font-extrabold shadow-xl shadow-amber-900/20 hover:bg-amber-300 hover:-translate-y-1 transition-all active:scale-95" 
-                onClick={() => navigate("/v")}
-              >
+              <button className="bg-amber-400 text-[#001F3F] px-10 py-4 rounded-2xl font-extrabold shadow-xl shadow-amber-900/20 hover:bg-amber-300 hover:-translate-y-1 transition-all active:scale-95" onClick={()=>navigate("/1v1")}>
                 Find an Opponent
               </button>
             </div>

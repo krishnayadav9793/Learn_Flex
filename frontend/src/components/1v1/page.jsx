@@ -584,12 +584,12 @@ const colors = ["#0b2a4a", "#123d6b", "#1c4f85", "#2e6bb3"];
 
 function BgSymbols() {
   const items = Array.from({ length: 22 }, (_, i) => {
-    const sym   = SYMBOLS[i % SYMBOLS.length]
+    const sym = SYMBOLS[i % SYMBOLS.length]
     const color = colors[i % colors.length]   // 👈 pick a color by index
-    const left  = (i * 4.5 + 2) % 98
+    const left = (i * 4.5 + 2) % 98
     const delay = (i * 1.1) % 14
-    const dur   = 12 + (i % 7)
-    const size  = 0.8 + (i % 3) * 0.4
+    const dur = 12 + (i % 7)
+    const size = 0.8 + (i % 3) * 0.4
     return (
       <span
         key={i}
@@ -599,7 +599,7 @@ function BgSymbols() {
           fontSize: `${size}rem`,
           animationDuration: `${dur}s`,
           animationDelay: `${delay}s`,
-          color: color,            
+          color: color,
         }}
       >
         {sym}
@@ -611,18 +611,18 @@ function BgSymbols() {
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 export default function CompetitionPage({ onQuizStart }) {
-  const [phase, setPhase]           = useState(PHASES.FINDING)
-  const [matchData, setMatchData]   = useState(null)
-  const [count, setCount]           = useState(3)
-  const [dots, setDots]             = useState('')
-  const countRef                    = useRef(null)
-  const navigate                    = useNavigate()
+  const [phase, setPhase] = useState(PHASES.FINDING)
+  const [matchData, setMatchData] = useState(null)
+  const [count, setCount] = useState(3)
+  const [dots, setDots] = useState('')
+  const countRef = useRef(null)
+  const navigate = useNavigate()
 
-  const [currentQ, setCurrentQ]               = useState(0)
-  const [selected, setSelected]               = useState(null)
-  const [userAnswers, setUserAnswers]         = useState([])
-  const [timeLeft, setTimeLeft]               = useState(600)
-  const [resultData, setResultData]           = useState(null)
+  const [currentQ, setCurrentQ] = useState(0)
+  const [selected, setSelected] = useState(null)
+  const [userAnswers, setUserAnswers] = useState([])
+  const [timeLeft, setTimeLeft] = useState(600)
+  const [resultData, setResultData] = useState(null)
   const [waitingForOpponent, setWaitingForOpponent] = useState(false)
   const timerRef = useRef(null)
 
@@ -648,7 +648,7 @@ export default function CompetitionPage({ onQuizStart }) {
   /* socket */
   useEffect(() => {
     const examId = localStorage.getItem('examId') || 'demo'
-    const name   = localStorage.getItem('name')
+    const name = localStorage.getItem('name')
     socket.emit('find_match', { exam_id: examId, name })
 
     socket.on('opponent_left', () => {
@@ -658,7 +658,7 @@ export default function CompetitionPage({ onQuizStart }) {
 
     socket.on('match_found', (data) => {
       const mySocketId = socket.id
-      const me       = data.player.socketId === mySocketId ? data.player : data.opponent
+      const me = data.player.socketId === mySocketId ? data.player : data.opponent
       const opponent = data.player.socketId === mySocketId ? data.opponent : data.player
       setMatchData({ ...data, player: me, opponent })
       setPhase(PHASES.MATCH_FOUND)
@@ -719,8 +719,8 @@ export default function CompetitionPage({ onQuizStart }) {
   }
 
   const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
-  const timerPct   = (timeLeft / 600) * 100
-  const isWarn     = timeLeft <= 60
+  const timerPct = (timeLeft / 600) * 100
+  const isWarn = timeLeft <= 60
 
   /* ── render ── */
   return (
@@ -762,6 +762,13 @@ export default function CompetitionPage({ onQuizStart }) {
                 <p className="finding-h">Finding Opponent</p>
                 <p className="finding-sub">Searching for a match{dots}</p>
               </div>
+              <button
+                className="btn-secondary"
+                onClick={() => navigate('/homepage')}
+                style={{ marginTop: '12px', minWidth: '180px' }}
+              >
+                Cancel Search
+              </button>
             </div>
           )}
 
@@ -876,12 +883,12 @@ export default function CompetitionPage({ onQuizStart }) {
 
           {/* ── RESULT ── */}
           {phase === PHASES.RESULT && resultData && (() => {
-            const mySocketId  = socket.id
-            const myResult    = resultData[mySocketId]
-            const oppResult   = resultData[Object.keys(resultData).find(id => id !== mySocketId)]
-            const myScore  = myResult?.filter((a, i) => Number(a) === Number(questions[i]?.Answer)).length || 0
+            const mySocketId = socket.id
+            const myResult = resultData[mySocketId]
+            const oppResult = resultData[Object.keys(resultData).find(id => id !== mySocketId)]
+            const myScore = myResult?.filter((a, i) => Number(a) === Number(questions[i]?.Answer)).length || 0
             const oppScore = oppResult?.filter((a, i) => Number(a) === Number(questions[i]?.Answer)).length || 0
-            const outcome     = myScore > oppScore ? 'win' : oppScore > myScore ? 'lose' : 'tie'
+            const outcome = myScore > oppScore ? 'win' : oppScore > myScore ? 'lose' : 'tie'
 
             return (
               <div className="result">
@@ -889,9 +896,9 @@ export default function CompetitionPage({ onQuizStart }) {
                   <p className="result-title">Quiz Complete</p>
 
                   <div className={`winner-banner ${outcome}`}>
-                    {outcome === 'win'  && <><span>🏆</span> You Win!</>}
+                    {outcome === 'win' && <><span>🏆</span> You Win!</>}
                     {outcome === 'lose' && <><span>😤</span> {matchData?.opponent?.name || 'Opponent'} Wins</>}
-                    {outcome === 'tie'  && <><span>🤝</span> It's a Tie!</>}
+                    {outcome === 'tie' && <><span>🤝</span> It's a Tie!</>}
                   </div>
 
                   <div className="scores-row">
@@ -909,34 +916,34 @@ export default function CompetitionPage({ onQuizStart }) {
                 </div>
 
                 {questions.map((q, idx) => {
-                  const myAns  = myResult?.[idx]
+                  const myAns = myResult?.[idx]
                   const oppAns = oppResult?.[idx]
                   const correct = q.Answer
                   return (
                     <div key={idx} className="rcard">
                       <p className="rcard-num">Question {idx + 1}</p>
                       <div className="rcard-responses">
-  <div className="rcard-resp">
-    <span className="resp-who you">You</span>
-    <span className="resp-ans">
-      {OPTION_LABELS[myAns - 1]} — {q[`Option_${myAns}`]?.trim()}
-    </span>
-    <span className={`resp-correct-tag ${Number(myAns) === Number(correct) ? 'right' : 'wrong'}`}>
-      {Number(myAns) === Number(correct) ? '✓ Correct' : '✗ Wrong'}
-    </span>
-  </div>
-  <div className="rcard-resp">
-    <span className="resp-who opp">
-      {matchData?.opponent?.name?.split(' ')[0] || 'Opponent'}
-    </span>
-    <span className="resp-ans">
-      {OPTION_LABELS[oppAns - 1]} — {q[`Option_${oppAns}`]?.trim()}
-    </span>
-    <span className={`resp-correct-tag ${Number(oppAns) === Number(correct) ? 'right' : 'wrong'}`}>
-      {Number(oppAns) === Number(correct) ? '✓ Correct' : '✗ Wrong'}
-    </span>
-  </div>
-</div>
+                        <div className="rcard-resp">
+                          <span className="resp-who you">You</span>
+                          <span className="resp-ans">
+                            {OPTION_LABELS[myAns - 1]} — {q[`Option_${myAns}`]?.trim()}
+                          </span>
+                          <span className={`resp-correct-tag ${Number(myAns) === Number(correct) ? 'right' : 'wrong'}`}>
+                            {Number(myAns) === Number(correct) ? '✓ Correct' : '✗ Wrong'}
+                          </span>
+                        </div>
+                        <div className="rcard-resp">
+                          <span className="resp-who opp">
+                            {matchData?.opponent?.name?.split(' ')[0] || 'Opponent'}
+                          </span>
+                          <span className="resp-ans">
+                            {OPTION_LABELS[oppAns - 1]} — {q[`Option_${oppAns}`]?.trim()}
+                          </span>
+                          <span className={`resp-correct-tag ${Number(oppAns) === Number(correct) ? 'right' : 'wrong'}`}>
+                            {Number(oppAns) === Number(correct) ? '✓ Correct' : '✗ Wrong'}
+                          </span>
+                        </div>
+                      </div>
                       <div className="correct-row">
                         <span>✓</span>
                         <span>
