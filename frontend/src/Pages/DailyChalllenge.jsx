@@ -114,7 +114,7 @@ export default function LearnFlex() {
       const attempts = qs.map(q => ({
         challenge_id: Number(challengeId),
         ques_id: q.id,
-        marked_option: ans[q.id] !== undefined ? ans[q.id] : null,
+        marked_option: ans[q.id] !== undefined ? ans[q.id]+1 : null,
         attempt_at: new Date().toISOString(),
       }));
 
@@ -124,6 +124,7 @@ export default function LearnFlex() {
         credentials: "include",
         body: JSON.stringify(attempts),
       });
+      
       if (!res.ok) throw new Error("Failed to save attempt");
     } catch (err) {
       console.error("Attempt insert failed:", err.message);
@@ -140,7 +141,7 @@ export default function LearnFlex() {
     setSubmitted(false);
     setAnswers({});
     setCurrent(0);
-    setTimeLeft(TOTAL_TIME);
+    setTimeLeft(TOTAL_TIME*60);
     setShowResult(false);
     setScore(0);
   };

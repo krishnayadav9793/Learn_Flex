@@ -56,53 +56,59 @@ AND dc.exam_id = ${examId};
 
   }
 };
-
 export const addAttempts = async (req, res) => {
   try {
     const attempts = req.body;
-    const user_id = req.user.id; //(cookie)
-   
-    if (!attempts || attempts.length == 0) {
-      
+
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user_id = req.user.id;
+
+    if (!attempts || attempts.length === 0) {
       return res.status(400).json({
         error: "No attempt provided"
-      })
+      });
     }
-    const values = [];
-    const placeholder = [];
 
+    console.log("Incoming attempts:", attempts);
+
+    let query = sql``;
     attempts.forEach((a, i) => {
-      const base = i * 5;
-
-      placeholder.push(
-        `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`
-      );
-      values.push(
-        user_id,
-        a.challenge_id,
-        a.ques_id,
-        a.marked_option,
-        a.attempt_at
-      );
+      if (i === 0) {
+        query = sql`
+          INSERT INTO "DailyChallengeAttempt"
+          (user_id, challenge_id, ques_id, marked_option, attempt_at)
+          VALUES
+          (${user_id}, ${a.challenge_id}, ${a.ques_id}, ${a.marked_option}, ${a.attempt_at})
+        `;
+      } else {
+        query = sql`
+          ${query},
+          (${user_id}, ${a.challenge_id}, ${a.ques_id}, ${a.marked_option}, ${a.attempt_at})
+        `;
+      }
     });
-    await sql.query(`
-      INSERT INTO "DailyChallengeAttempt"
-      (user_id, challenge_id, ques_id, marked_option, attempt_at)
-      VALUES ${placeholder.join(",")}
+
+    query = sql`
+      ${query}
       ON CONFLICT (user_id, challenge_id, ques_id)
       DO UPDATE SET
         marked_option = EXCLUDED.marked_option,
         attempt_at = EXCLUDED.attempt_at
-    `, values);
+    `;
+
+    await query;
 
     return res.status(200).json({
       message: "Attempts saved successfully"
     });
 
   } catch (error) {
-    console.error("Add Attempts Error:", error);
+    console.error("🔥 FULL ERROR:", error);
     return res.status(500).json({
-      error: "Failed to save attempts"
+      error: error.message
     });
   }
 };

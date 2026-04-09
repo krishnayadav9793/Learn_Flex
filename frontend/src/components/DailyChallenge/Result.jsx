@@ -1,4 +1,7 @@
+import { useNavigate } from "react-router-dom";
+
 export default function ResultScreen({ score, total, onRetry }) {
+  const navigate=useNavigate();
   const pct = Math.round((score / total) * 100);
 
   const tier =
@@ -84,7 +87,7 @@ export default function ResultScreen({ score, total, onRetry }) {
           <span className="text-base leading-none">↺</span>
         </button>
 
-        <button className="mt-4 text-xs font-bold text-slate-400 hover:text-[#0B2447] transition-colors uppercase tracking-widest flex items-center justify-center gap-1.5 w-full">
+        <button onClick={()=>navigate("/HomePage")} className="mt-4 text-xs font-bold text-slate-400 hover:text-[#0B2447] transition-colors uppercase tracking-widest flex items-center justify-center gap-1.5 w-full">
           <span>←</span>
           <span>Back to Dashboard</span>
         </button>
