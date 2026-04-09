@@ -12,11 +12,11 @@ export const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // console.log(decoded , "thtis is jwt decoded");
+   //console.log(decoded , "this is jwt decoded");
 
     const result = await sql`
       SELECT u.id, u.name, u.email, 
-             p.total_solved as questions, 0 as streak, p.rating
+      p.total_solved as questions, 0 as streak, p.rating
       FROM "User" u
       LEFT JOIN "User_Profile" p ON u.id = p."User_id"
       WHERE u.email = ${decoded.id}

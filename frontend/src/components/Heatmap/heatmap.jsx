@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Flame, Activity } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flame, Activity, Star } from "lucide-react";
 
 const getCellStyle = (count) => {
   if (!count)     return { bg: "#ede9e0", border: "rgba(0,0,0,0.05)"       };
@@ -47,7 +47,7 @@ export default function Heatmap() {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const [data, setData] = useState([]);
-  const [rating ,setRating] =useState(0);
+  const [rating, setRating] = useState(0);
 
   // Fetch data
   useEffect(() => {
@@ -199,49 +199,92 @@ export default function Heatmap() {
 
       {/* FOOTER */}
       <div style={{
-        marginTop:18, paddingTop:16, borderTop:"1px solid #ede9e0",
-        display:"flex", justifyContent:"space-between", alignItems:"center",
-        flexWrap:"wrap", gap:12,
+        marginTop: 18, paddingTop: 16, borderTop: "1px solid #ede9e0",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        flexWrap: "wrap", gap: 16,
       }}>
-        <div style={{
-          display:"flex", alignItems:"center", gap:9,
-          background:"#fff8f1", border:"1px solid #fddcbb", borderRadius:11, padding:"8px 14px",
+        
+        {/* METRICS CONTAINER */}
+        <div style={{ 
+          display: "flex", flexWrap: "wrap", gap: 16, 
+          fontFamily: "'Inter', system-ui, -apple-system, sans-serif" 
         }}>
-          <Flame style={{ color:"#f97316" }} size={16} fill="#f97316" />
-          <div>
-            <div style={{ fontSize:10, fontWeight:700, color:"#c2410c", textTransform:"uppercase", letterSpacing:".06em", marginBottom:2 }}>
-              Current Streak
+          
+          {/* CURRENT STREAK (Fresh Sky Blue) */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 18,
+            background: "#ffffff", border: "2px solid #bae6fd", 
+            borderRadius: "1.5rem", padding: "14px 24px",
+          }}>
+            {/* Pop-Out Icon Container */}
+            <div style={{ 
+              background: "#e0f2fe", width: 48, height: 48, 
+              border: "2px solid #bae6fd",
+              boxShadow: "3px 3px 0px #bae6fd",
+              borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center" 
+            }}>
+              <Flame style={{ color: "#0284c7" }} size={22} fill="#0284c7" />
             </div>
-            <div style={{ fontSize:13, fontWeight:800, color:"#ea580c" }}>
-              {streak} {streak === 1 ? "Day" : "Days"}
+            
+            <div>
+              <div style={{ 
+                fontSize: 12, fontWeight: 800, color: "#0ea5e9", opacity: 0.9,
+                textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 
+              }}>
+                Current Streak
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                <span style={{ fontSize: 28, fontWeight: 900, color: "#082f49", lineHeight: 1 }}>
+                  {streak}
+                </span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#0284c7" }}>
+                  {streak === 1 ? "Day" : "Days"}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div style={{
-          display:"flex", alignItems:"center", gap:9,
-          background:"#fff8f1", border:"1px solid #fddcbb", borderRadius:11, padding:"8px 14px",
-        }}>
-          <Flame style={{ color:"#f97316" }} size={16} fill="#f97316" />
-          <div>
-            <div style={{ fontSize:10, fontWeight:700, color:"#c2410c", textTransform:"uppercase", letterSpacing:".06em", marginBottom:2 }}>
-              Rating 
+          {/* RATING (Warm Vanilla Cream) */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 18,
+            background: "#ffffff", border: "2px solid #e6daca", 
+            borderRadius: "1.5rem", padding: "14px 24px",
+          }}>
+            {/* Pop-Out Icon Container */}
+            <div style={{ 
+              background: "#fdf8ef", width: 48, height: 48, 
+              border: "2px solid #e6daca",
+              boxShadow: "3px 3px 0px #e6daca",
+              borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center" 
+            }}>
+              <Star style={{ color: "#b08955" }} size={22} fill="#b08955" />
             </div>
-            <div style={{ fontSize:13, fontWeight:800, color:"#ea580c" }}>
-              {rating} 
+            
+            <div>
+              <div style={{ 
+                fontSize: 12, fontWeight: 800, color: "#a37e4c", opacity: 0.9,
+                textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 
+              }}>
+                Rating
+              </div>
+              <div style={{ fontSize: 28, fontWeight: 900, color: "#453220", lineHeight: 1 }}>
+                {rating}
+              </div>
             </div>
           </div>
+
         </div>
 
-        <div style={{ display:"flex", alignItems:"center", gap:7 }}>
-          <span style={{ fontSize:10, fontWeight:700, color:"#b0aa9e", textTransform:"uppercase", letterSpacing:".05em" }}>Less</span>
-          <div style={{ display:"flex", gap:3 }}>
+        {/* LEGEND */}
+        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#b0aa9e", textTransform: "uppercase", letterSpacing: ".05em" }}>Less</span>
+          <div style={{ display: "flex", gap: 3 }}>
             {[0, 1, 4, 7, 11].map((v, i) => {
               const { bg, border } = getCellStyle(v);
-              return <div key={i} style={{ width:13, height:13, borderRadius:3, background:bg, border:`0.5px solid ${border}` }} />;
+              return <div key={i} style={{ width: 13, height: 13, borderRadius: 3, background: bg, border: `0.5px solid ${border}` }} />;
             })}
           </div>
-          <span style={{ fontSize:10, fontWeight:700, color:"#b0aa9e", textTransform:"uppercase", letterSpacing:".05em" }}>More</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#b0aa9e", textTransform: "uppercase", letterSpacing: ".05em" }}>More</span>
         </div>
       </div>
     </div>
