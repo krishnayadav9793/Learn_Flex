@@ -15,7 +15,7 @@ import CompitationPage from "./components/1v1/page.jsx"
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/HomePage" />} />
+      <Route path="*" element={<Navigate to="/HomePage" />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/profile" element={<Profile />} />
@@ -25,7 +25,7 @@ function App() {
       <Route path="/DailyChallenge/:exam_id" element={<DailyChallengePage />} />
       <Route path="/HomePage" element={<HomePage />} />
       <Route path="/practice/:exam_name" element={<PracticeMode />} />
-      <Route path="/v" element={<CompitationPage/>}/>
+      <Route path="/1v1" element={<CompitationPage/>}/>
       <Route path="/resetPassword" element={<ForgotPasswordOTP/>}/>
     </Routes>
   )                                                                                  
