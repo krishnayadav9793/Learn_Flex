@@ -1,72 +1,74 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Trophy, Target, Users, ChevronDown, Zap, Search, Bell, Star, ArrowRight, PlayCircle } from 'lucide-react';
+import { BookOpen, Trophy, Target, Users, ChevronDown, Zap, Search, Bell, Star, ArrowRight, PlayCircle, Activity } from 'lucide-react';
 import Navbar from '../components/Home/Navbar.jsx';
 import { useNavigate } from "react-router-dom";
-
 
 const LearnFlexHome = () => {
   const navigate = useNavigate();
   const [examData, setExamData] = useState({});
   const [selectedExam, setSelectedExam] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [analysis, setAnalysis] = useState([]); // 🔥 Added analysis state
+
   const selectedExamId = examData[selectedExam]?.id;
   const currentTopics = examData[selectedExam]?.subjects || [];
 
   useEffect(() => {
-  if (selectedExamId) {
-    localStorage.setItem("examId", selectedExamId);
-  }
-}, [selectedExamId]);
-useEffect(() => {
- 
-  const fetchExam = async () => {
-    try {
-      const res = await fetch(`http://localhost:3000/exam/subjects`,{
-      method: "GET",
-      credentials: "include"
+    if (selectedExamId) {
+      localStorage.setItem("examId", selectedExamId);
     }
-  );
-      
-      if (!res.ok) throw new Error("Failed to Fetch");
+  }, [selectedExamId]);
 
-      const data = await res.json();
-      // if(data?.msg==="No token"||data?.msg==="User not found")navigate("/login")
-      const formatted = {};
-      data.forEach((row) => {
-        if (!formatted[row.exam_name]) {
-          formatted[row.exam_name] = {
-            id: row.exam_id,
-            subjects: [],
-          };
-        }
+  useEffect(() => {
+    const fetchExam = async () => {
+      try {
+        const res = await fetch(`http://localhost:3000/exam/subjects`, {
+          method: "GET",
+          credentials: "include"
+        });
+        
+        console.log("res_maa", res);
+        if (!res.ok) throw new Error("Failed to Fetch");
 
-        if (
-          row.subject_name &&
-          !formatted[row.exam_name].subjects.includes(row.subject_name)
-        ) {
-          formatted[row.exam_name].subjects.push(row.subject_name);
-        }
-      });
+        const data = await res.json();
+        
+        const formatted = {};
+        data.forEach((row) => {
+          if (!formatted[row.exam_name]) {
+            formatted[row.exam_name] = {
+              id: row.exam_id,
+              subjects: [],
+            };
+          }
 
-      setExamData(formatted);
+          if (
+            row.subject_name &&
+            !formatted[row.exam_name].subjects.includes(row.subject_name)
+          ) {
+            formatted[row.exam_name].subjects.push(row.subject_name);
+          }
+        });
 
-      const savedExamId = localStorage.getItem("examId");
+        setExamData(formatted);
+        setAnalysis(data); // 🔥 Save the raw data for the analysis section
 
-      const examName =
-        Object.keys(formatted).find(
-          (key) => formatted[key].id == savedExamId
-        ) || Object.keys(formatted)[0];
+        const savedExamId = localStorage.getItem("examId");
 
-      if (examName) setSelectedExam(examName);
+        const examName =
+          Object.keys(formatted).find(
+            (key) => formatted[key].id == savedExamId
+          ) || Object.keys(formatted)[0];
 
-    } catch (error) {
-      console.log("Fetch error:", error.message);
-    }
-  };
+        if (examName) setSelectedExam(examName);
 
-  fetchExam();
-}, []);
-  
+      } catch (error) {
+        console.log("Fetch error:", error.message);
+      }
+    };
+
+    fetchExam();
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#FFFDF5] text-[#1E293B] font-sans selection:bg-blue-100">
       <Navbar
@@ -79,7 +81,7 @@ useEffect(() => {
 
       <main className="max-w-7xl mx-auto p-6 md:p-10 space-y-12">
 
-        {/* Hero Section - Added Gradient & Animation */}
+        {/* Hero Section */}
         <section className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#001F3F] via-[#002b59] to-[#001F3F] p-10 md:p-16 text-[#FFFDF5] shadow-2xl shadow-blue-900/30">
           <div className="relative z-10 max-w-2xl">
             <h2 className="text-5xl md:text-6xl font-black mb-6 tracking-tight leading-[1.1]">
@@ -90,9 +92,10 @@ useEffect(() => {
             </p>
             <div className="flex flex-wrap gap-4">
               <button 
-              onClick={() => navigate(`/practice/${encodeURIComponent(selectedExam.replace(/\s+/g, ''))}`)}
-              className="bg-white text-[#001F3F] px-8 py-4 rounded-2xl font-bold shadow-lg hover:scale-105 transition-all flex items-center gap-2">
-              Start Practice <ArrowRight size={18} />
+                onClick={() => navigate(`/practice/${encodeURIComponent(selectedExam.replace(/\s+/g, ''))}`)}
+                className="bg-white text-[#001F3F] px-8 py-4 rounded-2xl font-bold shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+              >
+                Start Practice <ArrowRight size={18} />
               </button>
             </div>
           </div>
@@ -103,7 +106,7 @@ useEffect(() => {
           </div>
         </section>
 
-        {/* Daily + Weekly Challenges - Improved Card UI */}
+        {/* Daily + Weekly Challenges */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Daily Challenge */}
           <div className="group relative bg-white border border-slate-200 p-8 rounded-[2.5rem] hover:shadow-2xl hover:shadow-amber-900/10 transition-all duration-500 flex flex-col overflow-hidden">
@@ -120,14 +123,16 @@ useEffect(() => {
             </div>
 
             <div className="mt-auto flex items-center justify-between pt-6 border-t border-slate-100">
-              
               <button
-              onClick={() => {if (!selectedExam) {
-                alert("⚠️ Please select an exam first");
-                   return;
-                   }
-                navigate(`/DailyChallenge/${selectedExamId}`)}}
-              className="bg-[#001F3F] text-white px-7 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition-all active:scale-95">
+                onClick={() => {
+                  if (!selectedExam) {
+                    alert("⚠️ Please select an exam first");
+                    return;
+                  }
+                  navigate(`/DailyChallenge/${selectedExamId}`);
+                }}
+                className="bg-[#001F3F] text-white px-7 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition-all active:scale-95"
+              >
                 Solve Now
               </button>
             </div>
@@ -135,7 +140,7 @@ useEffect(() => {
 
           {/* Weekly Quiz */}
           <div className="group relative bg-white border border-slate-200 p-8 rounded-[2.5rem] hover:shadow-2xl hover:shadow-blue-900/10 transition-all duration-500 flex flex-col overflow-hidden">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-[5rem] -mr-10 -mt-10 group-hover:bg-blue-100 transition-colors" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-[5rem] -mr-10 -mt-10 group-hover:bg-blue-100 transition-colors" />
 
             <div className="relative z-10">
               <div className="p-4 w-fit bg-blue-50 rounded-2xl text-[#001F3F] group-hover:bg-[#001F3F] group-hover:text-white transition-all duration-300 mb-6">
@@ -148,25 +153,25 @@ useEffect(() => {
             </div>
 
             <div className="mt-auto flex items-center justify-between pt-6 border-t border-slate-100">
-             
               <button
-              className="bg-white border-2 border-[#001F3F] text-[#001F3F] px-7 py-3 rounded-xl font-bold text-sm hover:bg-[#001F3F] hover:text-white transition-all"
-              onClick={() => {
-                if(!selectedExam){
-                  alert("⚠️ Please select an exam first");
-                  return;
-                }
-                navigate(`/WeeklyQuiz/`, {
-                  state: { exam_id: selectedExamId, exam_name: selectedExam }
-                });
-                }}>
-                  Start Quiz
+                className="bg-white border-2 border-[#001F3F] text-[#001F3F] px-7 py-3 rounded-xl font-bold text-sm hover:bg-[#001F3F] hover:text-white transition-all"
+                onClick={() => {
+                  if(!selectedExam){
+                    alert("⚠️ Please select an exam first");
+                    return;
+                  }
+                  navigate(`/WeeklyQuiz/`, {
+                    state: { exam_id: selectedExamId, exam_name: selectedExam }
+                  });
+                }}
+              >
+                Start Quiz
               </button>
             </div>
           </div>
         </section>
 
-        {/* 1v1 Arena - Enhanced with Glow and Glassmorphism */}
+        {/* 1v1 Arena */}
         <section className="w-full">
           <div className="bg-gradient-to-r from-[#001F3F] to-[#003366] rounded-[3rem] p-12 shadow-2xl text-[#FFFDF5] relative overflow-hidden text-center">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
@@ -189,21 +194,23 @@ useEffect(() => {
                 Real-time battle with other {selectedExam} aspirants. Winner takes the streak!
               </p>
 
-              <button className="bg-amber-400 text-[#001F3F] px-10 py-4 rounded-2xl font-extrabold shadow-xl shadow-amber-900/20 hover:bg-amber-300 hover:-translate-y-1 transition-all active:scale-95" onClick={()=>navigate("/v")}>
+              <button 
+                className="bg-amber-400 text-[#001F3F] px-10 py-4 rounded-2xl font-extrabold shadow-xl shadow-amber-900/20 hover:bg-amber-300 hover:-translate-y-1 transition-all active:scale-95" 
+                onClick={() => navigate("/v")}
+              >
                 Find an Opponent
               </button>
             </div>
           </div>
         </section>
 
-        {/* Practice by Subject - Grid Styling */}
+        {/* Practice by Subject */}
         <section className="space-y-8">
           <div className="flex items-end justify-between">
             <div>
               <h3 className="text-3xl font-bold tracking-tight text-[#001F3F]">Practice by Subject</h3>
               <p className="text-slate-400 text-sm mt-1">Deep dive into specific topics</p>
             </div>
-           
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
@@ -228,13 +235,15 @@ useEffect(() => {
                 </div>
               ))
             ) : (
-              // Empty State / Loading
               [1, 2, 3, 4].map((i) => (
                 <div key={i} className="h-40 bg-slate-100 rounded-[2rem] animate-pulse" />
               ))
             )}
           </div>
         </section>
+
+       
+
       </main>
     </div>
   );

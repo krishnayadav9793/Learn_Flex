@@ -8,15 +8,17 @@ import {
   ShieldCheck,
   ArrowRight,
   Trophy,
-  BookOpen
+  BookOpen,
+  Activity
 } from "lucide-react";
-
-
 
 const Dashboard = () => {
   const [examData, setExamData] = useState({});
   const [selectedExam, setSelectedExam] = useState("");
-  const currentTopics = examData[selectedExam]?.subjects || [];
+  const [analysis, setAnalysis] = useState([]); // 🔥 Added analysis state
+
+  // Filter analysis data for the currently selected exam
+  const currentAnalysis = analysis.filter(item => item.exam_name === selectedExam);
 
   useEffect(() => {
     const fetchExam = async () => {
@@ -46,6 +48,7 @@ const Dashboard = () => {
         });
 
         setExamData(formatted);
+        setAnalysis(data); // 🔥 Save raw data for performance mapping
 
         const savedExamId = localStorage.getItem("examId");
 
@@ -63,22 +66,22 @@ const Dashboard = () => {
 
     fetchExam();
   }, []);
+
   return (
     <div className="min-h-screen bg-[#FFFDF5] font-sans text-[#0B2447]">
       <Navbar />
 
       <main className="max-w-7xl mx-auto p-6 md:p-10 space-y-12">
 
-        {/* TOP SECTION: PROFILE & HEATMAP */}
-        <div >
-
-          {/* RIGHT: HEATMAP (Span 8) */}
+        {/* TOP SECTION: HEATMAP */}
+        <div>
+          {/* HEATMAP (Span 8) */}
           <div className="lg:col-span-8">
             <SimpleYearlyHeatmap />
           </div>
         </div>
 
-
+        {/* SUBJECT ANALYSIS SECTION - FLAT THEME */}
         <section className="space-y-6 font-sans">
           <div className="flex items-end justify-between px-1">
             <div>
@@ -86,46 +89,72 @@ const Dashboard = () => {
                 Analysis by Subject
               </h3>
               <p className="text-[#0B2447]/50 text-[12px] font-bold uppercase tracking-widest mt-1.5">
-                Check the number of questions
+                Performance breakdown
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {currentTopics.length > 0 ? (
-              currentTopics.map((topic, index) => (
-                <div
-                  key={index}
-                  className="group bg-white border-2 border-[#E1EFFF] p-5 rounded-[1.5rem] hover:border-[#0B2447] hover:bg-[#FAF8F5] transition-colors duration-200 cursor-pointer flex flex-col justify-between min-h-[160px]"
-                >
-                  <div>
-                    {/* Flat Icon Container */}
-                    <div className="w-12 h-12 bg-[#E1EFFF] group-hover:bg-[#0B2447] transition-colors duration-200 rounded-xl flex items-center justify-center mb-4">
-                      <BookOpen size={22} className="text-[#0B2447] group-hover:text-white transition-colors duration-200" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {currentAnalysis.length > 0 ? (
+              currentAnalysis.map((sub, index) => {
+                const accuracy = Number(sub.accuracy || 0);
+
+                // Flat theme configuration based on accuracy score
+                let statusConfig = { text: "Weak", color: "text-red-700", bg: "bg-red-50", border: "border-red-200", bar: "bg-red-500" };
+                if (accuracy >= 80) statusConfig = { text: "Strong", color: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", bar: "bg-emerald-500" };
+                else if (accuracy >= 50) statusConfig = { text: "Average", color: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", bar: "bg-amber-500" };
+
+                return (
+                  <div
+                    key={index}
+                    className="group bg-white border-2 border-[#E1EFFF] p-6 rounded-[1.5rem] hover:border-[#0B2447] hover:bg-[#FAF8F5] transition-colors duration-200 cursor-pointer flex flex-col justify-between min-h-[220px]"
+                  >
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-[#E1EFFF] group-hover:bg-[#0B2447] transition-colors duration-200 rounded-xl flex items-center justify-center">
+                          <Activity size={22} className="text-[#0B2447] group-hover:text-white transition-colors duration-200" />
+                        </div>
+                        <h4 className="font-bold text-[17px] text-[#0B2447] leading-snug">
+                          {sub.subject_name}
+                        </h4>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border-2 ${statusConfig.bg} ${statusConfig.color} ${statusConfig.border}`}>
+                        {statusConfig.text}
+                      </span>
                     </div>
 
-                    <h4 className="font-bold text-[15px] text-[#0B2447] mb-4 line-clamp-2 leading-snug">
-                      {topic}
-                    </h4>
-                  </div>
-
-                  {/* Flat Progress Bar */}
-                  <div className="flex items-center gap-3 mt-auto">
-                    <div className="h-1.5 flex-grow bg-[#E1EFFF] group-hover:bg-white rounded-full overflow-hidden transition-colors duration-200">
-                      <div className="h-full bg-[#0B2447] w-1/3"></div>
+                    {/* Stats Boxes */}
+                    <div className="grid grid-cols-2 gap-3 mb-6">
+                      <div className="bg-[#FAF8F5] p-3 rounded-xl border-2 border-[#E1EFFF] group-hover:border-[#0B2447]/20 transition-colors duration-200">
+                        <p className="text-[#0B2447]/50 text-[10px] font-black uppercase tracking-widest mb-1">Attempted</p>
+                        <p className="text-lg font-bold text-[#0B2447]">{sub.attempted || 0}</p>
+                      </div>
+                      <div className="bg-[#FAF8F5] p-3 rounded-xl border-2 border-[#E1EFFF] group-hover:border-[#0B2447]/20 transition-colors duration-200">
+                        <p className="text-[#0B2447]/50 text-[10px] font-black uppercase tracking-widest mb-1">Correct</p>
+                        <p className="text-lg font-bold text-[#0B2447]">{sub.correct || 0}</p>
+                      </div>
                     </div>
-                    <span className="text-[11px] font-black text-[#0B2447]/50 group-hover:text-[#0B2447] transition-colors duration-200">
-                      30%
-                    </span>
+
+                    {/* Flat Progress Bar */}
+                    <div className="mt-auto">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[11px] font-black text-[#0B2447]/50 uppercase tracking-widest group-hover:text-[#0B2447] transition-colors">Accuracy</span>
+                        <span className="text-[13px] font-black text-[#0B2447]">{accuracy}%</span>
+                      </div>
+                      <div className="h-1.5 flex-grow bg-[#E1EFFF] group-hover:bg-white rounded-full overflow-hidden transition-colors duration-200">
+                        <div className={`h-full ${statusConfig.bar}`} style={{ width: `${accuracy}%` }}></div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               /* Flat Skeleton Loading State */
-              [1, 2, 3, 4].map((i) => (
+              [1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="h-[160px] bg-[#FAF8F5] border-2 border-[#E1EFFF] rounded-[1.5rem] animate-pulse"
+                  className="h-[220px] bg-[#FAF8F5] border-2 border-[#E1EFFF] rounded-[1.5rem] animate-pulse"
                 />
               ))
             )}
