@@ -30,9 +30,13 @@ function QuizQuestions() {
         });
         if (!res.ok) throw new Error('Failed to fetch questions');
         const list = await res.json();
-        if (list?.msg === 'already participated')
+        // ✅ Check BEFORE setting state
+        if (list?.msg === 'already participated') {
           navigate('/weeklyquiz', { state: { exam_id: localStorage.getItem('examId') } });
-        setQuestionList(list);
+          return; 
+        }
+
+setQuestionList(list);
       } catch (err) {
         setError(err.message);
       } finally {

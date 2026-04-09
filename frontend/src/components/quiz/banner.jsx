@@ -343,30 +343,38 @@ const Banner = ({ data }) => {
                 )}
 
                 {status === "live" && (
-                  <button
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "6px",
-                      background: "#001F3F",
-                      color: "#fff",
-                      fontSize: "13px",
-                      fontWeight: 800,
-                      padding: "11px 16px",
-                      borderRadius: "14px",
-                      border: "none",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                      width: "100%",
-                    }}
-                  >
-                    <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
-                      <polygon points="5,3 17,10 5,17" />
-                    </svg>
-                    Attempt Now
-                  </button>
-                )}
+  <button
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "6px",
+      background: "#001F3F",
+      color: "#fff",
+      fontSize: "13px",
+      fontWeight: 800,
+      padding: "11px 16px",
+      borderRadius: "14px",
+      border: "none",
+      cursor: "pointer",
+      whiteSpace: "nowrap",
+      width: "100%",
+    }}
+    onClick={() => {
+      const start = new Date(data.Start_Time).getTime();
+      const end = start + data.time_limit * 60 * 1000;
+      const remainingTime = Math.max(0, end - Date.now());
+      navigate(`/Quiz/${data.test_id}`, {
+        state: { quizName: data.quizname, remainingTime },
+      });
+}}
+  >
+    <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor">
+      <polygon points="5,3 17,10 5,17" />
+    </svg>
+    Attempt Now
+  </button>
+)}
 
                 {status === "upcoming" && (
                   <button
