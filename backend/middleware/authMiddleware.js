@@ -3,9 +3,10 @@ import { sql } from "../util/neonConnect.js";
 
 export const protect = async (req, res, next) => {
   try {
-    console.log(req.cookies)
+    // console.log(req.cookies)
     const token = req.cookies?.token||null;
     // console.log(token)
+    // console.log("middleware 1")
     if (!token) {
       return res.status(401).json({ msg: "No token" });
     }

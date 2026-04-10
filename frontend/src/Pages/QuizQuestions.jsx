@@ -83,6 +83,7 @@ setQuestionList(list);
 
   const submitQuiz = async () => {
     clearInterval(timerRef.current);
+    console.log("clicked");
     try {
       await fetch('http://localhost:3000/quiz/submit', {
         method: 'POST',

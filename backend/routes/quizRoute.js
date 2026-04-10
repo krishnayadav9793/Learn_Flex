@@ -9,6 +9,6 @@ const quizRoute = Router();
 
 quizRoute.get("/list/:id",protect,quizLists)
 quizRoute.get("/question/:quizId",[protect,isValidSubmission],questionsQuiz);
-quizRoute.post("/submit", [protect, isValidSubmission], handleSubmition);
+quizRoute.post("/submit", protect, handleSubmition);
 
 export default quizRoute;
