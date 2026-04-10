@@ -515,7 +515,7 @@ export default function PracticeMode() {
                         onClick={resetSessionView}
                         className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#0b2a4a] border border-slate-200 hover:border-[#0b2a4a]/30 rounded-xl px-3 py-1.5 bg-white hover:bg-[#0b2a4a]/5 transition-all shadow-sm"
                       >
-                        <RotateCcw className="w-3 h-3" />New Session
+                        <RotateCcw className="w-3 h-3" /> View Past Sessions
                       </button>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">

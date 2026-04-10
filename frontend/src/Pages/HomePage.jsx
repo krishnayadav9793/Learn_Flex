@@ -41,16 +41,16 @@ const LearnFlexHome = () => {
           };
         }
 
-          if (
+          if(
             row.subject_name &&
             !formatted[row.exam_name].subjects.includes(row.subject_name)
-          ) {
+          ){
             formatted[row.exam_name].subjects.push(row.subject_name);
           }
         });
 
         setExamData(formatted);
-        setAnalysis(data); // 🔥 Save the raw data for the analysis section
+        setAnalysis(data); 
 
         const savedExamId = localStorage.getItem("examId");
 
@@ -131,7 +131,7 @@ const LearnFlexHome = () => {
                   }
                   navigate(`/DailyChallenge/${selectedExamId}`);
                 }}
-                className="bg-[#001F3F] text-white px-7 py-3 rounded-xl font-bold text-sm hover:shadow-lg transition-all active:scale-95"
+                className="bg-[#001F3F] text-white px-7 py-3 rounded-xl font-bold text-sm hover:bg-[#003366] hover:text-white hover:shadow-xl hover:scale-105 transition-all duration-200 active:scale-95"
               >
                 Solve Now
               </button>
