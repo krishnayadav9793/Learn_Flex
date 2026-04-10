@@ -149,75 +149,103 @@ export default function LearnFlex() {
   if (showResult) return <ResultScreen score={score} total={questions.length * correct} onRetry={reset} />;
   if (!questions.length) return <Loading />;
 
-  return (
-    // Base wrapper with Light Cream (#FAF8F5) background and Dark Blue text default
-    <div className="min-h-screen bg-[#FAF8F5] text-[#0B2447] font-sans selection:bg-[#E1EFFF] selection:text-[#0B2447]">
+return (
+  <div className="min-h-screen bg-[#FAF8F5] text-[#0B2447] font-sans selection:bg-[#E1EFFF] selection:text-[#0B2447]">
 
-      <Navbar
-        exam={exam}
-        timeLeft={timeLeft}
-        totalTime={TOTAL_TIME}
-        formatTime={formatTime}
-        answered={Object.keys(answers).length}
-        total={questions.length}
-      />
+    <Navbar
+      exam={exam}
+      timeLeft={timeLeft}
+      totalTime={TOTAL_TIME}
+      formatTime={formatTime}
+      answered={Object.keys(answers).length}
+      total={questions.length}
+    />
 
-      <div className="flex min-h-[calc(100vh-60px)] max-w-[1600px] mx-auto w-full">
+    <div className="flex min-h-[calc(100vh-60px)] max-w-[1600px] mx-auto w-full">
 
-        {/* Main Content Area */}
-        <main className="flex-1 min-w-0 px-6 sm:px-10 lg:px-16 xl:px-24 py-10 flex flex-col items-center gap-8 relative">
-          
-          {/* Decorative subtle top-border accent using Light Blue */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#E1EFFF] via-[#0B2447] to-[#E1EFFF] opacity-20"></div>
+      {/* Main Content Area */}
+      <main className="flex-1 min-w-0 px-4 sm:px-8 lg:px-12 xl:px-20 py-6 sm:py-10 flex flex-col items-center gap-6 sm:gap-8 relative">
 
-          {/* Header */}
-          <div className="w-full max-w-4xl pt-4">
-            <h2 className="text-3xl font-black text-[#0B2447] tracking-tight">Daily Challenge</h2>
-            
-            <div className="flex items-center gap-3 mt-3">
-              {/* Badge: Light Blue background with Dark Blue text */}
-              <span className="text-[11px] font-bold px-3 py-1.5 bg-[#E1EFFF] text-[#0B2447] rounded border border-[#0B2447]/10 uppercase tracking-widest shadow-sm">
-                {exam}
-              </span>
-              
-              <div className="flex items-center gap-2 text-sm font-medium text-[#0B2447]/60">
-                <span>{questions.length} questions</span>
-                <span className="w-1 h-1 rounded-full bg-[#0B2447]/30"></span>
-                <span>{Math.floor(TOTAL_TIME / 60)} minutes</span>
-              </div>
+        {/* Decorative top border */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#E1EFFF] via-[#0B2447] to-[#E1EFFF] opacity-20" />
+
+        {/* Header */}
+        <div className="w-full max-w-4xl pt-3 sm:pt-4">
+          <h2 className="text-2xl sm:text-3xl font-black text-[#0B2447] tracking-tight">Daily Challenge</h2>
+
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 sm:mt-3">
+            <span className="text-[10px] sm:text-[11px] font-bold px-2.5 sm:px-3 py-1 sm:py-1.5 bg-[#E1EFFF] text-[#0B2447] rounded border border-[#0B2447]/10 uppercase tracking-widest shadow-sm">
+              {exam}
+            </span>
+
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-[#0B2447]/60">
+              <span>{questions.length} questions</span>
+              <span className="w-1 h-1 rounded-full bg-[#0B2447]/30" />
+              <span>{Math.floor(TOTAL_TIME / 60)} minutes</span>
             </div>
           </div>
+        </div>
 
-          {/* Question Component Wrapper */}
-          <div className="w-full max-w-4xl">
-            <QuizQuestion
-              question={questions[current]}
-              index={current}
-              total={questions.length}
-              selectOption={selectOption}
-              selected={answers[questions[current]?.id]}
-              nextQuestion={nextQuestion}
-              prevQuestion={prevQuestion}
-            />
+        {/* Question Component */}
+        <div className="w-full max-w-4xl">
+          <QuizQuestion
+            question={questions[current]}
+            index={current}
+            total={questions.length}
+            selectOption={selectOption}
+            selected={answers[questions[current]?.id]}
+            nextQuestion={nextQuestion}
+            prevQuestion={prevQuestion}
+          />
+        </div>
+
+        {/* Mobile Question Navigator — shown only below lg */}
+        <div className="w-full max-w-4xl lg:hidden">
+          <div className="bg-white border border-[#0B2447]/10 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <p className="text-xs font-bold text-[#0B2447]/50 uppercase tracking-widest mb-3">Questions</p>
+            <div className="flex flex-wrap gap-2">
+              {questions.map((q, i) => (
+                <button
+                  key={q.id}
+                  onClick={() => setCurrent(i)}
+                  className={`w-9 h-9 rounded-lg text-sm font-bold transition-all
+                    ${i === current
+                      ? "bg-[#0B2447] text-white shadow"
+                      : answers[q.id]
+                        ? "bg-[#E1EFFF] text-[#0B2447] border border-[#0B2447]/20"
+                        : "bg-[#FAF8F5] text-[#0B2447]/50 border border-[#0B2447]/10"
+                    }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => computeAndFinish(questions, answers)}
+              className="mt-4 w-full py-3 rounded-xl bg-[#0B2447] text-white font-bold text-sm hover:bg-[#0d2d5e] transition-all active:scale-95"
+            >
+              Submit
+            </button>
           </div>
-        </main>
+        </div>
 
-        {/* Sidebar — Very light airy blue background to contrast with the cream main section */}
-       <aside className="sticky top-0 h-screen overflow-y-auto w-80 xl:w-[340px] hidden lg:flex flex-col gap-6 px-6 xl:px-8 py-10 border-l-2 border-[#0B2447]/5 bg-gradient-to-b from-[#F4F9FF]/50 to-white shrink-0 shadow-[-12px_0_40px_#0B244708] z-10 scrollbar-hide">
-  
-  {/* Subtle decorative gradient at the top right to anchor it */}
-  <div className="absolute top-0 right-0 w-full h-32 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#0B2447]/[0.02] to-transparent pointer-events-none" />
+      </main>
 
-  <Sidebar
-    questions={questions}
-    answers={answers}
-    current={current}
-    setCurrent={setCurrent}
-    onSubmit={() => computeAndFinish(questions, answers)}
-  />
+      {/* Sidebar — desktop only (lg and above) */}
+      <aside className="sticky top-0 h-screen overflow-y-auto w-72 xl:w-[320px] hidden lg:flex flex-col gap-6 px-5 xl:px-7 py-10 border-l-2 border-[#0B2447]/5 bg-gradient-to-b from-[#F4F9FF]/50 to-white shrink-0 shadow-[-12px_0_40px_#0B244708] z-10 scrollbar-hide">
 
-</aside>
-      </div>
+        <div className="absolute top-0 right-0 w-full h-32 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#0B2447]/[0.02] to-transparent pointer-events-none" />
+
+        <Sidebar
+          questions={questions}
+          answers={answers}
+          current={current}
+          setCurrent={setCurrent}
+          onSubmit={() => computeAndFinish(questions, answers)}
+        />
+
+      </aside>
     </div>
-  );
+  </div>
+);
 }

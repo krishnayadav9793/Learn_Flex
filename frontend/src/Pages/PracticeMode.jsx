@@ -1,22 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft,
-  BookOpen,
-  Brain,
-  CheckCircle2,
-  Clock3,
-  PlayCircle,
-  Send,
-  Target,
-  TimerReset,
-  BarChart3,
-  ChevronLeft,
-  ChevronRight,
-  RotateCcw,
-  Award,
-  TrendingUp,
-  AlertCircle,
-  Zap,
+  ArrowLeft, BookOpen, Brain, CheckCircle2, Clock3, PlayCircle, Send,
+  Target, TimerReset, BarChart3, ChevronLeft, ChevronRight, RotateCcw,
+  Award, TrendingUp, AlertCircle, Zap, Menu, X,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -36,7 +22,6 @@ const subjectLabel = (key = "") => {
   return map[key] || key;
 };
 
-/* ── small reusable pieces ── */
 const StatPill = ({ label, value, variant = "default" }) => {
   const styles = {
     default: "bg-slate-50 border-slate-200 text-slate-700",
@@ -63,14 +48,21 @@ const QuestionDot = ({ index, answered, correct, wrong, current, onClick }) => {
   return <button className={cls} onClick={() => onClick(index)} title={`Q${index + 1}`} />;
 };
 
+const Spinner = () => (
+  <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" className="opacity-25" />
+    <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.3 0 0 5.3 0 12h4z" />
+  </svg>
+);
+
 export default function PracticeMode() {
   const navigate = useNavigate();
   const { exam_name: examName } = useParams();
 
-  const [subjects, setSubjects]             = useState([]);
-  const [subject, setSubject]               = useState("");
-  const [selectedTopics, setSelectedTopics] = useState([]);
-  const [questionCount, setQuestionCount]   = useState(10);
+  const [subjects, setSubjects]               = useState([]);
+  const [subject, setSubject]                 = useState("");
+  const [selectedTopics, setSelectedTopics]   = useState([]);
+  const [questionCount, setQuestionCount]     = useState(10);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(15);
 
   const [loadingMeta, setLoadingMeta] = useState(true);
@@ -82,17 +74,17 @@ export default function PracticeMode() {
   const [result, setResult]   = useState(null);
   const [history, setHistory] = useState([]);
 
-  const [questionIndex, setQuestionIndex]       = useState(0);
-  const [remainingSeconds, setRemainingSeconds] = useState(0);
-  const [answers, setAnswers]                   = useState({});
+  const [questionIndex, setQuestionIndex]         = useState(0);
+  const [remainingSeconds, setRemainingSeconds]   = useState(0);
+  const [answers, setAnswers]                     = useState({});
 
-  const selectedSubjectMeta = useMemo(
-    () => subjects.find((item) => item.key === subject),
-    [subjects, subject]
-  );
-  const topicList  = useMemo(() => selectedSubjectMeta?.topics || [], [selectedSubjectMeta]);
-  const topicNames = useMemo(() => topicList.map((t) => t.name), [topicList]);
-  const allTopicsSelected = topicNames.length > 0 && selectedTopics.length === topicNames.length;
+  // Mobile: left panel (config) drawer
+  const [showConfigDrawer, setShowConfigDrawer] = useState(false);
+
+  const selectedSubjectMeta   = useMemo(() => subjects.find((item) => item.key === subject), [subjects, subject]);
+  const topicList             = useMemo(() => selectedSubjectMeta?.topics || [], [selectedSubjectMeta]);
+  const topicNames            = useMemo(() => topicList.map((t) => t.name), [topicList]);
+  const allTopicsSelected     = topicNames.length > 0 && selectedTopics.length === topicNames.length;
 
   const availableBySelectedTopics = useMemo(() => {
     if (!selectedSubjectMeta) return 0;
@@ -112,10 +104,10 @@ export default function PracticeMode() {
   const isTimeOver            = !!session && remainingSeconds <= 0;
   const isSessionLocked       = !!result || isTimeOver;
 
-  const totalSeconds = timeLimitMinutes * 60;
-  const timeRatio    = session ? remainingSeconds / totalSeconds : 1;
-  const timeUrgent   = timeRatio < 0.2;
-  const timeCritical = timeRatio < 0.1;
+  const totalSeconds  = timeLimitMinutes * 60;
+  const timeRatio     = session ? remainingSeconds / totalSeconds : 1;
+  const timeUrgent    = timeRatio < 0.2;
+  const timeCritical  = timeRatio < 0.1;
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -180,6 +172,7 @@ export default function PracticeMode() {
       if (!res.ok) { setError(data.msg || "Unable to start practice session."); return; }
       setSession(data); setResult(null); setQuestionIndex(0); setAnswers({});
       setRemainingSeconds(Math.max(0, Math.floor((new Date(data.expiresAt).getTime() - Date.now()) / 1000)));
+      setShowConfigDrawer(false); // close drawer when session starts
     } catch { setError("Unable to start practice session."); }
     finally { setStarting(false); }
   };
@@ -209,28 +202,112 @@ export default function PracticeMode() {
   const toggleTopic     = (name) =>
     setSelectedTopics((prev) => prev.includes(name) ? prev.filter((t) => t !== name) : [...prev, name]);
   const toggleAllTopics = () => setSelectedTopics(allTopicsSelected ? [] : topicNames);
-  const updateAnswer    = (qId, val) => {
+  const updateAnswer    = (qId, val) => { if (isSessionLocked) return; setAnswers((prev) => ({ ...prev, [qId]: val })); };
+  const clearAnswer     = (qId) => {
     if (isSessionLocked) return;
-    setAnswers((prev) => ({ ...prev, [qId]: val }));
+    setAnswers((prev) => { const next = { ...prev }; delete next[qId]; return next; });
   };
-
-  // Clear the answer for a given question
-  const clearAnswer = (qId) => {
-    if (isSessionLocked) return;
-    setAnswers((prev) => {
-      const next = { ...prev };
-      delete next[qId];
-      return next;
-    });
-  };
-
   const resetSessionView = () => { setSession(null); setResult(null); setAnswers({}); setQuestionIndex(0); };
 
-  const Spinner = () => (
-    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" className="opacity-25" />
-      <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.3 0 0 5.3 0 12h4z" />
-    </svg>
+  /* ── Config panel (shared between sidebar + drawer) ── */
+  const ConfigPanel = () => (
+    <div className="relative bg-white border border-[#e5dfd5] rounded-2xl shadow-xl overflow-hidden">
+      <div className="px-6 pt-7 pb-5 text-center border-b border-slate-100">
+        <div className="mx-auto w-14 h-14 bg-[#0b2a4a] rounded-2xl flex items-center justify-center mb-3 shadow-lg">
+          <Brain className="w-7 h-7 text-white" />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Practice Mode</h1>
+        <p className="text-sm text-slate-500 mt-1">Configure your session below</p>
+      </div>
+
+      <div className="px-6 pb-6 pt-5 space-y-5">
+        {loadingMeta ? (
+          <div className="flex items-center gap-3 py-4 justify-center">
+            <svg className="animate-spin h-5 w-5 text-[#0b2a4a]" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" className="opacity-25" />
+              <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.3 0 0 5.3 0 12h4z" />
+            </svg>
+            <span className="text-sm text-slate-500">Loading subjects…</span>
+          </div>
+        ) : subjects.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
+            <AlertCircle className="w-8 h-8 text-slate-300" />
+            <p className="text-sm text-slate-500 font-semibold max-w-[200px]">No questions are currently available for this exam.</p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Subject</label>
+              <div className="flex gap-2 flex-wrap">
+                {subjects.map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => setSubject(item.key)}
+                    className={`px-3.5 py-1.5 rounded-xl text-sm font-semibold border transition-all duration-150 ${
+                      subject === item.key
+                        ? "bg-[#0b2a4a] border-[#0b2a4a] text-white shadow-md"
+                        : "bg-white border-slate-200 text-slate-600 hover:border-[#0b2a4a]/40 hover:text-[#0b2a4a]"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Questions</label>
+                <input
+                  type="number" min={1} max={100} value={questionCount}
+                  onChange={(e) => setQuestionCount(Math.max(1, Number(e.target.value) || 1))}
+                  className="w-full rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#0b2a4a]/10 focus:border-[#0b2a4a] px-3 py-2.5 text-sm text-slate-900 font-mono transition-all shadow-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Minutes</label>
+                <input
+                  type="number" min={1} max={180} value={timeLimitMinutes}
+                  onChange={(e) => setTimeLimitMinutes(Math.max(1, Number(e.target.value) || 1))}
+                  className="w-full rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#0b2a4a]/10 focus:border-[#0b2a4a] px-3 py-2.5 text-sm text-slate-900 font-mono transition-all shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <div className="flex-1 rounded-xl bg-sky-50 border border-sky-200 px-3 py-2.5">
+                <div className="text-[10px] uppercase tracking-widest text-sky-600 font-semibold">Available</div>
+                <div className="text-sm font-bold font-mono text-[#1c4f85]">{availableBySelectedTopics}</div>
+              </div>
+              <div className="flex-1 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5">
+                <div className="text-[10px] uppercase tracking-widest text-emerald-600 font-semibold">Scoring</div>
+                <div className="text-sm font-bold font-mono text-emerald-700">+4 / −1</div>
+              </div>
+            </div>
+
+            <button
+              onClick={startPractice}
+              disabled={starting || loadingMeta || !subject || availableBySelectedTopics <= 0}
+              className="w-full bg-[#0b2a4a] hover:bg-[#123d6b] text-white font-semibold py-3.5 rounded-xl transition-all duration-200 shadow-lg active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+            >
+              {starting ? <><Spinner />Starting…</> : <><PlayCircle className="w-4 h-4" />Start Session</>}
+            </button>
+
+            {session && !result && (
+              <button
+                onClick={submitPractice}
+                disabled={submitting}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-all duration-200 shadow-md active:scale-[0.98] disabled:opacity-60 inline-flex items-center justify-center gap-2 text-sm"
+              >
+                {submitting ? <><Spinner />Submitting…</> : <><Send className="w-4 h-4" />Submit Session</>}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="h-1.5 w-full bg-[#0b2a4a]" />
+    </div>
   );
 
   /* ─────────────────────────── render ─────────────────────────── */
@@ -255,38 +332,52 @@ export default function PracticeMode() {
         .pulse-red { animation: pulseBorder 1s ease-in-out infinite; }
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+        .slide-down { animation: slideDown 0.2s ease forwards; }
       `}</style>
 
-      <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 space-y-5">
+      <div className="max-w-[1400px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8 space-y-4">
 
         {/* ── Top bar ── */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <button
             onClick={() => navigate("/HomePage")}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-[#0b2a4a] border border-slate-200 hover:border-[#0b2a4a]/30 bg-white hover:bg-[#0b2a4a]/5 shadow-sm transition-all duration-200"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-[#0b2a4a] border border-slate-200 hover:border-[#0b2a4a]/30 bg-white hover:bg-[#0b2a4a]/5 shadow-sm transition-all duration-200"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back
+            <span className="hidden sm:inline">Back</span>
           </button>
 
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-[#0b2a4a]" />
-            <span className="text-xs font-semibold tracking-widest uppercase text-slate-500">LearnFlex · Practice</span>
+            <span className="text-xs font-semibold tracking-widest uppercase text-slate-500 hidden sm:inline">LearnFlex · Practice</span>
+            <span className="text-xs font-semibold tracking-widest uppercase text-slate-500 sm:hidden">Practice</span>
           </div>
 
-          {/* Timer pill */}
-          {session && !result ? (
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-mono font-bold shadow-sm transition-all duration-500 ${
-              timeCritical ? "bg-red-50 border-red-300 text-red-700 pulse-red"
-              : timeUrgent ? "bg-amber-50 border-amber-300 text-amber-700"
-              : "bg-white border-slate-200 text-[#0b2a4a]"
-            }`}>
-              <Clock3 className={`w-4 h-4 ${timeCritical ? "text-red-500" : timeUrgent ? "text-amber-500" : "text-[#0b2a4a]"}`} />
-              {formatTime(remainingSeconds)}
-            </div>
-          ) : (
-            <div className="w-28" />
-          )}
+          <div className="flex items-center gap-2">
+            {/* Timer pill */}
+            {session && !result ? (
+              <div className={`inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl border text-sm font-mono font-bold shadow-sm transition-all duration-500 ${
+                timeCritical ? "bg-red-50 border-red-300 text-red-700 pulse-red"
+                : timeUrgent ? "bg-amber-50 border-amber-300 text-amber-700"
+                : "bg-white border-slate-200 text-[#0b2a4a]"
+              }`}>
+                <Clock3 className={`w-4 h-4 ${timeCritical ? "text-red-500" : timeUrgent ? "text-amber-500" : "text-[#0b2a4a]"}`} />
+                {formatTime(remainingSeconds)}
+              </div>
+            ) : (
+              <div className="w-4 sm:w-28" />
+            )}
+
+            {/* Mobile config toggle — only when no active session, or always to allow submit */}
+            <button
+              onClick={() => setShowConfigDrawer((v) => !v)}
+              className="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 bg-white shadow-sm text-slate-600 hover:text-[#0b2a4a] hover:border-[#0b2a4a]/30 transition-all"
+              aria-label="Toggle config"
+            >
+              {showConfigDrawer ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
 
         {/* Timer progress bar */}
@@ -299,120 +390,25 @@ export default function PracticeMode() {
           </div>
         )}
 
+        {/* Mobile config drawer */}
+        {showConfigDrawer && (
+          <div className="lg:hidden slide-down space-y-3">
+            <ConfigPanel />
+            {error && (
+              <div className="flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-100 px-4 py-3 shadow-sm">
+                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── Main grid ── */}
         <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-5 items-start">
 
-          {/* ═══ LEFT PANEL ═══ */}
-          <div className="space-y-4">
-
-            {/* Config card — styled like Login card */}
-            <div className="relative bg-white border border-[#e5dfd5] rounded-2xl shadow-xl overflow-hidden">
-              {/* Header */}
-              <div className="px-6 pt-7 pb-5 text-center border-b border-slate-100">
-                <div className="mx-auto w-14 h-14 bg-[#0b2a4a] rounded-2xl flex items-center justify-center mb-3 shadow-lg">
-                  <Brain className="w-7 h-7 text-white" />
-                </div>
-                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Practice Mode</h1>
-                <p className="text-sm text-slate-500 mt-1">Configure your session below</p>
-              </div>
-
-              <div className="px-6 pb-6 pt-5 space-y-5">
-                {loadingMeta ? (
-                  <div className="flex items-center gap-3 py-4 justify-center">
-                    <svg className="animate-spin h-5 w-5 text-[#0b2a4a]" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" className="opacity-25" />
-                      <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.3 0 0 5.3 0 12h4z" />
-                    </svg>
-                    <span className="text-sm text-slate-500">Loading subjects…</span>
-                  </div>
-                ) : subjects.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
-                    <AlertCircle className="w-8 h-8 text-slate-300" />
-                    <p className="text-sm text-slate-500 font-semibold max-w-[200px]">No questions are currently available for this exam.</p>
-                  </div>
-                ) : (
-                  <>
-                    {/* Subject toggles */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Subject</label>
-                      <div className="flex gap-2 flex-wrap">
-                        {subjects.map((item) => (
-                          <button
-                            key={item.key}
-                            onClick={() => setSubject(item.key)}
-                            className={`px-3.5 py-1.5 rounded-xl text-sm font-semibold border transition-all duration-150 ${
-                              subject === item.key
-                                ? "bg-[#0b2a4a] border-[#0b2a4a] text-white shadow-md"
-                                : "bg-white border-slate-200 text-slate-600 hover:border-[#0b2a4a]/40 hover:text-[#0b2a4a]"
-                            }`}
-                          >
-                            {item.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Count + Time inputs — match login input style */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Questions</label>
-                        <input
-                          type="number" min={1} max={100} value={questionCount}
-                          onChange={(e) => setQuestionCount(Math.max(1, Number(e.target.value) || 1))}
-                          className="w-full rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#0b2a4a]/10 focus:border-[#0b2a4a] px-3 py-2.5 text-sm text-slate-900 font-mono transition-all shadow-sm"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Minutes</label>
-                        <input
-                          type="number" min={1} max={180} value={timeLimitMinutes}
-                          onChange={(e) => setTimeLimitMinutes(Math.max(1, Number(e.target.value) || 1))}
-                          className="w-full rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#0b2a4a]/10 focus:border-[#0b2a4a] px-3 py-2.5 text-sm text-slate-900 font-mono transition-all shadow-sm"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Info strip */}
-                    <div className="flex gap-2">
-                      <div className="flex-1 rounded-xl bg-sky-50 border border-sky-200 px-3 py-2.5">
-                        <div className="text-[10px] uppercase tracking-widest text-sky-600 font-semibold">Available</div>
-                        <div className="text-sm font-bold font-mono text-[#1c4f85]">{availableBySelectedTopics}</div>
-                      </div>
-                      <div className="flex-1 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5">
-                        <div className="text-[10px] uppercase tracking-widest text-emerald-600 font-semibold">Scoring</div>
-                        <div className="text-sm font-bold font-mono text-emerald-700">+4 / −1</div>
-                      </div>
-                    </div>
-
-                    {/* Start button — exact same style as login button */}
-                    <button
-                      onClick={startPractice}
-                      disabled={starting || loadingMeta || !subject || availableBySelectedTopics <= 0}
-                      className="w-full bg-[#0b2a4a] hover:bg-[#123d6b] text-white font-semibold py-3.5 rounded-xl transition-all duration-200 shadow-lg active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
-                    >
-                      {starting ? <><Spinner />Starting…</> : <><PlayCircle className="w-4 h-4" />Start Session</>}
-                    </button>
-
-                    {session && !result && (
-                      <button
-                        onClick={submitPractice}
-                        disabled={submitting}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-all duration-200 shadow-md active:scale-[0.98] disabled:opacity-60 inline-flex items-center justify-center gap-2 text-sm"
-                      >
-                        {submitting ? <><Spinner />Submitting…</> : <><Send className="w-4 h-4" />Submit Session</>}
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {/* Bottom navy accent — same as login */}
-              <div className="h-1.5 w-full bg-[#0b2a4a]" />
-            </div>
-
-            {/* History card removed from here */}
-
-            {/* Error */}
+          {/* ═══ LEFT PANEL — desktop only ═══ */}
+          <div className="hidden lg:flex flex-col space-y-4">
+            <ConfigPanel />
             {error && (
               <div className="flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-100 px-4 py-3 shadow-sm">
                 <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
@@ -422,71 +418,77 @@ export default function PracticeMode() {
           </div>
 
           {/* ═══ RIGHT PANEL ═══ */}
-          <div className="relative bg-white border border-[#e5dfd5] rounded-2xl shadow-xl overflow-hidden flex flex-col min-h-[600px]">
+          <div className="relative bg-white border border-[#e5dfd5] rounded-2xl shadow-xl overflow-hidden flex flex-col min-h-[500px] sm:min-h-[600px]">
 
-            {/* Empty state & Dashboard */}
+            {/* Empty state / Dashboard */}
             {!session && (
-              <div className="flex-1 flex flex-col p-8 fade-up h-full bg-slate-50/50">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-[#0b2a4a] rounded-xl flex items-center justify-center shadow-lg">
-                    <BarChart3 className="w-6 h-6 text-white" />
+              <div className="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 fade-up h-full bg-slate-50/50">
+                <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#0b2a4a] rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                    <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-slate-800">Recent Sessions</h2>
-                    <p className="text-sm text-slate-500">Track your practice performance and history</p>
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Recent Sessions</h2>
+                    <p className="text-xs sm:text-sm text-slate-500">Track your practice performance and history</p>
                   </div>
                 </div>
 
+                {/* Mobile hint */}
+                <div className="lg:hidden mb-4 flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+                  <Menu className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                  <p className="text-xs text-blue-700 font-medium">Tap the <span className="font-bold">menu icon</span> (top right) to configure and start a session.</p>
+                </div>
+
                 {history.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-white rounded-2xl border border-slate-200 shadow-sm">
-                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-5 border border-slate-200">
-                      <BookOpen className="w-8 h-8 text-slate-300" />
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-8 sm:p-12 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4 sm:mb-5 border border-slate-200">
+                      <BookOpen className="w-7 h-7 sm:w-8 sm:h-8 text-slate-300" />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-800 mb-2">No history yet</h2>
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-2">No history yet</h2>
                     <p className="text-sm text-slate-500 max-w-sm leading-relaxed">
-                      Configure your session on the left and hit{" "}
+                      Configure your session and hit{" "}
                       <span className="text-[#0b2a4a] font-semibold">Start Session</span> to begin your first practice!
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {history.map((item, idx) => (
-                      <div key={`${item.submittedAt}-${idx}`} className="group relative bg-white border border-slate-200 rounded-2xl p-5 hover:shadow-lg transition-all hover:-translate-y-1 hover:border-[#0b2a4a]/20">
-                        <div className="flex justify-between items-start mb-4">
+                      <div key={`${item.submittedAt}-${idx}`} className="group relative bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 hover:shadow-lg transition-all hover:-translate-y-1 hover:border-[#0b2a4a]/20">
+                        <div className="flex justify-between items-start mb-3 sm:mb-4">
                           <div className="inline-flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg">
-                            <Brain className="w-4 h-4 text-[#0b2a4a]" />
+                            <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0b2a4a]" />
                             <span className="text-xs font-bold text-slate-700">{subjectLabel(item.subject)}</span>
                           </div>
-                          <div className={`px-3 py-1 rounded-lg text-xs font-bold font-mono ${
+                          <div className={`px-2.5 py-1 rounded-lg text-xs font-bold font-mono ${
                             item.percentage >= 70 ? "bg-emerald-50 text-emerald-700" :
                             item.percentage >= 40 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"
                           }`}>
                             {formatPercent(item.percentage)}
                           </div>
                         </div>
-                        
-                        <div className="grid grid-cols-3 gap-3">
+
+                        <div className="grid grid-cols-3 gap-2 sm:gap-3">
                           <div className="text-center p-2 rounded-xl bg-slate-50 border border-slate-100">
-                            <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Score</div>
-                            <div className="text-sm font-mono font-bold text-slate-700">{item.score} <span className="opacity-50 text-xs text-slate-400">/ {item.maxScore}</span></div>
+                            <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold mb-1">Score</div>
+                            <div className="text-xs sm:text-sm font-mono font-bold text-slate-700">{item.score}<span className="opacity-50 text-[10px]">/{item.maxScore}</span></div>
                           </div>
                           <div className="text-center p-2 rounded-xl bg-emerald-50 border border-emerald-100">
-                            <div className="text-[10px] text-emerald-600 uppercase font-bold mb-1">Correct</div>
-                            <div className="text-sm font-mono font-bold text-emerald-700">{item.correct}</div>
+                            <div className="text-[9px] sm:text-[10px] text-emerald-600 uppercase font-bold mb-1">Correct</div>
+                            <div className="text-xs sm:text-sm font-mono font-bold text-emerald-700">{item.correct}</div>
                           </div>
                           <div className="text-center p-2 rounded-xl bg-red-50 border border-red-100">
-                            <div className="text-[10px] text-red-500 uppercase font-bold mb-1">Wrong</div>
-                            <div className="text-sm font-mono font-bold text-red-600">{item.wrong}</div>
+                            <div className="text-[9px] sm:text-[10px] text-red-500 uppercase font-bold mb-1">Wrong</div>
+                            <div className="text-xs sm:text-sm font-mono font-bold text-red-600">{item.wrong}</div>
                           </div>
                         </div>
-                        
-                        <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-400 font-medium">
+
+                        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-100 flex justify-between items-center text-[10px] sm:text-[11px] text-slate-400 font-medium">
                           <div className="flex items-center gap-1.5">
-                            <Clock3 className="w-3.5 h-3.5" />
-                            {new Date(item.submittedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            <Clock3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            {new Date(item.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <Target className="w-3.5 h-3.5" />
+                            <Target className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                             {item.attempted} attempted
                           </div>
                         </div>
@@ -503,33 +505,40 @@ export default function PracticeMode() {
 
                 {/* Result summary */}
                 {result && (
-                  <div className="px-6 pt-6 pb-5 border-b border-slate-100 fade-up">
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-4 sm:pb-5 border-b border-slate-100 fade-up">
+                    <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 bg-[#0b2a4a] rounded-xl flex items-center justify-center shadow-md">
-                          <Award className="w-4 h-4 text-white" />
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#0b2a4a] rounded-xl flex items-center justify-center shadow-md">
+                          <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                         </div>
-                        <h2 className="text-base font-bold text-slate-800">Session Complete</h2>
+                        <h2 className="text-sm sm:text-base font-bold text-slate-800">Session Complete</h2>
                       </div>
                       <button
                         onClick={resetSessionView}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#0b2a4a] border border-slate-200 hover:border-[#0b2a4a]/30 rounded-xl px-3 py-1.5 bg-white hover:bg-[#0b2a4a]/5 transition-all shadow-sm"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#0b2a4a] border border-slate-200 hover:border-[#0b2a4a]/30 rounded-xl px-2.5 sm:px-3 py-1.5 bg-white hover:bg-[#0b2a4a]/5 transition-all shadow-sm whitespace-nowrap"
                       >
-                        <RotateCcw className="w-3 h-3" /> View Past Sessions
+                        <RotateCcw className="w-3 h-3" />
+                        <span className="hidden sm:inline">View Past Sessions</span>
+                        <span className="sm:hidden">History</span>
                       </button>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                       <StatPill label="Score"   value={`${result.score}/${result.maxScore}`} variant="navy" />
                       <StatPill label="Percent" value={formatPercent(result.percentage)}     variant="default" />
                       <StatPill label="Correct" value={result.correct}                       variant="green" />
-                      <StatPill label="Wrong"   value={result.wrong}                         variant="red" />
-                      <StatPill label="Skipped" value={result.unanswered}                    variant="amber" />
+                      <div className="hidden sm:block"><StatPill label="Wrong"   value={result.wrong}     variant="red" /></div>
+                      <div className="hidden sm:block"><StatPill label="Skipped" value={result.unanswered} variant="amber" /></div>
+                    </div>
+                    {/* Show wrong/skipped on mobile inline */}
+                    <div className="sm:hidden grid grid-cols-2 gap-2 mt-2">
+                      <StatPill label="Wrong"   value={result.wrong}      variant="red" />
+                      <StatPill label="Skipped" value={result.unanswered} variant="amber" />
                     </div>
                   </div>
                 )}
 
                 {/* Question dot nav */}
-                <div className="px-6 py-3 border-b border-slate-100 flex items-center gap-2 overflow-x-auto">
+                <div className="px-4 sm:px-6 py-3 border-b border-slate-100 flex items-center gap-2 overflow-x-auto">
                   <span className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mr-1 flex-shrink-0">Q</span>
                   {session.questions?.map((q, i) => {
                     const qr      = questionResultMap[q.id];
@@ -545,8 +554,8 @@ export default function PracticeMode() {
                       />
                     );
                   })}
-                  <div className="ml-auto flex-shrink-0 pl-4 border-l border-slate-100">
-                    <div className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold ${
+                  <div className="ml-auto flex-shrink-0 pl-3 sm:pl-4 border-l border-slate-100">
+                    <div className={`inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold ${
                       isSessionLocked
                         ? "bg-amber-50 text-amber-700 border border-amber-200"
                         : "bg-emerald-50 text-emerald-700 border border-emerald-200"
@@ -558,7 +567,7 @@ export default function PracticeMode() {
                 </div>
 
                 {/* Breadcrumb */}
-                <div className="px-6 pt-4 pb-1 flex items-center gap-2 flex-wrap">
+                <div className="px-4 sm:px-6 pt-3 sm:pt-4 pb-1 flex items-center gap-2 flex-wrap">
                   <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 bg-slate-100 rounded-lg px-2.5 py-1">
                     <TimerReset className="w-3 h-3 text-[#0b2a4a]" />
                     {subjectLabel(session.subject)}
@@ -566,7 +575,7 @@ export default function PracticeMode() {
                   <span className="text-slate-300 text-xs">›</span>
                   <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 bg-slate-100 rounded-lg px-2.5 py-1">
                     <TrendingUp className="w-3 h-3 text-[#1c4f85]" />
-                    {currentQuestion.topic}
+                    <span className="truncate max-w-[120px] sm:max-w-none">{currentQuestion.topic}</span>
                   </span>
                   <span className="ml-auto text-xs font-mono font-semibold text-slate-400">
                     {questionIndex + 1} / {session.questionCount}
@@ -574,17 +583,17 @@ export default function PracticeMode() {
                 </div>
 
                 {/* Scrollable body */}
-                <div className="flex-1 overflow-y-auto px-6 pb-4 pt-3 space-y-4 fade-up">
+                <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-4 pt-3 space-y-3 sm:space-y-4 fade-up">
 
                   {/* Question card */}
-                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-5">
+                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4 sm:p-5">
                     <span className="inline-flex items-center gap-1.5 text-[10px] font-bold font-mono text-white bg-[#0b2a4a] rounded-lg px-2.5 py-1 mb-3 shadow-sm">
                       Q{questionIndex + 1}
                       {currentQuestion.questionType && (
                         <span className="opacity-60 font-normal uppercase ml-1">{currentQuestion.questionType}</span>
                       )}
                     </span>
-                    <p className="text-[15px] leading-relaxed text-slate-800 whitespace-pre-wrap break-words mt-2">
+                    <p className="text-[14px] sm:text-[15px] leading-relaxed text-slate-800 whitespace-pre-wrap break-words mt-2">
                       {currentQuestion.statement}
                     </p>
                     {currentQuestion.imageUrl && (
@@ -592,7 +601,7 @@ export default function PracticeMode() {
                         <img
                           src={`${API_BASE}${currentQuestion.imageUrl}`}
                           alt={`Question ${currentQuestion.qno}`}
-                          className="w-full max-h-[480px] object-contain"
+                          className="w-full max-h-[320px] sm:max-h-[480px] object-contain"
                           loading="lazy"
                         />
                       </div>
@@ -607,13 +616,11 @@ export default function PracticeMode() {
                           <p className="text-xs text-slate-400 mb-2">Option text is image-based — match option number from the image.</p>
                         )}
 
-                        {/* Clear response button — only shown when an answer is selected and session is live */}
                         {answers[currentQuestion.id] && !isSessionLocked && (
                           <div className="flex justify-end mb-1">
                             <button
                               onClick={() => clearAnswer(currentQuestion.id)}
                               className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-red-500 border border-slate-200 hover:border-red-200 hover:bg-red-50 rounded-lg px-2.5 py-1 transition-all duration-150"
-                              title="Clear selected answer"
                             >
                               <RotateCcw className="w-3 h-3" />
                               Clear Response
@@ -621,14 +628,14 @@ export default function PracticeMode() {
                           </div>
                         )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        {/* Single column on mobile, 2 cols on md+ */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5">
                           {currentQuestion.options.map((option) => {
                             const selectedValue  = answers[currentQuestion.id] || "";
                             const isSelected     = selectedValue === option.key;
                             const optionText     = String(option.text || "").trim();
                             const isGenericOption = /^Option\s+[1-4]$/i.test(optionText);
-                            const displayText    = isGenericOption && currentQuestion.imageUrl
-                              ? `${optionText} (see image)` : optionText;
+                            const displayText    = isGenericOption && currentQuestion.imageUrl ? `${optionText} (see image)` : optionText;
                             const isCorrectOption = !!currentQuestionResult &&
                               String(currentQuestionResult.correctAnswer || "") === String(option.key);
 
@@ -651,11 +658,8 @@ export default function PracticeMode() {
                               <label
                                 key={`${currentQuestion.id}-${option.key}`}
                                 data-locked={isSessionLocked}
-                                onDoubleClick={() => {
-                                  if (!isSessionLocked && isSelected) clearAnswer(currentQuestion.id);
-                                }}
-                                title={isSelected && !isSessionLocked ? "Double-click to clear" : undefined}
-                                className={`option-card flex items-start gap-3 rounded-xl px-4 py-3.5 border cursor-pointer shadow-sm ${borderCls} ${bgCls}`}
+                                onDoubleClick={() => { if (!isSessionLocked && isSelected) clearAnswer(currentQuestion.id); }}
+                                className={`option-card flex items-start gap-3 rounded-xl px-3 sm:px-4 py-3 sm:py-3.5 border cursor-pointer shadow-sm ${borderCls} ${bgCls}`}
                               >
                                 <div className={`flex-shrink-0 mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${radioCls}`}>
                                   {(isSelected || (isSessionLocked && isCorrectOption)) && (
@@ -696,9 +700,9 @@ export default function PracticeMode() {
 
                     {/* Answer reveal */}
                     {isSessionLocked && currentQuestionResult && (
-                      <div className="mt-1 rounded-xl bg-slate-50 border border-slate-200 p-4 shadow-sm">
-                        <div className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-3">Answer Breakdown</div>
-                        <div className="grid grid-cols-3 gap-4">
+                      <div className="mt-1 rounded-xl bg-slate-50 border border-slate-200 p-3 sm:p-4 shadow-sm">
+                        <div className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-2 sm:mb-3">Answer Breakdown</div>
+                        <div className="grid grid-cols-3 gap-3 sm:gap-4">
                           <div>
                             <div className="text-[10px] text-slate-400 font-semibold mb-0.5">Your Answer</div>
                             <div className="text-sm font-mono font-bold text-[#1c4f85]">{currentQuestionResult.userAnswer || "—"}</div>
@@ -723,35 +727,23 @@ export default function PracticeMode() {
                 </div>
 
                 {/* Nav footer */}
-                <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3">
-                  {/* Previous Button */}
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-100 flex items-center justify-between gap-2 sm:gap-3">
                   <button
                     onClick={() => setQuestionIndex((p) => Math.max(0, p - 1))}
                     disabled={questionIndex === 0}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+                    className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-sm font-semibold border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
                   >
                     <ChevronLeft className="w-4 h-4" />
-                    Previous
+                    <span className="hidden sm:inline">Previous</span>
                   </button>
 
-                  {/* Middle Section: Submit Button (only on last question) OR Question Counter */}
                   {questionIndex === session.questionCount - 1 && !result ? (
                     <button
                       onClick={submitPractice}
                       disabled={submitting}
-                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg transition-all active:scale-[0.98] disabled:opacity-60"
+                      className="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg transition-all active:scale-[0.98] disabled:opacity-60"
                     >
-                      {submitting ? (
-                        <>
-                          <Spinner />
-                          Submitting...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4" />
-                          Submit
-                        </>
-                      )}
+                      {submitting ? <><Spinner />Submitting...</> : <><Send className="w-4 h-4" />Submit</>}
                     </button>
                   ) : (
                     <span className="text-xs font-mono font-semibold text-slate-400">
@@ -759,20 +751,18 @@ export default function PracticeMode() {
                     </span>
                   )}
 
-                  {/* Next Button */}
                   <button
                     onClick={() => setQuestionIndex((p) => Math.min(session.questionCount - 1, p + 1))}
                     disabled={questionIndex >= session.questionCount - 1}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#0b2a4a] hover:bg-[#123d6b] text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-md active:scale-[0.98]"
+                    className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-sm font-semibold bg-[#0b2a4a] hover:bg-[#123d6b] text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-md active:scale-[0.98]"
                   >
-                    Next
+                    <span className="hidden sm:inline">Next</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Bottom navy accent — matches login card */}
             <div className="h-1.5 w-full bg-[#0b2a4a] mt-auto" />
           </div>
         </div>
