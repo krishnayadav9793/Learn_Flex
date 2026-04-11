@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const socket = io("https://learn-flex-puce.vercel.app/", {
+const socket = io("https://learn-flex-puce.vercel.app", {
   withCredentials: true,
 });
 
