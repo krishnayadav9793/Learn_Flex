@@ -11,8 +11,9 @@ import DailyChallengePage from "./Pages/DailyChalllenge.jsx"
 import HomePage from "./Pages/HomePage.jsx"
 import PracticeMode from "./Pages/PracticeMode.jsx"
 import CompitationPage from "./components/1v1/page.jsx"
-
+import dotenv from 'dotenv'
 function App() {
+  // dotenv.config();
   return (
     <Routes>
       <Route path="*" element={<Navigate to="/HomePage" />} />

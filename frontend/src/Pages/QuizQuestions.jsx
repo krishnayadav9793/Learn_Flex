@@ -24,8 +24,9 @@ function QuizQuestions() {
     const fetchQuestions = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:3000/quiz/question/${id}?quizId=${id}`, {
+        const res = await fetch(`https://learn-flex-puce.vercel.app/quiz/question/${id}?quizId=${id}`, {
           method: 'GET',
+          headers: { "Content-Type": "application/json" },
           credentials: 'include',
         });
         if (!res.ok) throw new Error('Failed to fetch questions');
@@ -85,7 +86,7 @@ setQuestionList(list);
     clearInterval(timerRef.current);
     console.log("clicked");
     try {
-      await fetch('http://localhost:3000/quiz/submit', {
+      await fetch('https://learn-flex-puce.vercel.app/quiz/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: answers }),

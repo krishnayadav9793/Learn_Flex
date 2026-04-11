@@ -43,7 +43,7 @@ export default function LearnFlex() {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/dc/dailyChallenge/${exam_id}`, {
+        const res = await fetch(`https://learn-flex-puce.vercel.app/dc/dailyChallenge/${exam_id}`, {
           method: "GET",
           credentials: "include",
         });
@@ -118,7 +118,7 @@ export default function LearnFlex() {
         attempt_at: new Date().toISOString(),
       }));
 
-      const res = await fetch("http://localhost:3000/dc/attempt", {
+      const res = await fetch("https://learn-flex-puce.vercel.app/dc/attempt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

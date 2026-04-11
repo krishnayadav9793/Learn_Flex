@@ -23,8 +23,9 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchExam = async () => {
       try {
-        const res = await fetch("http://localhost:3000/exam/subjects", {
+        const res = await fetch("https://learn-flex-puce.vercel.app/exam/subjects", {
           method: "GET",
+          headers: { "Content-Type": "application/json" },
           credentials: "include"
         });
 

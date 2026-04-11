@@ -58,8 +58,9 @@ function QuizPage() {
 
     const fetchQuiz = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/quiz/list/${examId}`, {
+        const res = await fetch(`https://learn-flex-puce.vercel.app/quiz/list/${examId}`, {
           method: "GET",
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
         });
         const data = await res.json();
