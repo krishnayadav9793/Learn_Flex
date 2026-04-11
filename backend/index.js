@@ -31,7 +31,7 @@ const io = new Server(server, {
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://learn-flex-yw72.vercel.app",
     credentials: true,
   })
 );
