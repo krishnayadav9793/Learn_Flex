@@ -1,8 +1,8 @@
 import React from "react"
-import { Routes, Route,  Navigate, Link, BrowserRouter } from "react-router-dom"
+import { Routes, Route, Navigate, Link, BrowserRouter } from "react-router-dom"
 import Login from "./components/auth/Login.jsx"
 import Signup from "./components/auth/Signup.jsx"
-import Profile from "./components/Profile/Profile.jsx"
+import { Profile } from "./components/Profile/Profile.jsx"
 import LeaderBoard from "./Pages/LeaderBoard.jsx"
 import QuizPage from "./Pages/QuizPage.jsx"
 import QuizQuestions from "./Pages/QuizQuestions.jsx"
@@ -26,10 +26,10 @@ function App() {
       <Route path="/DailyChallenge/:exam_id" element={<DailyChallengePage />} />
       <Route path="/HomePage" element={<HomePage />} />
       <Route path="/practice/:exam_name" element={<PracticeMode />} />
-      <Route path="/1v1" element={<CompitationPage/>}/>
-      <Route path="/resetPassword" element={<ForgotPasswordOTP/>}/>
+      <Route path="/1v1" element={<CompitationPage />} />
+      <Route path="/resetPassword" element={<ForgotPasswordOTP />} />
     </Routes>
-  )                                                                                  
+  )
 }
 
 export default App
