@@ -142,7 +142,7 @@ const LoginCard = () => {
     const data = { email, password };
 
     try {
-      const res = await fetch("http://localhost:3000/user/login", {
+      const res = await fetch("https://learn-flex-puce.vercel.app/user/login", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

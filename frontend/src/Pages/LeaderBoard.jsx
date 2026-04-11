@@ -48,8 +48,9 @@ const Leaderboard = () => {
     if (!quizId) { setLoading(false); return; }
     const fetchLeaderboard = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/leaderboard/${quizId}`,{
-          credentials:"include"
+        const res = await fetch(`https://learn-flex-puce.vercel.app/leaderboard/${quizId}`,{
+          credentials:"include",
+          headers: { "Content-Type": "application/json" },
         });
         const result = await res.json();
         setData(Array.isArray(result) ? result : result.data ?? []);

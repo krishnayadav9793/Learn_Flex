@@ -53,7 +53,7 @@ export default function Heatmap() {
   useEffect(() => {
     (async () => {
       try {
-        const res  = await fetch("http://localhost:3000/dc/heatmap", { credentials: "include" });
+        const res  = await fetch("https://learn-flex-puce.vercel.app/dc/heatmap", { credentials: "include" });
         const json = await res.json();
         setData(json.heatmap || []);
         setRating(json.rating || 0);

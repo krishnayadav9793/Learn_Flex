@@ -9,7 +9,7 @@ function Profile() {
     const dataFetch = async () => {
       try {
         console.log("isnerted")
-        const data = await fetch("http://localhost:3000/user/profile", {
+        const data = await fetch("https://learn-flex-puce.vercel.app/user/profile", {
           credentials: "include"
         })
         const res=await data.json();

@@ -22,8 +22,9 @@ const LearnFlexHome = () => {
   useEffect(() => {
     const fetchExam = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/exam/subjects`, {
+        const res = await fetch(`https://learn-flex-puce.vercel.app/exam/subjects`, {
           method: "GET",
+          headers: { "Content-Type": "application/json" },
           credentials: "include"
         });
         
@@ -215,44 +216,7 @@ return (
           </div>
         </section>
  
-        {/* Practice by Subject */}
-        <section className="space-y-6 sm:space-y-8">
-          <div className="flex items-end justify-between">
-            <div>
-              <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#001F3F]">Practice by Subject</h3>
-              <p className="text-slate-400 text-xs sm:text-sm mt-1">Deep dive into specific topics</p>
-            </div>
-          </div>
- 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-            {currentTopics.length > 0 ? (
-              currentTopics.map((topic, index) => (
-                <div
-                  key={index}
-                  className="group bg-white border border-slate-200 p-4 sm:p-6 md:p-7 rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] hover:bg-[#001F3F] hover:scale-[1.02] transition-all duration-300 cursor-pointer shadow-sm hover:shadow-xl hover:shadow-blue-900/20"
-                >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-blue-50 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 md:mb-5 group-hover:bg-white/10 group-hover:rotate-6 transition-all">
-                    <BookOpen size={20} className="text-[#001F3F] group-hover:text-white sm:hidden" />
-                    <BookOpen size={26} className="hidden sm:block text-[#001F3F] group-hover:text-white" />
-                  </div>
-                  <h4 className="font-bold text-sm sm:text-base md:text-lg text-[#001F3F] group-hover:text-white transition-colors mb-1 sm:mb-2 leading-snug">
-                    {topic}
-                  </h4>
-                  <div className="flex items-center gap-2">
-                    <div className="h-1 flex-grow bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-[#001F3F] w-1/3 group-hover:bg-blue-300" />
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-400 group-hover:text-blue-200">30%</span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              [1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-32 sm:h-40 bg-slate-100 rounded-xl sm:rounded-[2rem] animate-pulse" />
-              ))
-            )}
-          </div>
-        </section>
+        
  
       </main>
     </div>

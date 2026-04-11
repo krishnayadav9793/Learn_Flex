@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://learn-flex-puce.vercel.app/";
 
 const formatTime = (seconds) => {
   const safe = Math.max(0, seconds);
@@ -123,7 +123,7 @@ export default function PracticeMode() {
       setLoadingMeta(true); setError("");
       try {
         const query = examName ? `?examName=${encodeURIComponent(examName)}` : "";
-        const res = await fetch(`${API_BASE}/practice/meta${query}`, { credentials: "include" });
+        const res = await fetch(`${API_BASE}/practice/meta${query}`, { credentials: "include" ,headers: { "Content-Type": "application/json" },});
         if (res.status === 401) { navigate("/login"); return; }
         const data = await res.json();
         const subjectList = data.subjects || [];
