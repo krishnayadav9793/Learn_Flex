@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Clock, CheckCircle2, Send, Grid, X } from 'lucide-react';
+import { API_BASE } from '../config';
 
 function QuizQuestions() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ function QuizQuestions() {
     const fetchQuestions = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`https://learn-flex-2.onrender.com/quiz/question/${id}?quizId=${id}`, {
+        const res = await fetch(`${API_BASE}/quiz/question/${id}?quizId=${id}`, {
           method: 'GET',
           headers: { "Content-Type": "application/json" },
           credentials: 'include',
@@ -73,7 +74,7 @@ function QuizQuestions() {
   const submitQuiz = async () => {
     clearInterval(timerRef.current);
     try {
-      await fetch('https://learn-flex-2.onrender.com/quiz/submit', {
+      await fetch(`${API_BASE}/quiz/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: answers }),

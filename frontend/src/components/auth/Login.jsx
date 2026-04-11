@@ -7,6 +7,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useNavigate , Link } from "react-router-dom";
+import { API_BASE } from "../../config";
 
 /*
 Animated background with neutral LearnFlex dashboard colors
@@ -142,7 +143,7 @@ const LoginCard = () => {
     const data = { email, password };
 
     try {
-      const res = await fetch("https://learn-flex-2.onrender.com/user/login", {
+      const res = await fetch(`${API_BASE}/user/login`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

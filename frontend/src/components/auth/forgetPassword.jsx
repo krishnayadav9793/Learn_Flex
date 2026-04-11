@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_BASE } from '../../config'
 
 const OTP_LENGTH = 6
 const OTP_EXPIRY_SEC = 15 * 60
@@ -183,7 +184,7 @@ export default function ForgotPasswordOTP() {
     setEmailErr('')
     setSending(true)
     try {
-      const res = await fetch('https://learn-flex-puce.vercel.app/user/forgetpassword', {
+      const res = await fetch(`${API_BASE}/user/forgetpassword`, {
         method: 'POST',
         body: JSON.stringify({ email }),
         headers: { 'Content-Type': 'application/json' }
@@ -278,7 +279,7 @@ export default function ForgotPasswordOTP() {
     if (!validatePasswords()) return
     setResetting(true)
     try {
-      const res = await fetch('https://learn-flex-2.onrender.com/user/resetpassword', {
+      const res = await fetch(`${API_BASE}/user/resetpassword`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, newPassword: passwords.new })

@@ -23,7 +23,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["https://learn-flex-yw72.vercel.app","http://localhost:5173"],
+    origin: ["https://learn-flex-yw72.vercel.app", "http://localhost:5173"],
     credentials: true,
   },
 });
@@ -31,7 +31,7 @@ const io = new Server(server, {
 
 app.use(
   cors({
-    origin: ["https://learn-flex-yw72.vercel.app","http://localhost:5173"],
+    origin: ["https://learn-flex-yw72.vercel.app", "http://localhost:5173"],
     credentials: true,
   })
 );
@@ -47,7 +47,7 @@ app.use("/quiz", quizRoute);
 app.use("/practice", practiceRoute);
 app.use("/exam", ExamRoute);
 app.use("/dc", dailyRouter);
-app.use("/leaderboard",leaderBoardrouter)
+app.use("/leaderboard", leaderBoardrouter)
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.includes("your_jwt_secret")) {
   process.env.JWT_SECRET = "demo-jwt-secret";

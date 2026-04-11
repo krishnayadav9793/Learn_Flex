@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Banner from "../components/quiz/banner.jsx";
 import { Sparkles, Brain } from "lucide-react";
+import { API_BASE } from "../config";
 
 // ── Inline Navbar ──────────────────────────────────────────────────────────────
 const Navbar = () => {
@@ -63,7 +64,7 @@ function QuizPage() {
 
     const fetchQuiz = async () => {
       try {
-        const res = await fetch(`https://learn-flex-2.onrender.com/quiz/list/${examId}`, {
+        const res = await fetch(`${API_BASE}/quiz/list/${examId}`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_BASE } from '../../config'
 import App from '../../Pages/ProfilePage.jsx'
 function Profile() {
   const navigate=useNavigate();
@@ -9,7 +10,7 @@ function Profile() {
     const dataFetch = async () => {
       try {
         console.log("isnerted")
-        const data = await fetch("https://learn-flex-2.onrender.com/user/profile", {
+        const data = await fetch(`${API_BASE}/user/profile`, {
           credentials: "include"
         })
         const res=await data.json();

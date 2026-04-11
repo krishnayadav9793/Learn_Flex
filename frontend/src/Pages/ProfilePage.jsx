@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../components/profile/Navbar.jsx";
 import SimpleYearlyHeatmap from "../components/Heatmap/heatmap.jsx";
+import { API_BASE } from "../config";
 import {
   Atom,
   FlaskConical,
@@ -23,7 +24,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchExam = async () => {
       try {
-        const res = await fetch("https://learn-flex-2.onrender.com/exam/subjects", {
+        const res = await fetch(`${API_BASE}/exam/subjects`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include"
