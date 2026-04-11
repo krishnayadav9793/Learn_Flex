@@ -138,7 +138,7 @@ const SignupCard = () => {
     setStatus(null);
 
     try {
-      const res = await fetch("https://learn-flex-puce.vercel.app/user/signup", {
+      const res = await fetch("https://learn-flex-2.onrender.com/user/signup", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

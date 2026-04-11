@@ -48,7 +48,7 @@ const Leaderboard = () => {
     if (!quizId) { setLoading(false); return; }
     const fetchLeaderboard = async () => {
       try {
-        const res = await fetch(`https://learn-flex-puce.vercel.app/leaderboard/${quizId}`,{
+        const res = await fetch(`https://learn-flex-2.onrender.com/leaderboard/${quizId}`,{
           credentials:"include",
           headers: { "Content-Type": "application/json" },
         });

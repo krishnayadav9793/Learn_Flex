@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import App from '../../Pages/ProfilePage'
+import App from '../../Pages/ProfilePage.jsx'
 function Profile() {
   const navigate=useNavigate();
   const [ userDetail, setUserDetail ] = useState("Loading")
@@ -9,7 +9,7 @@ function Profile() {
     const dataFetch = async () => {
       try {
         console.log("isnerted")
-        const data = await fetch("https://learn-flex-puce.vercel.app/user/profile", {
+        const data = await fetch("https://learn-flex-2.onrender.com/user/profile", {
           credentials: "include"
         })
         const res=await data.json();

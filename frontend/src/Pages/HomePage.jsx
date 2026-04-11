@@ -22,7 +22,7 @@ const LearnFlexHome = () => {
   useEffect(() => {
     const fetchExam = async () => {
       try {
-        const res = await fetch(`https://learn-flex-puce.vercel.app/exam/subjects`, {
+        const res = await fetch(`https://learn-flex-2.onrender.com/exam/subjects`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include"
@@ -107,7 +107,7 @@ return (
           </div>
  
           {/* Background text decoration — hidden on small screens to avoid overflow */}
-          <div className="hidden sm:block absolute right-[20px] bottom-[-40px] opacity-10 text-[140px] md:text-[200px] lg:text-[240px] font-black tracking-tighter select-none pointer-events-none leading-none">
+          <div className=" hidden sm:block absolute right-4 top-1/2 -translate-y-1/2 opacity-10 font-black tracking-tighter select-none pointer-events-none leading-none whitespace-nowrap text-[clamp(80px,15vw,300px)]">
             {selectedExam ? selectedExam.split(" ")[0] : "GOAL"}
           </div>
         </section>
