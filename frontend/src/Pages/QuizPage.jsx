@@ -7,13 +7,13 @@ import { Sparkles, Brain } from "lucide-react";
 const Navbar = () => {
   const navigate = useNavigate();
   return (
-    <nav className="sticky top-0 z-50 bg-[#FFFDF5]/95 backdrop-blur-md border-b border-[#E5E1D3] px-6 py-3 flex items-center justify-between shadow-sm">
-      <div className="flex items-center gap-10">
+    <nav className="sticky top-0 z-50 bg-[#FFFDF5]/95 backdrop-blur-md border-b border-[#E5E1D3] px-4 sm:px-6 py-3 flex items-center justify-between shadow-sm">
+      <div className="flex items-center gap-4 sm:gap-10">
         <div className="flex items-center gap-2 group cursor-pointer">
           <div className="bg-[#001F3F] p-1.5 rounded-lg group-hover:rotate-[-10deg] transition-transform duration-300">
-            <Brain className="w-5 h-5 text-white" />
+            <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
-          <h1 className="text-2xl font-[1000] tracking-tighter flex items-center">
+          <h1 className="text-xl sm:text-2xl font-[1000] tracking-tighter flex items-center">
             <span className="text-blue-500">LEARN</span>
             <span className="text-[#001F3F] ml-0.5 relative">
               FLEX
@@ -23,17 +23,23 @@ const Navbar = () => {
         </div>
       </div>
 
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-3 pl-4 border-l border-[#E5E1D3]">
+      <div className="flex items-center gap-3 sm:gap-6">
+        <div className="flex items-center gap-2 sm:gap-3 pl-3 sm:pl-4 border-l border-[#E5E1D3]">
           <div className="hidden lg:block text-right">
             <p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Elite Member</p>
             <p className="text-xs font-bold text-[#001F3F]">
               {localStorage.getItem("name")?.toUpperCase()}
             </p>
           </div>
+          {/* Show name initial on md screens too */}
+          <div className="hidden sm:block lg:hidden text-right">
+            <p className="text-xs font-bold text-[#001F3F] max-w-[100px] truncate">
+              {localStorage.getItem("name")}
+            </p>
+          </div>
           <div
             onClick={() => navigate("/profile")}
-            className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#001F3F] to-blue-800 flex items-center justify-center text-white font-black text-sm shadow-lg ring-2 ring-white hover:scale-105 transition-transform cursor-pointer"
+            className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-[#001F3F] to-blue-800 flex items-center justify-center text-white font-black text-sm shadow-lg ring-2 ring-white hover:scale-105 transition-transform cursor-pointer"
           >
             {localStorage.getItem("name")?.[0]?.toUpperCase()}
           </div>
@@ -49,7 +55,6 @@ function QuizPage() {
   const params = useLocation();
   const [quizList, setQuizList] = useState([]);
 
-  // exam_id is passed from HomePage via navigate state
   const examId = params?.state?.exam_id || localStorage.getItem("examId");
 
   // ---------------- FETCH QUIZ ----------------
@@ -79,83 +84,83 @@ function QuizPage() {
 
       <Navbar />
 
-      <main className="max-w-7xl mx-auto pt-24 px-6 md:px-10 pb-16">
+      <main className="max-w-7xl mx-auto pt-6 sm:pt-10 md:pt-16 px-4 sm:px-6 md:px-10 pb-16">
 
         {/* HERO */}
-        <section className="relative overflow-hidden rounded-[2.8rem] bg-gradient-to-br from-[#001F3F] via-[#002e5c] to-[#003a70] px-12 py-16 text-white shadow-2xl">
+        <section className="relative overflow-hidden rounded-[1.8rem] sm:rounded-[2.2rem] md:rounded-[2.8rem] bg-gradient-to-br from-[#001F3F] via-[#002e5c] to-[#003a70] px-6 sm:px-10 md:px-12 py-10 sm:py-12 md:py-16 text-white shadow-2xl">
           <div className="relative z-10 max-w-xl">
-            <div className="flex items-center gap-2 mb-4 text-blue-200">
-              <Sparkles size={18} />
-              <span className="text-xs font-bold tracking-widest uppercase">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4 text-blue-200">
+              <Sparkles size={16} />
+              <span className="text-[10px] sm:text-xs font-bold tracking-widest uppercase">
                 Practice Arena
               </span>
             </div>
 
-            <h1 className="text-5xl font-black mb-5 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 sm:mb-5 tracking-tight">
               Quiz Arena
             </h1>
 
-            <p className="text-blue-100/70 text-lg leading-relaxed">
+            <p className="text-blue-100/70 text-sm sm:text-base md:text-lg leading-relaxed">
               Attempt curated quizzes designed to test your knowledge,
               sharpen accuracy and track performance in real-time.
             </p>
 
             <button
               onClick={() => navigate("/HomePage")}
-              className="mt-6 inline-flex items-center gap-2 bg-white text-[#001F3F] text-sm font-bold px-5 py-2.5 rounded-full hover:bg-blue-50 transition"
+              className="mt-5 sm:mt-6 inline-flex items-center gap-2 bg-white text-[#001F3F] text-xs sm:text-sm font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-full hover:bg-blue-50 transition"
             >
               ← Back to Home
             </button>
           </div>
 
-          {/* Background decoration */}
-          <div className="absolute right-10 bottom-[-50px] opacity-10 text-[220px] font-black select-none">
+          {/* Background decoration — hidden on very small screens to avoid overflow */}
+          <div className="hidden sm:block absolute right-6 md:right-10 bottom-[-50px] opacity-10 text-[140px] md:text-[220px] font-black select-none">
             QUIZ
           </div>
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_60%)]" />
         </section>
 
         {/* SECTION HEADER */}
-        <div className="mt-16 mb-8 flex items-center justify-between">
+        <div className="mt-10 sm:mt-14 md:mt-16 mb-6 sm:mb-8 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-extrabold text-[#001F3F]">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-[#001F3F]">
               Available Quizzes
             </h2>
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
               Choose a quiz and begin your challenge.
             </p>
           </div>
-          <div className="text-xs bg-blue-50 text-blue-700 px-4 py-2 rounded-xl font-semibold">
+          <div className="text-xs bg-blue-50 text-blue-700 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl font-semibold whitespace-nowrap">
             {quizList.length} Quizzes
           </div>
         </div>
 
         {/* QUIZ GRID */}
-        <section className="flex flex-col gap-4">
-  {quizList.length > 0 ? (
-    quizList.map((quiz) => (
-      <div key={quiz.test_id}>
-        <Banner data={quiz} />
-      </div>
-    ))
-  ) : (
-    [1, 2, 3].map((i) => (
-      <div
-        key={i}
-        className="h-[120px] rounded-[22px] bg-white border border-slate-200 animate-pulse"
-      />
-    ))
-  )}
-</section>
+        <section className="flex flex-col gap-3 sm:gap-4">
+          {quizList.length > 0 ? (
+            quizList.map((quiz) => (
+              <div key={quiz.test_id}>
+                <Banner data={quiz} />
+              </div>
+            ))
+          ) : (
+            [1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-[90px] sm:h-[110px] md:h-[120px] rounded-[18px] sm:rounded-[22px] bg-white border border-slate-200 animate-pulse"
+              />
+            ))
+          )}
+        </section>
 
         {/* EMPTY STATE */}
         {quizList.length === 0 && (
-          <div className="mt-16 text-center">
-            <div className="text-5xl mb-4">🧠</div>
-            <h3 className="text-xl font-bold text-[#001F3F]">
+          <div className="mt-12 sm:mt-16 text-center px-4">
+            <div className="text-4xl sm:text-5xl mb-3 sm:mb-4">🧠</div>
+            <h3 className="text-lg sm:text-xl font-bold text-[#001F3F]">
               No quizzes available
             </h3>
-            <p className="text-slate-500 mt-2 text-sm">
+            <p className="text-slate-500 mt-2 text-xs sm:text-sm">
               New quizzes will appear here once they are scheduled.
             </p>
           </div>
