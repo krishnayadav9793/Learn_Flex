@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../components/profile/Navbar.jsx";
 import SimpleYearlyHeatmap from "../components/Heatmap/heatmap.jsx";
-import { useNavigate } from "react-router-dom";
 import {
   Atom,
   FlaskConical,
@@ -10,12 +9,10 @@ import {
   ArrowRight,
   Trophy,
   BookOpen,
-  Activity,
-  ArrowLeft
+  Activity
 } from "lucide-react";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
   const [examData, setExamData] = useState({});
   const [selectedExam, setSelectedExam] = useState("");
   const [analysis, setAnalysis] = useState([]); // 🔥 Added analysis state
@@ -76,16 +73,6 @@ const Dashboard = () => {
       <Navbar />
 
       <main className="max-w-7xl mx-auto p-6 md:p-10 space-y-12">
-        <div className="flex justify-start">
-          <button
-            onClick={() => navigate("/HomePage")}
-            className="group flex items-center gap-2 px-4 py-2 bg-white border-2 border-[#0B2447] rounded-xl font-bold text-[13px] uppercase tracking-wider transition-all hover:bg-[#0B2447] hover:text-white active:scale-95 sm:px-6 sm:py-2.5"
-          >
-            <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
-            <span>Back to Home</span>
-          </button>
-        </div>
-
         {/* TOP SECTION: HEATMAP */}
         <div>
           {/* HEATMAP (Span 8) */}
