@@ -13,7 +13,6 @@ export const getDailyChallenge = async (req, res) => {
     q."Option_3" AS option3,
     q."Option_4" AS option4,
     q."Answer" AS correct,
-    q."difficulty",
     q."Image" AS image,
     dc.time_limit,
     e.exam_name,
@@ -74,32 +73,19 @@ export const addAttempts = async (req, res) => {
 
     console.log("Incoming attempts:", attempts);
 
-    let query = sql``;
-    attempts.forEach((a, i) => {
-      if (i === 0) {
-        query = sql`
-          INSERT INTO "DailyChallengeAttempt"
-          (user_id, challenge_id, ques_id, marked_option, attempt_at)
-          VALUES
-          (${user_id}, ${a.challenge_id}, ${a.ques_id}, ${a.marked_option}, ${a.attempt_at})
-        `;
-      } else {
-        query = sql`
-          ${query},
-          (${user_id}, ${a.challenge_id}, ${a.ques_id}, ${a.marked_option}, ${a.attempt_at})
-        `;
-      }
-    });
-
-    query = sql`
-      ${query}
-      ON CONFLICT (user_id, challenge_id, ques_id)
-      DO UPDATE SET
-        marked_option = EXCLUDED.marked_option,
-        attempt_at = EXCLUDED.attempt_at
-    `;
-
-    await query;
+    // 🔥 Insert ONE BY ONE (important)
+    for (const a of attempts) {
+      await sql`
+        INSERT INTO "DailyChallengeAttempt"
+        (user_id, challenge_id, ques_id, marked_option, attempt_at)
+        VALUES
+        (${user_id}, ${a.challenge_id}, ${a.ques_id}, ${a.marked_option}, ${a.attempt_at})
+        ON CONFLICT (user_id, challenge_id, ques_id)
+        DO UPDATE SET
+          marked_option = EXCLUDED.marked_option,
+          attempt_at = EXCLUDED.attempt_at
+      `;
+    }
 
     return res.status(200).json({
       message: "Attempts saved successfully"

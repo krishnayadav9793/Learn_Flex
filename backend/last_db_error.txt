@@ -1,0 +1,2 @@
+record "new" has no field "marked_option"
+{"questionId":"a5965cba-5ff8-479e-bfff-3365ba4cadd0","qno":"a5965cba-5ff8-479e-bfff-3365ba4cadd0","topic":"General","userAnswer":"1","correctAnswer":"4","isCorrect":false,"evaluated":true,"marksAwarded":-1}
