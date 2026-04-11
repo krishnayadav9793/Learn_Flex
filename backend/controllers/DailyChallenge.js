@@ -80,10 +80,7 @@ export const addAttempts = async (req, res) => {
         (user_id, challenge_id, ques_id, marked_option, attempt_at)
         VALUES
         (${user_id}, ${a.challenge_id}, ${a.ques_id}, ${a.marked_option}, ${a.attempt_at})
-        ON CONFLICT (user_id, challenge_id, ques_id)
-        DO UPDATE SET
-          marked_option = EXCLUDED.marked_option,
-          attempt_at = EXCLUDED.attempt_at
+        
       `;
     }
 
