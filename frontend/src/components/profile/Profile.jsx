@@ -9,13 +9,13 @@ function Profile() {
   useEffect(() => {
     const dataFetch = async () => {
       try {
-        console.log("isnerted")
+        // console.log("isnerted")
         const data = await fetch(`${API_BASE}/user/profile`, {
           credentials: "include"
         })
         const res=await data.json();
         if(res.msg==="No token")navigate("/login")
-        console.log(res)
+        // console.log(res)
         setUserDetail(res)
       } catch (err) {
         
