@@ -26,7 +26,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchExam = async () => {
       try {
-        const res = await fetch("https://learn-flex-puce.vercel.app/exam/subjects", {
+        const res = await fetch("https://learn-flex-2.onrender.com/exam/subjects", {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include"

@@ -99,7 +99,7 @@ export default function ForgotPasswordOTP({ onSendEmail, onVerify, onBack }) {
     setEmailErr('')
     setSending(true)
     try {
-      const res = await fetch(`https://learn-flex-puce.vercel.app/user/forgetpassword`, {
+      const res = await fetch(`https://learn-flex-2.onrender.com/user/forgetpassword`, {
         method: "POST",
         body: JSON.stringify({ email: email }),
         headers: {
@@ -223,7 +223,7 @@ export default function ForgotPasswordOTP({ onSendEmail, onVerify, onBack }) {
     setResetting(true)
     try {
       
-      const res = await fetch('https://learn-flex-puce.vercel.app/user/resetpassword', {
+      const res = await fetch('https://learn-flex-2.onrender.com/user/resetpassword', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

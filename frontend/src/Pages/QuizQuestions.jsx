@@ -23,7 +23,7 @@ function QuizQuestions() {
     const fetchQuestions = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`https://learn-flex-puce.vercel.app/quiz/question/${id}?quizId=${id}`, {
+        const res = await fetch(`https://learn-flex-2.onrender.com/quiz/question/${id}?quizId=${id}`, {
           method: 'GET',
           headers: { "Content-Type": "application/json" },
           credentials: 'include',
@@ -73,7 +73,7 @@ function QuizQuestions() {
   const submitQuiz = async () => {
     clearInterval(timerRef.current);
     try {
-      await fetch('https://learn-flex-puce.vercel.app/quiz/submit', {
+      await fetch('https://learn-flex-2.onrender.com/quiz/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: answers }),

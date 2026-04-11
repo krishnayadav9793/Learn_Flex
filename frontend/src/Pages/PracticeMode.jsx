@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-const API_BASE = "https://learn-flex-puce.vercel.app/";
+const API_BASE = "https://learn-flex-2.onrender.com/";
 
 const formatTime = (seconds) => {
   const safe = Math.max(0, seconds);
