@@ -1,7 +1,7 @@
 import React from "react"
 import { Routes, Route,  Navigate, Link, BrowserRouter } from "react-router-dom"
-import Login from "./components/auth/Login"
-import Signup from "./components/auth/Signup"
+import Login from "./components/auth/Login.jsx"
+import Signup from "./components/auth/Signup.jsx"
 import Profile from "./components/Profile/Profile.jsx"
 import LeaderBoard from "./Pages/LeaderBoard.jsx"
 import QuizPage from "./Pages/QuizPage.jsx"
@@ -11,7 +11,7 @@ import DailyChallengePage from "./Pages/DailyChalllenge.jsx"
 import HomePage from "./Pages/HomePage.jsx"
 import PracticeMode from "./Pages/PracticeMode.jsx"
 import CompitationPage from "./components/1v1/page.jsx"
-import dotenv from 'dotenv'
+
 function App() {
   // dotenv.config();
   return (

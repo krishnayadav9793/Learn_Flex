@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import Navbar from "../components/profile/Navbar";
-import SimpleYearlyHeatmap from "../components/Heatmap/heatmap";
+import Navbar from "../components/profile/Navbar.jsx";
+import SimpleYearlyHeatmap from "../components/Heatmap/heatmap.jsx";
 import { useNavigate } from "react-router-dom";
 import {
   Atom,
