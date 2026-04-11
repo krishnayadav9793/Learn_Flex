@@ -28,7 +28,7 @@ const LearnFlexHome = () => {
           credentials: "include"
         });
         
-        console.log("res_maa", res);
+        //console.log("res_maa", res);
         if (!res.ok) navigate("/login");
 
       const data = await res.json();
