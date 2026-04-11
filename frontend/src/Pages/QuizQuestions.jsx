@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Clock, CheckCircle2, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, CheckCircle2, Send, Grid, X } from 'lucide-react';
 
 function QuizQuestions() {
   const navigate = useNavigate();
@@ -15,11 +15,10 @@ function QuizQuestions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // default closed on mobile
   const [submitConfirm, setSubmitConfirm] = useState(false);
   const timerRef = useRef(null);
 
-  // fetch questions
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -30,13 +29,11 @@ function QuizQuestions() {
         });
         if (!res.ok) throw new Error('Failed to fetch questions');
         const list = await res.json();
-        // ✅ Check BEFORE setting state
         if (list?.msg === 'already participated') {
           navigate('/weeklyquiz', { state: { exam_id: localStorage.getItem('examId') } });
-          return; 
+          return;
         }
-
-setQuestionList(list);
+        setQuestionList(list);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -46,18 +43,12 @@ setQuestionList(list);
     fetchQuestions();
   }, [id]);
 
-  // timer starts immediately after load
   useEffect(() => {
     if (loading) return;
     if (timeLeft <= 0) { submitQuiz(); return; }
-
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 1000) {
-          clearInterval(timerRef.current);
-          submitQuiz();
-          return 0;
-        }
+        if (prev <= 1000) { clearInterval(timerRef.current); submitQuiz(); return 0; }
         return prev - 1000;
       });
     }, 1000);
@@ -75,15 +66,11 @@ setQuestionList(list);
   const isCritical = timeLeft < 30000;
 
   const handleAnswer = (quesId, option) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [quesId]: { answer_marked: option, test_id: id },
-    }));
+    setAnswers((prev) => ({ ...prev, [quesId]: { answer_marked: option, test_id: id } }));
   };
 
   const submitQuiz = async () => {
     clearInterval(timerRef.current);
-    console.log("clicked");
     try {
       await fetch('http://localhost:3000/quiz/submit', {
         method: 'POST',
@@ -100,6 +87,12 @@ setQuestionList(list);
   const answeredCount = Object.keys(answers).length;
   const totalCount = questionList.length;
   const currentQ = questionList[currentIndex];
+
+  const handleQuestionNav = (idx) => {
+    setCurrentIndex(idx);
+    // auto-close sidebar on mobile after selecting a question
+    if (window.innerWidth < 768) setSidebarOpen(false);
+  };
 
   if (loading) {
     return (
@@ -125,26 +118,29 @@ setQuestionList(list);
 
       {/* ── TOP NAV ── */}
       <header className="sticky top-0 z-30 bg-[#FFFDF5]/90 backdrop-blur-sm border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 h-16 flex items-center gap-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 h-14 sm:h-16 flex items-center gap-3 sm:gap-6">
 
           {/* Sidebar toggle */}
           <button
             onClick={() => setSidebarOpen((p) => !p)}
-            className="flex items-center gap-2 text-xs font-bold text-[#001F3F]/50 hover:text-[#001F3F] transition-colors tracking-wide uppercase"
+            className="flex items-center gap-1.5 sm:gap-2 text-xs font-bold text-[#001F3F]/50 hover:text-[#001F3F] transition-colors tracking-wide uppercase flex-shrink-0"
           >
-            <span className="grid grid-cols-2 gap-[3px]">
-              {[0,1,2,3].map(i => (
-                <span key={i} className="w-[5px] h-[5px] rounded-[1px] bg-current" />
-              ))}
-            </span>
-            {sidebarOpen ? 'Hide' : 'Map'}
+            {sidebarOpen
+              ? <X size={14} />
+              : (
+                <span className="grid grid-cols-2 gap-[3px]">
+                  {[0,1,2,3].map(i => <span key={i} className="w-[5px] h-[5px] rounded-[1px] bg-current" />)}
+                </span>
+              )
+            }
+            <span className="hidden sm:inline">{sidebarOpen ? 'Hide' : 'Map'}</span>
           </button>
 
-          {/* Progress bar */}
-          <div className="flex-1 max-w-sm">
-            <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 mb-1.5">
+          {/* Progress bar — shrinks on mobile */}
+          <div className="flex-1 min-w-0 max-w-xs sm:max-w-sm">
+            <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-bold text-slate-400 mb-1">
               <span>{answeredCount} answered</span>
-              <span>{totalCount - answeredCount} remaining</span>
+              <span className="hidden sm:inline">{totalCount - answeredCount} remaining</span>
             </div>
             <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
               <div
@@ -154,113 +150,137 @@ setQuestionList(list);
             </div>
           </div>
 
-          {/* Spacer */}
           <div className="flex-1" />
 
+          {/* Q counter — mobile only */}
+          <span className="sm:hidden text-xs font-bold text-slate-400 flex-shrink-0">
+            {currentIndex + 1}/{totalCount}
+          </span>
+
           {/* Timer */}
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl border-2 font-bold text-sm transition-all duration-300
+          <div className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl border-2 font-bold text-xs sm:text-sm transition-all duration-300 flex-shrink-0
             ${isCritical
               ? 'bg-red-50 border-red-300 text-red-600 animate-pulse'
               : isLowTime
               ? 'bg-amber-50 border-amber-300 text-amber-600'
               : 'bg-white border-slate-200 text-[#001F3F]'
             }`}>
-            <Clock size={14} />
+            <Clock size={13} />
             <span className="tabular-nums">{formatTime(timeLeft)}</span>
           </div>
         </div>
       </header>
 
       {/* ── BODY ── */}
-      <div className="flex flex-1 max-w-7xl w-full mx-auto px-6 md:px-10 py-8 gap-8">
+      <div className="flex flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 md:px-10 py-4 sm:py-8 gap-4 sm:gap-8 relative">
 
-        {/* ── SIDEBAR ── */}
-        <aside className={`transition-all duration-300 overflow-hidden flex-shrink-0
-          ${sidebarOpen ? 'w-52 opacity-100' : 'w-0 opacity-0 pointer-events-none'}`}>
-          <div className="w-52 space-y-5">
+        {/* ── SIDEBAR — mobile: absolute overlay, desktop: inline ── */}
+        <>
+          {/* Mobile backdrop */}
+          {sidebarOpen && (
+            <div
+              className="md:hidden fixed inset-0 z-20 bg-black/20 backdrop-blur-[2px]"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
 
-            <p className="text-[10px] font-black tracking-[0.15em] uppercase text-slate-400">
-              Question Map
-            </p>
+          <aside className={`
+            flex-shrink-0 z-30
+            md:relative md:block md:transition-all md:duration-300
+            ${sidebarOpen
+              ? 'md:w-52 md:opacity-100'
+              : 'md:w-0 md:opacity-0 md:pointer-events-none md:overflow-hidden'
+            }
+            fixed top-[57px] sm:top-[65px] left-0 bottom-0
+            transition-transform duration-300
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          `}>
+            <div className="md:w-52 w-64 h-full md:h-auto bg-[#FFFDF5] md:bg-transparent p-4 md:p-0 overflow-y-auto space-y-5 border-r border-slate-200 md:border-none shadow-xl md:shadow-none">
 
-            {/* Legend */}
-            <div className="flex gap-4">
-              <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold">
-                <span className="w-3 h-3 rounded-sm bg-[#001F3F]" /> Done
-              </span>
-              <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold">
-                <span className="w-3 h-3 rounded-sm bg-slate-200" /> Skip
-              </span>
-            </div>
+              <p className="text-[10px] font-black tracking-[0.15em] uppercase text-slate-400">
+                Question Map
+              </p>
 
-            {/* Number grid */}
-            <div className="grid grid-cols-5 gap-2">
-              {questionList.map((q, idx) => {
-                const answered = !!answers[q.Ques_id];
-                const isActive = idx === currentIndex;
-                return (
-                  <button
-                    key={q.Ques_id}
-                    onClick={() => setCurrentIndex(idx)}
-                    className={`w-9 h-9 rounded-xl text-xs font-bold transition-all duration-150
-                      ${isActive
-                        ? 'bg-[#001F3F] text-white scale-110 shadow-md shadow-[#001F3F]/25'
-                        : answered
-                        ? 'bg-[#001F3F]/12 text-[#001F3F] hover:bg-[#001F3F]/20'
-                        : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
-                      }`}
-                  >
-                    {idx + 1}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Stats card */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
-              <div className="flex justify-between items-center text-xs font-semibold">
-                <span className="text-slate-400">Attempted</span>
-                <span className="text-[#001F3F] font-black">{answeredCount}/{totalCount}</span>
+              {/* Legend */}
+              <div className="flex gap-4">
+                <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold">
+                  <span className="w-3 h-3 rounded-sm bg-[#001F3F]" /> Done
+                </span>
+                <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold">
+                  <span className="w-3 h-3 rounded-sm bg-slate-200" /> Skip
+                </span>
               </div>
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#001F3F] to-blue-400 transition-all duration-500"
-                  style={{ width: `${totalCount ? (answeredCount / totalCount) * 100 : 0}%` }}
-                />
+
+              {/* Number grid */}
+              <div className="grid grid-cols-5 gap-2">
+                {questionList.map((q, idx) => {
+                  const answered = !!answers[q.Ques_id];
+                  const isActive = idx === currentIndex;
+                  return (
+                    <button
+                      key={q.Ques_id}
+                      onClick={() => handleQuestionNav(idx)}
+                      className={`w-9 h-9 rounded-xl text-xs font-bold transition-all duration-150
+                        ${isActive
+                          ? 'bg-[#001F3F] text-white scale-110 shadow-md shadow-[#001F3F]/25'
+                          : answered
+                          ? 'bg-[#001F3F]/12 text-[#001F3F] hover:bg-[#001F3F]/20'
+                          : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                        }`}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
               </div>
-              <div className="flex justify-between items-center text-xs font-semibold">
-                <span className="text-slate-400">Skipped</span>
-                <span className="text-slate-400 font-black">{totalCount - answeredCount}</span>
+
+              {/* Stats card */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+                <div className="flex justify-between items-center text-xs font-semibold">
+                  <span className="text-slate-400">Attempted</span>
+                  <span className="text-[#001F3F] font-black">{answeredCount}/{totalCount}</span>
+                </div>
+                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#001F3F] to-blue-400 transition-all duration-500"
+                    style={{ width: `${totalCount ? (answeredCount / totalCount) * 100 : 0}%` }}
+                  />
+                </div>
+                <div className="flex justify-between items-center text-xs font-semibold">
+                  <span className="text-slate-400">Skipped</span>
+                  <span className="text-slate-400 font-black">{totalCount - answeredCount}</span>
+                </div>
               </div>
             </div>
-          </div>
-        </aside>
+          </aside>
+        </>
 
         {/* ── QUESTION MAIN ── */}
-        <main className="flex-1 flex flex-col min-w-0 gap-6">
+        <main className="flex-1 flex flex-col min-w-0 gap-4 sm:gap-6">
 
           {/* Question Card */}
           {currentQ && (
             <div
               key={currentQ.Ques_id}
-              className="bg-white border border-slate-200 rounded-[2.5rem] p-10 shadow-sm flex-1 flex flex-col"
+              className="bg-white border border-slate-200 rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-7 md:p-10 shadow-sm flex-1 flex flex-col"
               style={{ animation: 'fadeUp 0.22s ease' }}
             >
               {/* Header row */}
-              <div className="flex items-center gap-3 mb-7">
-                <span className="bg-[#001F3F] text-white text-[11px] font-black px-3 py-1 rounded-full tracking-widest uppercase">
+              <div className="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-7">
+                <span className="bg-[#001F3F] text-white text-[10px] sm:text-[11px] font-black px-2.5 sm:px-3 py-1 rounded-full tracking-widest uppercase">
                   Q {currentIndex + 1}
                 </span>
                 <span className="text-slate-300 text-xs font-bold">of {totalCount}</span>
                 {answers[currentQ.Ques_id] && (
-                  <span className="ml-auto flex items-center gap-1.5 text-emerald-500 text-xs font-bold">
-                    <CheckCircle2 size={13} /> Answered
+                  <span className="ml-auto flex items-center gap-1 sm:gap-1.5 text-emerald-500 text-xs font-bold">
+                    <CheckCircle2 size={13} />
+                    <span className="hidden sm:inline">Answered</span>
                   </span>
                 )}
               </div>
 
               {/* Statement */}
-              <p className="text-[#1E293B] text-xl font-semibold leading-relaxed mb-8">
+              <p className="text-[#1E293B] text-base sm:text-lg md:text-xl font-semibold leading-relaxed mb-5 sm:mb-8">
                 {currentQ.Question_Statement}
               </p>
 
@@ -269,25 +289,25 @@ setQuestionList(list);
                 <img
                   src={currentQ.Image}
                   alt="question"
-                  className="rounded-2xl border border-slate-100 mb-8 max-w-md"
+                  className="rounded-2xl border border-slate-100 mb-5 sm:mb-8 w-full max-w-xs sm:max-w-md object-contain"
                 />
               )}
 
               {/* Options */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-auto">
                 {[1, 2, 3, 4].map((opt, i) => {
                   const isSelected = answers[currentQ.Ques_id]?.answer_marked === opt;
                   return (
                     <button
                       key={opt}
                       onClick={() => handleAnswer(currentQ.Ques_id, opt)}
-                      className={`group flex items-center gap-4 p-5 rounded-2xl border-2 text-left font-sans transition-all duration-200
+                      className={`group flex items-center gap-3 sm:gap-4 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border-2 text-left font-sans transition-all duration-200
                         ${isSelected
                           ? 'bg-[#001F3F] border-[#001F3F] text-white shadow-lg shadow-[#001F3F]/15 scale-[1.01]'
                           : 'bg-white border-slate-200 text-[#1E293B] hover:border-[#001F3F]/40 hover:bg-slate-50/80'
                         }`}
                     >
-                      <span className={`w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl text-sm font-black transition-colors
+                      <span className={`w-8 h-8 sm:w-9 sm:h-9 flex-shrink-0 flex items-center justify-center rounded-lg sm:rounded-xl text-sm font-black transition-colors
                         ${isSelected
                           ? 'bg-white/15 text-white'
                           : 'bg-slate-100 text-[#001F3F] group-hover:bg-[#001F3F]/8'
@@ -297,7 +317,7 @@ setQuestionList(list);
                       <span className="flex-1 text-sm font-medium leading-snug">
                         {currentQ[`Option_${opt}`]}
                       </span>
-                      {isSelected && <CheckCircle2 size={17} className="text-white/60 flex-shrink-0" />}
+                      {isSelected && <CheckCircle2 size={16} className="text-white/60 flex-shrink-0" />}
                     </button>
                   );
                 })}
@@ -306,22 +326,24 @@ setQuestionList(list);
           )}
 
           {/* ── NAV ROW ── */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
+
             {/* Prev */}
             <button
               onClick={() => setCurrentIndex((p) => Math.max(0, p - 1))}
               disabled={currentIndex === 0}
-              className={`flex items-center gap-2 px-6 py-3 rounded-2xl border-2 font-bold text-sm transition-all
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border-2 font-bold text-sm transition-all
                 ${currentIndex === 0
                   ? 'border-slate-100 text-slate-300 bg-white cursor-not-allowed'
                   : 'border-slate-200 bg-white text-[#001F3F] hover:bg-[#001F3F] hover:text-white hover:border-[#001F3F] active:scale-95'
                 }`}
             >
-              <ChevronLeft size={16} /> Previous
+              <ChevronLeft size={16} />
+              <span className="hidden sm:inline">Previous</span>
             </button>
 
-            {/* Dot strip */}
-            <div className="flex items-center gap-1.5">
+            {/* Dot strip — hidden on very small screens, shown sm+ */}
+            <div className="hidden sm:flex items-center gap-1.5 flex-wrap justify-center max-w-[200px] sm:max-w-xs">
               {questionList.map((_, idx) => (
                 <button
                   key={idx}
@@ -337,20 +359,26 @@ setQuestionList(list);
               ))}
             </div>
 
+            {/* Mobile center: compact progress */}
+            <div className="sm:hidden flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-400">{currentIndex + 1}/{totalCount}</span>
+            </div>
+
             {/* Next / Submit */}
             {currentIndex < totalCount - 1 ? (
               <button
                 onClick={() => setCurrentIndex((p) => Math.min(totalCount - 1, p + 1))}
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-slate-200 bg-white text-[#001F3F] font-bold text-sm hover:bg-[#001F3F] hover:text-white hover:border-[#001F3F] transition-all active:scale-95"
+                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-slate-200 bg-white text-[#001F3F] font-bold text-sm hover:bg-[#001F3F] hover:text-white hover:border-[#001F3F] transition-all active:scale-95"
               >
-                Next <ChevronRight size={16} />
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight size={16} />
               </button>
             ) : (
               <button
                 onClick={() => setSubmitConfirm(true)}
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#001F3F] text-white font-bold text-sm hover:bg-[#002b59] transition-all active:scale-95 shadow-lg shadow-[#001F3F]/20"
+                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-[#001F3F] text-white font-bold text-sm hover:bg-[#002b59] transition-all active:scale-95 shadow-lg shadow-[#001F3F]/20"
               >
-                Submit <Send size={14} />
+                Submit <Send size={13} />
               </button>
             )}
           </div>
@@ -361,14 +389,14 @@ setQuestionList(list);
       {submitConfirm && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div
-            className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl border border-slate-100"
+            className="bg-white rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-10 max-w-sm w-full shadow-2xl border border-slate-100"
             style={{ animation: 'fadeUp 0.2s ease' }}
           >
-            <div className="w-14 h-14 bg-[#001F3F] rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Send size={22} className="text-white" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#001F3F] rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
+              <Send size={20} className="text-white" />
             </div>
-            <h2 className="text-2xl font-black text-[#001F3F] text-center mb-2">Submit Quiz?</h2>
-            <p className="text-slate-400 text-sm text-center leading-relaxed mb-8">
+            <h2 className="text-xl sm:text-2xl font-black text-[#001F3F] text-center mb-2">Submit Quiz?</h2>
+            <p className="text-slate-400 text-sm text-center leading-relaxed mb-6 sm:mb-8">
               You've answered{' '}
               <span className="font-black text-[#001F3F]">{answeredCount}</span> of{' '}
               <span className="font-black text-[#001F3F]">{totalCount}</span> questions.
@@ -381,13 +409,13 @@ setQuestionList(list);
             <div className="flex gap-3">
               <button
                 onClick={() => setSubmitConfirm(false)}
-                className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-[#001F3F] font-bold text-sm hover:bg-slate-50 transition-all"
+                className="flex-1 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-slate-200 text-[#001F3F] font-bold text-sm hover:bg-slate-50 transition-all"
               >
                 Review
               </button>
               <button
                 onClick={submitQuiz}
-                className="flex-1 py-3 rounded-2xl bg-[#001F3F] text-white font-bold text-sm hover:bg-[#002b59] transition-all shadow-lg shadow-[#001F3F]/20"
+                className="flex-1 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-[#001F3F] text-white font-bold text-sm hover:bg-[#002b59] transition-all shadow-lg shadow-[#001F3F]/20"
               >
                 Confirm
               </button>
