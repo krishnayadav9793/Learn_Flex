@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft, BookOpen, Brain, CheckCircle2, Clock3, PlayCircle, Send,
   Target, TimerReset, BarChart3, ChevronLeft, ChevronRight, RotateCcw,
-  Award, TrendingUp, AlertCircle, Zap, Menu, X, Trophy, History, MousePointer2
+  Award, TrendingUp, AlertCircle, Zap, Menu, X, Trophy, History, MousePointer2,
+  Calendar, LayoutGrid, Lock, FileSearch, Info
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE } from "../config";
@@ -62,6 +63,247 @@ const Spinner = () => (
   </svg>
 );
 
+const FluidRangeInput = React.memo(({ value, min, max, onChange, disabled, step = 1 }) => {
+  const [localValue, setLocalValue] = useState(value);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleChange = (e) => {
+    const val = Number(e.target.value);
+    setLocalValue(val);
+    onChange(val);
+  };
+
+  const fillPercent = ((localValue - min) / (Math.max(1, max - min))) * 100;
+
+  return (
+    <input
+      type="range"
+      min={min}
+      max={max}
+      step={step}
+      value={localValue}
+      disabled={disabled}
+      onChange={handleChange}
+      className="flex-1 slider-fill"
+      style={{ "--fill-percent": `${Math.max(0, Math.min(100, fillPercent))}%` }}
+    />
+  );
+});
+
+const ConfigPanel = React.memo(({
+  loadingMeta, subjects, subject, setSubject,
+  questionCount, setQuestionCount,
+  timeLimitMinutes, setTimeLimitMinutes,
+  availableBySelectedTopics, marking,
+  starting, startPractice,
+  session, result, submitPractice, submitting, discardSession
+}) => {
+  const isActive = session && !result;
+
+  return (
+    <div className="relative bg-white border border-[#e5dfd5] rounded-2xl shadow-xl overflow-hidden">
+      <div className="px-6 pt-7 pb-5 text-center border-b border-slate-100">
+        <div className="mx-auto w-14 h-14 bg-[#0b2a4a] rounded-2xl flex items-center justify-center mb-3 shadow-lg">
+          <Brain className="w-7 h-7 text-white" />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Practice Mode</h1>
+        <p className="text-sm text-slate-500 mt-1">
+          {isActive ? "Session in Progress" : "Configure your session below"}
+        </p>
+      </div>
+
+      <div className="px-6 pb-6 pt-5 space-y-5">
+        {loadingMeta ? (
+          <div className="flex items-center gap-3 py-4 justify-center">
+            <svg className="animate-spin h-5 w-5 text-[#0b2a4a]" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" className="opacity-25" />
+              <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.3 0 0 5.3 0 12h4z" />
+            </svg>
+            <span className="text-sm text-slate-500">Loading subjects…</span>
+          </div>
+        ) : subjects.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
+            <AlertCircle className="w-8 h-8 text-slate-300" />
+            <p className="text-sm text-slate-500 font-semibold max-w-[200px]">No questions are currently available for this exam.</p>
+          </div>
+        ) : isActive ? (
+          /* ACTIVE SESSION VIEW */
+          <div className="space-y-5 py-2">
+            <div className="p-4 bg-sky-50 border border-sky-100 rounded-2xl space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-sky-200">
+                  <PlayCircle className="w-5 h-5 text-[#0b2a4a]" />
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-widest text-sky-600 font-bold mb-0.5">Active Subject</div>
+                  <div className="text-sm font-bold text-[#0b2a4a]">{subjectLabel(session.subject)}</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-sky-200/50">
+                <div>
+                  <div className="text-[9px] uppercase tracking-widest text-sky-500/70 font-bold">Questions</div>
+                  <div className="text-xs font-bold text-sky-900 font-mono">{session.questionCount} Total</div>
+                </div>
+                <div>
+                  <div className="text-[9px] uppercase tracking-widest text-sky-500/70 font-bold">Scoring</div>
+                  <div className="text-xs font-bold text-sky-900 font-mono">{session.scoringMode}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <button
+                onClick={submitPractice}
+                disabled={submitting}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-all duration-200 shadow-md active:scale-[0.98] disabled:opacity-60 inline-flex items-center justify-center gap-2"
+              >
+                {submitting ? <><Spinner />Submitting…</> : <><Send className="w-4 h-4" />Submit Session</>}
+              </button>
+              
+              <button
+                onClick={discardSession}
+                className="w-full bg-white hover:bg-red-50 text-red-600 border border-red-100 hover:border-red-200 font-semibold py-3 rounded-xl transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-2 text-sm"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Discard Session
+              </button>
+            </div>
+            
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 italic text-[11px] text-slate-400 text-center">
+              Finish or discard your current session to start a new one.
+            </div>
+          </div>
+        ) : (
+          /* CONFIGURATION VIEW */
+          <>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Subject</label>
+              <div className="flex gap-2 flex-wrap">
+                {subjects.map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => setSubject(item.key)}
+                    className={`px-3.5 py-1.5 rounded-xl text-sm font-semibold border transition-all duration-150 ${
+                      subject === item.key
+                        ? "bg-[#0b2a4a] border-[#0b2a4a] text-white shadow-md"
+                        : "bg-white border-slate-200 text-slate-600 hover:border-[#0b2a4a]/40 hover:text-[#0b2a4a]"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {availableBySelectedTopics === 0 ? (
+              <div className="py-8 px-4 text-center space-y-3 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                <div className="mx-auto w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-slate-400" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold text-slate-700">No Questions Found</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed px-2">
+                    We are still populating questions for this subject. Please try another subject or check back soon!
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Questions</label>
+                      <span className="text-[10px] font-bold text-[#0b2a4a] bg-[#0b2a4a]/5 px-2 py-0.5 rounded-md">
+                        Limit: {availableBySelectedTopics}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <FluidRangeInput
+                        min={availableBySelectedTopics > 0 ? 1 : 0}
+                        max={availableBySelectedTopics || 1}
+                        value={questionCount}
+                        disabled={availableBySelectedTopics <= 0}
+                        onChange={setQuestionCount}
+                      />
+                      <input
+                        type="number" 
+                        min={1} 
+                        max={availableBySelectedTopics || 100} 
+                        value={questionCount === 0 ? "" : questionCount}
+                        disabled={availableBySelectedTopics <= 0}
+                        onChange={(e) => {
+                          const val = e.target.value === "" ? 0 : Number(e.target.value);
+                          const max = availableBySelectedTopics || 100;
+                          setQuestionCount(Math.min(val, max));
+                        }}
+                        onBlur={() => {
+                          if (questionCount < 1 && availableBySelectedTopics > 0) setQuestionCount(1);
+                        }}
+                        className="w-16 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#0b2a4a]/10 focus:border-[#0b2a4a] px-2 py-2 text-center text-sm text-slate-900 font-mono font-bold transition-all shadow-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Time Limit (Minutes)</label>
+                    <div className="flex items-center gap-4">
+                       <FluidRangeInput
+                        min={1}
+                        max={180}
+                        step={1}
+                        value={timeLimitMinutes}
+                        onChange={setTimeLimitMinutes}
+                      />
+                      <input
+                        type="number" 
+                        min={1} 
+                        max={180} 
+                        value={timeLimitMinutes}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setTimeLimitMinutes(Math.max(1, Math.min(val, 180)));
+                        }}
+                        className="w-16 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#0b2a4a]/10 focus:border-[#0b2a4a] px-2 py-2 text-center text-sm text-slate-900 font-mono font-bold transition-all shadow-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <div className="flex-1 rounded-xl bg-sky-50 border border-sky-200 px-3 py-2.5">
+                    <div className="text-[10px] uppercase tracking-widest text-sky-600 font-semibold">Available</div>
+                    <div className="text-sm font-bold font-mono text-[#1c4f85]">{availableBySelectedTopics}</div>
+                  </div>
+                  <div className="flex-1 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5">
+                    <div className="text-[10px] uppercase tracking-widest text-emerald-600 font-semibold">Scoring</div>
+                    <div className="text-sm font-bold font-mono text-emerald-700">
+                      {marking.correctMarks > 0 ? `+${formatScore(marking.correctMarks)}` : formatScore(marking.correctMarks)} / {marking.negativeMarks > 0 ? `-${formatScore(Math.abs(marking.negativeMarks))}` : formatScore(marking.negativeMarks)}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={startPractice}
+                  disabled={starting || loadingMeta || !subject || availableBySelectedTopics <= 0}
+                  className="w-full bg-[#0b2a4a] hover:bg-[#123d6b] text-white font-semibold py-3.5 rounded-xl transition-all duration-200 shadow-lg active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                >
+                  {starting ? <><Spinner />Starting…</> : <><PlayCircle className="w-4 h-4" />Start Session</>}
+                </button>
+              </>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="h-1.5 w-full bg-[#0b2a4a]" />
+    </div>
+  );
+});
+
 export default function PracticeMode() {
   const navigate = useNavigate();
   const { exam_name: examName } = useParams();
@@ -73,6 +315,7 @@ export default function PracticeMode() {
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(15);
 
   const [loadingMeta, setLoadingMeta] = useState(true);
+  const [loadingReview, setLoadingReview] = useState(false);
   const [starting, setStarting]       = useState(false);
   const [submitting, setSubmitting]   = useState(false);
   const [error, setError]             = useState("");
@@ -276,7 +519,10 @@ export default function PracticeMode() {
       if (res.status === 401) { navigate("/login"); return; }
       const data = await res.json();
       if (!res.ok) { setError(data.msg || "Unable to submit."); return; }
-      setResult(data); fetchHistory();
+      setResult(data); 
+      fetchHistory();
+      // Automatically "pop up" the config panel (on mobile, open drawer)
+      setShowConfigDrawer(true);
     } catch { setError("Unable to submit practice session."); }
     finally { setSubmitting(false); }
   }, [answers, fetchHistory, navigate, result, session, submitting]);
@@ -295,109 +541,45 @@ export default function PracticeMode() {
     setAnswers((prev) => { const next = { ...prev }; delete next[qId]; return next; });
   };
   const resetSessionView = () => { setSession(null); setResult(null); setAnswers({}); setQuestionIndex(0); };
+  const goToHistory = () => {
+    resetSessionView();
+    setShowHistory(true);
+  };
+  const discardSession = () => {
+    if (window.confirm("Are you sure you want to end this session? Your progress will not be saved.")) {
+      resetSessionView();
+    }
+  };
 
-  /* ── Config panel (shared between sidebar + drawer) ── */
-  const ConfigPanel = () => (
-    <div className="relative bg-white border border-[#e5dfd5] rounded-2xl shadow-xl overflow-hidden">
-      <div className="px-6 pt-7 pb-5 text-center border-b border-slate-100">
-        <div className="mx-auto w-14 h-14 bg-[#0b2a4a] rounded-2xl flex items-center justify-center mb-3 shadow-lg">
-          <Brain className="w-7 h-7 text-white" />
-        </div>
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Practice Mode</h1>
-        <p className="text-sm text-slate-500 mt-1">Configure your session below</p>
-      </div>
+  const handleReviewResult = async (submissionId) => {
+    if (loadingReview) return;
+    setLoadingReview(true); setError("");
+    try {
+      const res = await fetch(`${API_BASE}/practice/submission/${submissionId}`, { credentials: "include" });
+      if (res.status === 401) { navigate("/login"); return; }
+      const data = await res.json();
+      if (!res.ok) { setError(data.msg || "Unable to load review details."); return; }
+      
+      // Load both session questions and result data
+      setSession(data.session);
+      setResult(data.result);
+      // Map existing results back to answers state for the dots
+      const reviewAnswers = {};
+      data.result.questionResults.forEach(qr => {
+        if (qr.userAnswer) reviewAnswers[qr.questionId] = qr.userAnswer;
+      });
+      setAnswers(reviewAnswers);
+      setQuestionIndex(0);
+      setShowHistory(false); // Switch to session view
+    } catch {
+      setError("Unable to load session review.");
+    } finally {
+      setLoadingReview(false);
+    }
+  };
 
-      <div className="px-6 pb-6 pt-5 space-y-5">
-        {loadingMeta ? (
-          <div className="flex items-center gap-3 py-4 justify-center">
-            <svg className="animate-spin h-5 w-5 text-[#0b2a4a]" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" className="opacity-25" />
-              <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.3 0 0 5.3 0 12h4z" />
-            </svg>
-            <span className="text-sm text-slate-500">Loading subjects…</span>
-          </div>
-        ) : subjects.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
-            <AlertCircle className="w-8 h-8 text-slate-300" />
-            <p className="text-sm text-slate-500 font-semibold max-w-[200px]">No questions are currently available for this exam.</p>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Subject</label>
-              <div className="flex gap-2 flex-wrap">
-                {subjects.map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => setSubject(item.key)}
-                    className={`px-3.5 py-1.5 rounded-xl text-sm font-semibold border transition-all duration-150 ${
-                      subject === item.key
-                        ? "bg-[#0b2a4a] border-[#0b2a4a] text-white shadow-md"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-[#0b2a4a]/40 hover:text-[#0b2a4a]"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Questions</label>
-                <input
-                  type="number" min={1} max={100} value={questionCount}
-                  onChange={(e) => setQuestionCount(Math.max(1, Number(e.target.value) || 1))}
-                  className="w-full rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#0b2a4a]/10 focus:border-[#0b2a4a] px-3 py-2.5 text-sm text-slate-900 font-mono transition-all shadow-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-1">Minutes</label>
-                <input
-                  type="number" min={1} max={180} value={timeLimitMinutes}
-                  onChange={(e) => setTimeLimitMinutes(Math.max(1, Number(e.target.value) || 1))}
-                  className="w-full rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-4 focus:ring-[#0b2a4a]/10 focus:border-[#0b2a4a] px-3 py-2.5 text-sm text-slate-900 font-mono transition-all shadow-sm"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <div className="flex-1 rounded-xl bg-sky-50 border border-sky-200 px-3 py-2.5">
-                <div className="text-[10px] uppercase tracking-widest text-sky-600 font-semibold">Available</div>
-                <div className="text-sm font-bold font-mono text-[#1c4f85]">{availableBySelectedTopics}</div>
-              </div>
-              <div className="flex-1 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5">
-                <div className="text-[10px] uppercase tracking-widest text-emerald-600 font-semibold">Scoring</div>
-                <div className="text-sm font-bold font-mono text-emerald-700">
-                  {marking.correctMarks > 0 ? `+${formatScore(marking.correctMarks)}` : formatScore(marking.correctMarks)} / {marking.negativeMarks > 0 ? `+${formatScore(marking.negativeMarks)}` : formatScore(marking.negativeMarks)}
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={startPractice}
-              disabled={starting || loadingMeta || !subject || availableBySelectedTopics <= 0}
-              className="w-full bg-[#0b2a4a] hover:bg-[#123d6b] text-white font-semibold py-3.5 rounded-xl transition-all duration-200 shadow-lg active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
-            >
-              {starting ? <><Spinner />Starting…</> : <><PlayCircle className="w-4 h-4" />Start Session</>}
-            </button>
-
-            {session && !result && (
-              <button
-                onClick={submitPractice}
-                disabled={submitting}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-all duration-200 shadow-md active:scale-[0.98] disabled:opacity-60 inline-flex items-center justify-center gap-2 text-sm"
-              >
-                {submitting ? <><Spinner />Submitting…</> : <><Send className="w-4 h-4" />Submit Session</>}
-              </button>
-            )}
-          </>
-        )}
-      </div>
-
-      <div className="h-1.5 w-full bg-[#0b2a4a]" />
-    </div>
-  );
+  /* ── Deleted ConfigPanel from here ── */
 
   /* ─────────────────────────── render ─────────────────────────── */
   return (
@@ -482,7 +664,15 @@ export default function PracticeMode() {
         {/* Mobile config drawer */}
         {showConfigDrawer && (
           <div className="lg:hidden slide-down space-y-3">
-            <ConfigPanel />
+            <ConfigPanel 
+              loadingMeta={loadingMeta} subjects={subjects} subject={subject} setSubject={setSubject}
+              questionCount={questionCount} setQuestionCount={setQuestionCount}
+              timeLimitMinutes={timeLimitMinutes} setTimeLimitMinutes={setTimeLimitMinutes}
+              availableBySelectedTopics={availableBySelectedTopics} marking={marking}
+              starting={starting} startPractice={startPractice}
+              session={session} result={result} submitPractice={submitPractice} submitting={submitting}
+              discardSession={discardSession}
+            />
             {error && (
               <div className="flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-100 px-4 py-3 shadow-sm">
                 <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
@@ -497,7 +687,15 @@ export default function PracticeMode() {
 
           {/* ═══ LEFT PANEL — desktop only ═══ */}
           <div className="hidden lg:flex flex-col space-y-4">
-            <ConfigPanel />
+            <ConfigPanel 
+              loadingMeta={loadingMeta} subjects={subjects} subject={subject} setSubject={setSubject}
+              questionCount={questionCount} setQuestionCount={setQuestionCount}
+              timeLimitMinutes={timeLimitMinutes} setTimeLimitMinutes={setTimeLimitMinutes}
+              availableBySelectedTopics={availableBySelectedTopics} marking={marking}
+              starting={starting} startPractice={startPractice}
+              session={session} result={result} submitPractice={submitPractice} submitting={submitting}
+              discardSession={discardSession}
+            />
             {error && (
               <div className="flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-100 px-4 py-3 shadow-sm">
                 <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
@@ -544,44 +742,56 @@ export default function PracticeMode() {
                         </p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 relative">
+                        {loadingReview && (
+                          <div className="absolute inset-0 z-50 bg-white/60 backdrop-blur-[2px] rounded-2xl flex items-center justify-center">
+                            <div className="bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3">
+                              <Spinner />
+                              <span className="text-sm font-bold text-[#0b2a4a]">Loading session detail…</span>
+                            </div>
+                          </div>
+                        )}
                         {history.map((item, idx) => (
-                          <div key={`${item.submittedAt}-${idx}`} className="group relative bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 hover:shadow-lg transition-all hover:-translate-y-1 hover:border-[#0b2a4a]/20">
+                          <div 
+                            key={`${item.submittedAt}-${idx}`} 
+                            onClick={() => handleReviewResult(item.sessionId || item.submissionId)}
+                            className="group relative bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 hover:shadow-xl transition-all cursor-pointer hover:-translate-y-1 hover:border-[#0b2a4a]/30"
+                          >
                             <div className="flex justify-between items-start mb-3 sm:mb-4">
-                              <div className="inline-flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg">
+                              <div className="inline-flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg group-hover:bg-[#0b2a4a]/5 transition-colors">
                                 <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0b2a4a]" />
                                 <span className="text-xs font-bold text-slate-700">{subjectLabel(item.subject)}</span>
                               </div>
-                              <div className={`px-2.5 py-1 rounded-lg text-xs font-bold font-mono ${
-                                item.percentage >= 70 ? "bg-emerald-50 text-emerald-700" :
-                                item.percentage >= 40 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"
+                              <div className={`px-2.5 py-1 rounded-lg text-xs font-bold font-mono shadow-sm ${
+                                item.percentage >= 70 ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
+                                item.percentage >= 40 ? "bg-amber-50 text-amber-700 border border-amber-100" : "bg-red-50 text-red-600 border border-red-100"
                               }`}>
                                 {formatPercent(item.percentage)}
                               </div>
                             </div>
 
                             <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                              <div className="text-center p-2 rounded-xl bg-slate-50 border border-slate-100">
-                                <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold mb-1">Score</div>
+                              <div className="text-center p-2 rounded-xl bg-slate-50 border border-slate-100 group-hover:bg-white transition-colors">
+                                <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-black mb-1">Score</div>
                                 <div className="text-xs sm:text-sm font-mono font-bold text-slate-700">{formatScore(item.score)}<span className="opacity-50 text-[10px]">/{formatScore(item.maxScore)}</span></div>
                               </div>
-                              <div className="text-center p-2 rounded-xl bg-emerald-50 border border-emerald-100">
-                                <div className="text-[9px] sm:text-[10px] text-emerald-600 uppercase font-bold mb-1">Correct</div>
+                              <div className="text-center p-2 rounded-xl bg-emerald-50 border border-emerald-100 group-hover:bg-white transition-colors">
+                                <div className="text-[9px] sm:text-[10px] text-emerald-600 uppercase font-black mb-1">Correct</div>
                                 <div className="text-xs sm:text-sm font-mono font-bold text-emerald-700">{item.correct}</div>
                               </div>
-                              <div className="text-center p-2 rounded-xl bg-red-50 border border-red-100">
-                                <div className="text-[9px] sm:text-[10px] text-red-500 uppercase font-bold mb-1">Wrong</div>
+                              <div className="text-center p-2 rounded-xl bg-red-50 border border-red-100 group-hover:bg-white transition-colors">
+                                <div className="text-[9px] sm:text-[10px] text-red-500 uppercase font-black mb-1">Wrong</div>
                                 <div className="text-xs sm:text-sm font-mono font-bold text-red-600">{item.wrong}</div>
                               </div>
                             </div>
 
-                            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-100 flex justify-between items-center text-[10px] sm:text-[11px] text-slate-400 font-medium">
-                              <div className="flex items-center gap-1.5">
-                                <Clock3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-100 flex justify-between items-center text-[10px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                              <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md">
+                                <Clock3 className="w-3.5 h-3.5" />
                                 {new Date(item.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                               </div>
-                              <div className="flex items-center gap-1.5 font-bold text-[#0b2a4a]">
-                                <Trophy className="w-3 h-3" />
+                              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0b2a4a]/5 text-[#0b2a4a] group-hover:bg-[#0b2a4a] group-hover:text-white transition-all shadow-sm border border-[#0b2a4a]/10">
+                                <Trophy className="w-3.5 h-3.5" />
                                 Review Result
                               </div>
                             </div>
@@ -639,7 +849,7 @@ export default function PracticeMode() {
                         </div>
                       </div>
 
-                      <div 
+                        <div 
                         onClick={() => setShowHistory(true)}
                         className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col group hover:border-[#0b2a4a]/20 transition-all cursor-pointer"
                       >
@@ -659,91 +869,144 @@ export default function PracticeMode() {
             )}
 
             {/* Active session */}
-            {session && currentQuestion && (
+            {session && (
               <div className="flex flex-col h-full">
+                {/* Attempted Questions Progress Bar */}
+                <div className="h-1 sm:h-1.5 w-full bg-slate-100 overflow-hidden relative flex-shrink-0">
+                  <div 
+                    className="h-full bg-[#0b2a4a] transition-all duration-700 ease-out shadow-[0_0_10px_rgba(11,42,74,0.3)]"
+                    style={{ 
+                      width: `${Math.min(100, (Object.keys(answers).length / session.questionCount) * 100)}%` 
+                    }}
+                  />
+                </div>
 
-                {/* Result summary */}
+                {/* Result summary - Zenith Dashboard */}
                 {result && (
-                  <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-4 sm:pb-5 border-b border-slate-100 fade-up">
-                    <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#0b2a4a] rounded-xl flex items-center justify-center shadow-md">
-                          <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                  <div className="px-4 sm:px-6 py-6 sm:py-8 border-b border-slate-100 bg-white/50 backdrop-blur-sm relative overflow-hidden group">
+                    {/* Background Decorative Element */}
+                    <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-[#0b2a4a]/5 rounded-full blur-3xl group-hover:bg-[#0b2a4a]/10 transition-colors duration-1000" />
+                    
+                    <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#0b2a4a] rounded-2xl flex items-center justify-center shadow-2xl shadow-[#0b2a4a]/20 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+                          <Award className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
                         </div>
-                        <h2 className="text-sm sm:text-base font-bold text-slate-800">Session Complete</h2>
+                        <div>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">Session Complete</h2>
+                            {result.isLegacy && (
+                              <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-black uppercase rounded-lg border border-amber-200">Legacy Record</span>
+                            )}
+                          </div>
+                          <p className="text-xs sm:text-sm font-medium text-slate-500 flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {result.submittedAt ? new Date(result.submittedAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : 'Recently'}
+                          </p>
+                        </div>
+
                       </div>
-                      <button
-                        onClick={resetSessionView}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#0b2a4a] border border-slate-200 hover:border-[#0b2a4a]/30 rounded-xl px-2.5 sm:px-3 py-1.5 bg-white hover:bg-[#0b2a4a]/5 transition-all shadow-sm whitespace-nowrap"
-                      >
-                        <RotateCcw className="w-3 h-3" />
-                        <span className="hidden sm:inline">View Past Sessions</span>
-                        <span className="sm:hidden">History</span>
-                      </button>
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-col items-center justify-center bg-[#0b2a4a] text-white px-5 py-3 rounded-2xl shadow-lg hover:translate-y-[-4px] transition-transform">
+                          <span className="text-[10px] font-bold uppercase tracking-wider opacity-60">Accuracy</span>
+                          <span className="text-lg font-black">{formatPercent(result.percentage)}</span>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center bg-white border border-slate-200 px-5 py-3 rounded-2xl shadow-sm hover:shadow-md transition-all">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Score</span>
+                          <span className="text-lg font-black text-slate-800">{formatScore(result.score)}<span className="text-slate-300 font-normal">/{formatScore(result.maxScore)}</span></span>
+                        </div>
+                        <button
+                          onClick={goToHistory}
+                          className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-slate-100 hover:bg-[#0b2a4a] text-slate-700 hover:text-white font-bold text-sm transition-all shadow-sm"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          <span>Activity Log</span>
+                        </button>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                      <StatPill label="Score"   value={`${formatScore(result.score)}/${formatScore(result.maxScore)}`} variant="navy" />
-                      <StatPill label="Percent" value={formatPercent(result.percentage)}     variant="default" />
-                      <StatPill label="Correct" value={result.correct}                       variant="green" />
-                      <div className="hidden sm:block"><StatPill label="Wrong"   value={result.wrong}     variant="red" /></div>
-                      <div className="hidden sm:block"><StatPill label="Skipped" value={result.unanswered} variant="amber" /></div>
-                    </div>
-                    {/* Show wrong/skipped on mobile inline */}
-                    <div className="sm:hidden grid grid-cols-2 gap-2 mt-2">
-                      <StatPill label="Wrong"   value={result.wrong}      variant="red" />
-                      <StatPill label="Skipped" value={result.unanswered} variant="amber" />
+
+                    <div className="grid grid-cols-4 gap-4 mt-8">
+                      <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 group/pill">
+                        <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Correct</div>
+                        <div className="text-xl font-black text-emerald-800 flex items-baseline gap-1">
+                          {result.correct}
+                          <span className="text-xs font-bold opacity-40">pts</span>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-rose-50 rounded-xl border border-rose-100 shadow-sm">
+                        <div className="text-[10px] font-bold text-rose-600 uppercase tracking-widest mb-1">Incorrect</div>
+                        <div className="text-xl font-black text-rose-800">{result.wrong}</div>
+                      </div>
+                      <div className="p-3 bg-amber-50 rounded-xl border border-amber-100">
+                        <div className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1">Skipped</div>
+                        <div className="text-xl font-black text-amber-800">{result.unanswered}</div>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total</div>
+                        <div className="text-xl font-black text-slate-700">{session.questionCount}</div>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* Question dot nav */}
-                <div className="px-4 sm:px-6 py-3 border-b border-slate-100 flex items-center gap-2 overflow-x-auto">
-                  <span className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mr-1 flex-shrink-0">Q</span>
-                  {session.questions?.map((q, i) => {
-                    const qr      = questionResultMap[q.id];
-                    const answered = !!answers[q.id];
-                    return (
-                      <QuestionDot
-                        key={q.id} index={i}
-                        answered={answered && !result}
-                        correct={qr && qr.marksAwarded > 0}
-                        wrong={qr && qr.marksAwarded < 0}
-                        current={i === questionIndex}
-                        onClick={setQuestionIndex}
-                      />
-                    );
-                  })}
-                  <div className="ml-auto flex-shrink-0 pl-3 sm:pl-4 border-l border-slate-100">
-                    <div className={`inline-flex items-center gap-1.5 rounded-lg px-2 sm:px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold ${
+
+                {/* Question Navigator - Zentih Progress Matrix */}
+                <div className="px-4 sm:px-6 py-4 border-b border-slate-100 bg-[#f8fafc] flex items-center gap-3 overflow-x-auto no-scrollbar">
+                  <div className="flex items-center gap-1.5 pr-4 border-r border-slate-200">
+                    <LayoutGrid className="w-4 h-4 text-slate-400" />
+                    <span className="text-[10px] uppercase font-black text-slate-400 tracking-tighter">MAP</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {session.questions?.map((q, i) => {
+                      const qr      = questionResultMap[q.id];
+                      const answered = !!answers[q.id];
+                      return (
+                        <QuestionDot
+                          key={q.id} index={i}
+                          answered={answered && !result}
+                          correct={qr && qr.marksAwarded > 0}
+                          wrong={qr && qr.marksAwarded < 0}
+                          current={i === questionIndex}
+                          onClick={setQuestionIndex}
+                        />
+                      );
+                    })}
+                  </div>
+                  
+                  <div className="ml-auto flex items-center gap-3 pl-4 border-l border-slate-200">
+                    <div className={`flex items-center gap-2 rounded-2xl px-3 py-1.5 text-[11px] font-black tracking-tight ${
                       isSessionLocked
-                        ? "bg-amber-50 text-amber-700 border border-amber-200"
-                        : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        ? "bg-[#0b2a4a] text-white shadow-lg shadow-[#0b2a4a]/20"
+                        : "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
                     }`}>
-                      {isSessionLocked ? <CheckCircle2 className="w-3 h-3" /> : <Zap className="w-3 h-3" />}
-                      {isSessionLocked ? "Review" : "Live"}
+                      {isSessionLocked ? <Lock className="w-3 h-3" /> : <Zap className="w-3 h-3 animate-pulse text-yellow-300" />}
+                      {isSessionLocked ? "REVIEW MODE" : "LIVE SESSION"}
                     </div>
                   </div>
                 </div>
+
 
                 {/* Breadcrumb */}
                 <div className="px-4 sm:px-6 pt-3 sm:pt-4 pb-1 flex items-center gap-2 flex-wrap">
                   <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 bg-slate-100 rounded-lg px-2.5 py-1">
                     <TimerReset className="w-3 h-3 text-[#0b2a4a]" />
-                    {subjectLabel(session.subject)}
+                    {session?.subject ? subjectLabel(session.subject) : "Practice"}
                   </span>
                   <span className="text-slate-300 text-xs">›</span>
                   <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 bg-slate-100 rounded-lg px-2.5 py-1">
                     <TrendingUp className="w-3 h-3 text-[#1c4f85]" />
-                    <span className="truncate max-w-[120px] sm:max-w-none">{currentQuestion.topic}</span>
+                    <span className="truncate max-w-[120px] sm:max-w-none">{currentQuestion?.topic || "General"}</span>
                   </span>
                   <span className="ml-auto text-xs font-mono font-semibold text-slate-400">
-                    {questionIndex + 1} / {session.questionCount}
+                    {questionIndex + 1} / {session?.questionCount || "?"}
                   </span>
                 </div>
 
-                {/* Scrollable body */}
                 <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-4 pt-3 space-y-3 sm:space-y-4 fade-up">
-
+                  {currentQuestion ? (
+                    <>
                   {/* Question card */}
                   <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4 sm:p-5">
                     <span className="inline-flex items-center gap-1.5 text-[10px] font-bold font-mono text-white bg-[#0b2a4a] rounded-lg px-2.5 py-1 mb-3 shadow-sm">
@@ -857,32 +1120,64 @@ export default function PracticeMode() {
                       </div>
                     )}
 
-                    {/* Answer reveal */}
+                    {/* Answer reveal - Zenit Detail View */}
                     {isSessionLocked && currentQuestionResult && (
-                      <div className="mt-1 rounded-xl bg-slate-50 border border-slate-200 p-3 sm:p-4 shadow-sm">
-                        <div className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-2 sm:mb-3">Answer Breakdown</div>
-                        <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                          <div>
-                            <div className="text-[10px] text-slate-400 font-semibold mb-0.5">Your Answer</div>
-                            <div className="text-sm font-mono font-bold text-[#1c4f85]">{currentQuestionResult.userAnswer || "—"}</div>
+                      <div className="mt-6 rounded-2xl overflow-hidden border border-slate-200 shadow-xl shadow-slate-200/50">
+                        <div className="bg-[#0b2a4a] px-4 py-2.5 flex items-center justify-between">
+                          <span className="text-[10px] font-black text-white uppercase tracking-widest opacity-80">Detailed Breakdown</span>
+                          <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${
+                            currentQuestionResult.isCorrect ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
+                          }`}>
+                            {currentQuestionResult.isCorrect ? 'Correct Path' : 'Correction Needed'}
                           </div>
-                          <div>
-                            <div className="text-[10px] text-slate-400 font-semibold mb-0.5">Correct</div>
-                            <div className="text-sm font-mono font-bold text-emerald-600">{currentQuestionResult.correctAnswer}</div>
+                        </div>
+
+                        <div className="bg-white p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div className={`p-4 rounded-xl border-2 ${currentQuestionResult.isCorrect ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'}`}>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Submitted Option</div>
+                            <div className={`text-xl font-black ${currentQuestionResult.isCorrect ? 'text-emerald-700' : 'text-rose-700'}`}>
+                              {currentQuestionResult.userAnswer || "No Response"}
+                            </div>
                           </div>
-                          <div>
-                            <div className="text-[10px] text-slate-400 font-semibold mb-0.5">Marks</div>
-                            <div className={`text-sm font-mono font-bold ${
+
+                          <div className="p-4 rounded-xl border-2 border-emerald-100 bg-emerald-50/20">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Verified Solution</div>
+                            <div className="text-xl font-black text-emerald-700">
+                              {currentQuestionResult.correctAnswer || "✓"}
+                            </div>
+                          </div>
+
+
+                          <div className="p-4 rounded-xl border-2 border-slate-100 bg-slate-50/30">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Outcome</div>
+                            <div className={`text-xl font-black ${
                               currentQuestionResult.marksAwarded > 0 ? "text-emerald-600" :
-                              currentQuestionResult.marksAwarded < 0 ? "text-red-500" : "text-slate-400"
+                              currentQuestionResult.marksAwarded < 0 ? "text-rose-600" : "text-slate-400"
                             }`}>
                               {currentQuestionResult.marksAwarded > 0 ? "+" : ""}{formatScore(currentQuestionResult.marksAwarded)}
+                              <span className="text-xs ml-1 opacity-40">marks</span>
                             </div>
                           </div>
                         </div>
                       </div>
                     )}
-                  </div>
+                    </div>
+                      </>
+                    ) : (
+                      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white rounded-2xl border border-dashed border-slate-200 h-full min-h-[300px]">
+                        <div className="w-12 h-12 bg-slate-50 rounded-xl shadow-sm flex items-center justify-center mb-4">
+                          <AlertCircle className="w-6 h-6 text-slate-300" />
+                        </div>
+                        <h3 className="text-base font-bold text-slate-700 mb-1">Incomplete Session Data</h3>
+                        <p className="text-xs text-slate-500 max-w-[240px]">We couldn't retrieve the questions for this past attempt. This usually happens if the data was partially lost.</p>
+                        <button 
+                          onClick={goToHistory}
+                          className="mt-5 px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold text-[#0b2a4a] hover:bg-[#0b2a4a] hover:text-white transition-all shadow-sm"
+                        >
+                          Return to Activity Log
+                        </button>
+                      </div>
+                    )}
                 </div>
 
                 {/* Nav footer */}

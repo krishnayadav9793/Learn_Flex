@@ -4,6 +4,7 @@ import { sql } from "../util/neonConnect.js";
 const sessions = new Map();
 const historyFallback = new Map();
 
+
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const normalizeSubject = (subject = "") => String(subject).trim().toLowerCase();
 
@@ -173,13 +174,11 @@ export const getPracticeMeta = async (req, res) => {
       }
     }
 
-    // Secondary identification: Name fallback (Critical for UPSC)
+    // Secondary identification: Name fallback (CRITICAL: UPSC must be +1/-0.33)
     if (examName && examName.toUpperCase().includes("UPSC")) {
-       if (marking.correctMarks === 4 && marking.negativeMarks === -1) {
-         marking.correctMarks = 1;
-         marking.negativeMarks = -0.33;
-         console.log(`[DEBUG] Using Hardcoded UPSC Fallback: +1/-0.33`);
-       }
+      marking.correctMarks = 1;
+      marking.negativeMarks = -0.33;
+      console.log(`[DEBUG] Enforcing strict UPSC Marking: +1/-0.33`);
     }
 
     return res.json({ subjects: details, marking });
@@ -337,11 +336,13 @@ export const createPracticeSession = async (req, res) => {
     });
 
     const sessionId = crypto.randomUUID();
+    const userId = String(req.user?.id || req.user?._id || "guest");
     const now = Date.now();
     const expiresAt = new Date(now + timeLimitMinutes * 60 * 1000).toISOString();
-
+  
     const session = {
       sessionId,
+      userId, // Associate session with user for recovery
       subject,
       examId, // Store the exam link
       selectedTopics: ["General"],
@@ -373,14 +374,12 @@ export const createPracticeSession = async (req, res) => {
         }
       }
       
-      // Secondary identification: Name fallback (Critical for UPSC)
+      // Secondary identification: Name fallback (CRITICAL: UPSC must be +1/-0.33)
       if (examName && examName.toUpperCase().includes("UPSC")) {
-        if (session.correctMarks === 4 && session.negativeMarks === -1) {
-          session.correctMarks = 1;
-          session.negativeMarks = -0.33;
-          session.scoringMode = "+1/-0.33";
-          console.log(`[DEBUG] Using Hardcoded UPSC Fallback for session: +1/-0.33`);
-        }
+        session.correctMarks = 1;
+        session.negativeMarks = -0.33;
+        session.scoringMode = "+1/-0.33";
+        console.log(`[DEBUG] Enforcing strict UPSC Marking for session: +1/-0.33`);
       }
     } catch (e) {
       console.error("[DEBUG] Failed to fetch marking info, using defaults", e);
@@ -400,6 +399,26 @@ export const getPracticeSession = (req, res) => {
     return res.status(404).json({ msg: "Practice session not found" });
   }
   return res.json(serializeSession(session));
+};
+
+export const getActiveSession = (req, res) => {
+  const userId = String(req.user?.id || req.user?._id || "guest");
+  if (userId === "guest") return res.status(404).json({ msg: "No active session for guests" });
+
+  const now = new Date();
+  
+  // Find an unsubmitted, non-expired session for this user
+  const activeSession = Array.from(sessions.values()).find(s => 
+    s.userId === userId && 
+    !s.submittedAt && 
+    new Date(s.expiresAt) > now
+  );
+
+  if (!activeSession) {
+    return res.status(404).json({ msg: "No active session found" });
+  }
+
+  return res.json(serializeSession(activeSession));
 };
 
 export const submitPracticeSession = async (req, res) => {
@@ -544,11 +563,11 @@ export const submitPracticeSession = async (req, res) => {
            
            await sql`
              INSERT INTO practice_submission_answers (
-               submission_id, question_id, user_answer, correct_answer, 
+               submission_id, question_id, user_answer, marked_option, correct_answer, 
                is_correct, marks_awarded, question_order
              ) VALUES (
-               ${dbSessionId}::text, ${qr.questionId || null}::text, ${qr.userAnswer || null}::text, ${qr.correctAnswer || null}::text, 
-               ${qr.isCorrect || false}::boolean, ${qr.marksAwarded || 0}::double precision, ${qOrder++}::integer
+               ${dbSessionId}, ${qr.questionId || null}, ${qr.userAnswer || null}, ${qr.userAnswer || null}, ${qr.correctAnswer || null}, 
+               ${qr.isCorrect || false}, ${qr.marksAwarded || 0}, ${qOrder++}
              )
            `;
          } catch (answerErr) {
@@ -620,6 +639,8 @@ export const getPracticeHistory = async (req, res) => {
 
       history.push({
         userId,
+        submissionId: row.submission_id,
+        sessionId: row.submission_id,
         subject: row.subject,
         selectedTopics: ["General"],
         questionCount: cMarks > 0 ? row.max_score / cMarks : row.max_score / 4,
@@ -665,5 +686,168 @@ export const getPracticeQuestionImage = async (req, res) => {
     return res.redirect(question.originalImageUrl);
   } catch {
     return res.status(404).json({ msg: "Question image not found" });
+  }
+};
+
+export const getSubmissionDetails = async (req, res) => {
+  const { submissionId } = req.params;
+  const userId = String(req.user?.id || req.user?._id || "guest");
+
+  try {
+    // 1. Get submission summary
+    const subRes = await sql`
+      SELECT s.submission_id, s.score, s.max_score, s.percentage, s.attempted, 
+             s.correct, s.wrong, s.started_at, s.submitted_at, s.correct_marks, s.wrong_marks,
+             ps.subject_name as subject
+      FROM practice_submissions s
+      JOIN "Subject" ps ON s.subject_id = ps.subject_id
+      WHERE s.submission_id = ${submissionId} AND s.user_id = ${userId}
+      LIMIT 1
+    `;
+
+    if (subRes.length === 0) {
+      return res.status(404).json({ msg: "Submission not found" });
+    }
+
+    const sub = subRes[0];
+
+    // 2. Get questions and answers
+    const details = await sql`
+      SELECT 
+        COALESCE(a.user_answer, a.marked_option) as "userAnswer",
+        a.is_correct as "isCorrect",
+        a.marks_awarded as "marksAwarded",
+        q."Ques_id" as id,
+        q."Ques_id" as qno,
+        q."Question_Statement" as statement,
+        q."Option_1", q."Option_2", q."Option_3", q."Option_4",
+        q."Image",
+        a.correct_answer as "correctAnswer"
+      FROM practice_submission_answers a
+      JOIN "Questions" q ON TRIM(a.question_id) = TRIM(q."Ques_id"::text)
+      WHERE a.submission_id = ${submissionId}
+      ORDER BY a.question_order ASC
+    `;
+
+    // LEGACY FALLBACK: If no answers found, synthesize a map from summary stats
+    if (details.length === 0 && subRes.length > 0) {
+      console.warn(`[getSubmissionDetails] Synthesis started for legacy ID: ${submissionId}`);
+      const cMarks = Number(sub.correct_marks || 4);
+      const wMarks = Number(sub.wrong_marks || -1);
+      const totalQ = Math.max(sub.attempted, Math.round(Number(sub.max_score || 0) / cMarks) || 0);
+      
+      const synthQuestions = [];
+      const synthResults = [];
+      let qNum = 1;
+
+      // Add correct ones
+      for (let i = 0; i < sub.correct; i++) {
+        const qid = `synth-${submissionId}-c-${i}`;
+        synthQuestions.push({
+          id: qid, index: qNum++, topic: "Legacy Record",
+          statement: "Detailed text for this legacy session was not preserved, but your correctness status is shown below.",
+          options: [], questionType: "mcq", isLegacy: true
+        });
+        synthResults.push({ questionId: qid, userAnswer: "Correct", correctAnswer: "Correct", isCorrect: true, marksAwarded: cMarks });
+      }
+      // Add wrong ones
+      for (let i = 0; i < sub.wrong; i++) {
+        const qid = `synth-${submissionId}-w-${i}`;
+        synthQuestions.push({
+          id: qid, index: qNum++, topic: "Legacy Record",
+          statement: "Detailed text for this legacy session was not preserved, but your correctness status is shown below.",
+          options: [], questionType: "mcq", isLegacy: true
+        });
+        synthResults.push({ questionId: qid, userAnswer: "Incorrect", correctAnswer: "Correct", isCorrect: false, marksAwarded: wMarks });
+      }
+      // Add remaining as skipped
+      while (qNum <= totalQ) {
+        const qid = `synth-${submissionId}-s-${qNum}`;
+        synthQuestions.push({
+          id: qid, index: qNum++, topic: "Legacy Record",
+          statement: "This question was skipped in this legacy attempt.",
+          options: [], questionType: "mcq", isLegacy: true
+        });
+        synthResults.push({ questionId: qid, userAnswer: null, correctAnswer: "—", isCorrect: false, marksAwarded: 0 });
+      }
+
+      return res.json({
+        session: { sessionId: sub.submission_id, subject: sub.subject, questionCount: synthQuestions.length, questions: synthQuestions, isLegacy: true },
+        result: {
+          sessionId: sub.submission_id, subject: sub.subject, score: sub.score, maxScore: sub.max_score,
+          percentage: sub.percentage, correct: sub.correct, wrong: sub.wrong, attempted: sub.attempted,
+          unanswered: Math.max(0, totalQ - sub.attempted), submittedAt: sub.submitted_at,
+          questionResults: synthResults, isLegacy: true
+        }
+      });
+    }
+
+
+    const questions = details.map((row, idx) => {
+       const options = [];
+       if (row.Option_1) options.push({ key: "1", text: row.Option_1 });
+       if (row.Option_2) options.push({ key: "2", text: row.Option_2 });
+       if (row.Option_3) options.push({ key: "3", text: row.Option_3 });
+       if (row.Option_4) options.push({ key: "4", text: row.Option_4 });
+
+       return {
+         id: String(row.id),
+         index: idx + 1,
+         qno: row.qno,
+         topic: "General",
+         statement: row.statement,
+         options,
+         questionType: options.length > 0 ? "mcq" : "numeric",
+         hasImage: !!row.Image,
+         imageUrl: row.Image ? `/practice/image/${encodeURIComponent(submissionId)}/${encodeURIComponent(row.id)}` : null,
+         originalImageUrl: row.Image
+       };
+    });
+
+    const questionResults = details.map(row => ({
+      questionId: String(row.id),
+      userAnswer: row.userAnswer,
+      correctAnswer: row.correctAnswer,
+      isCorrect: row.isCorrect,
+      marksAwarded: row.marksAwarded
+    }));
+
+    const result = {
+      sessionId: sub.submission_id,
+      subject: sub.subject,
+      score: sub.score,
+      maxScore: sub.max_score,
+      percentage: sub.percentage,
+      correct: sub.correct,
+      wrong: sub.wrong,
+      attempted: sub.attempted,
+      unanswered: Math.max(sub.max_score / (sub.correct_marks || 4) - (sub.correct + sub.wrong), 0),
+      submittedAt: sub.submitted_at,
+      questionResults
+    };
+
+    return res.json({
+      session: {
+        sessionId: sub.submission_id,
+        subject: sub.subject,
+        questionCount: questions.length,
+        questions
+      },
+      result
+    });
+
+  } catch (err) {
+    console.error("FATAL Error in getSubmissionDetails:", err);
+    // Write to a diagnostic file so the AI can read it
+    try {
+      const fs = await import("fs");
+      fs.appendFileSync("C:/Documents/Learn_Flex-main/backend_error_log.txt", `\n[${new Date().toISOString()}] Submission ${submissionId}: ${err.message}\n${err.stack}\n`);
+    } catch (e) {}
+    
+    return res.status(500).json({ 
+      msg: "Failed to load submission details", 
+      error: err.message,
+      submissionId 
+    });
   }
 };
