@@ -181,8 +181,8 @@ return (
 
             <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-[#0B2447]/60">
               <span>{questions.length} questions</span>
-              <span className="w-1 h-1 rounded-full bg-[#0B2447]/30" />
-              <span>{Math.floor(TOTAL_TIME / 60)} minutes</span>
+              
+            
             </div>
           </div>
         </div>

@@ -13,8 +13,8 @@ export const getDailyChallenge = async (req, res) => {
     q."Option_3" AS option3,
     q."Option_4" AS option4,
     q."Answer" AS correct,
-    q.subject_id,
     q."Image" AS image,
+    s.subject_name,
     dc.time_limit,
     e.exam_name,
     em.correct_marks,
@@ -36,6 +36,9 @@ JOIN "DailyChallengeQuestions" dcq
 
 JOIN "Questions" q
     ON q."Ques_id" = dcq.ques_id
+
+JOIN "Subject" s
+    ON s.subject_id = q.subject_id
 
 WHERE dc.challenge_date = CURRENT_DATE
 AND dc.exam_id = ${examId};
