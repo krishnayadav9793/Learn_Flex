@@ -37,9 +37,9 @@ export default function QuizQuestion({
           </div>
 
           {/* Subject Badge - Light Blue */}
-          {question.subject && (
+          {question.subject_name && (
             <span className="bg-[#E1EFFF] text-[#0B2447] border border-[#0B2447]/10 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest">
-              {question.subject}
+              {question.subject_name }
             </span>
           )}
 

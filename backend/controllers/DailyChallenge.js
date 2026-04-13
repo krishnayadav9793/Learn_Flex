@@ -13,6 +13,7 @@ export const getDailyChallenge = async (req, res) => {
     q."Option_3" AS option3,
     q."Option_4" AS option4,
     q."Answer" AS correct,
+    q.subject_id,
     q."Image" AS image,
     dc.time_limit,
     e.exam_name,
@@ -45,6 +46,7 @@ AND dc.exam_id = ${examId};
         message: "No daily challenge found"
       });
     }
+    
     res.json(result);
 
   } catch (error) {
@@ -73,7 +75,6 @@ export const addAttempts = async (req, res) => {
 
     console.log("Incoming attempts:", attempts);
 
-    // 🔥 Insert ONE BY ONE (important)
     for (const a of attempts) {
       await sql`
         INSERT INTO "DailyChallengeAttempt"
