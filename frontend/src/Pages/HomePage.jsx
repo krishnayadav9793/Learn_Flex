@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BookOpen, Trophy, Target, Users, ChevronDown, Zap, Search, Bell, Star, ArrowRight, PlayCircle, Activity } from 'lucide-react';
 import Navbar from '../components/Home/Navbar.jsx';
 import { useNavigate } from "react-router-dom";
+import { API_BASE } from '../config';
 
 const LearnFlexHome = () => {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ const LearnFlexHome = () => {
   useEffect(() => {
     const fetchExam = async () => {
       try {
-        const res = await fetch(`https://learn-flex-2.onrender.com/exam/subjects`, {
+        const res = await fetch(`${API_BASE}/exam/subjects`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include"

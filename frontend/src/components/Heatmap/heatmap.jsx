@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Flame, Activity, Star } from "lucide-react";
+import { API_BASE } from "../../config";
 
 const getCellStyle = (count) => {
   if (!count)     return { bg: "#ede9e0", border: "rgba(0,0,0,0.05)"       };
@@ -53,7 +54,7 @@ export default function Heatmap() {
   useEffect(() => {
     (async () => {
       try {
-        const res  = await fetch("https://learn-flex-2.onrender.com/dc/heatmap", { credentials: "include" });
+        const res  = await fetch(`${API_BASE}/dc/heatmap`, { credentials: "include" });
         const json = await res.json();
         setData(json.heatmap || []);
         setRating(json.rating || 0);

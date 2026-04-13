@@ -8,6 +8,7 @@ import {
   User,
 } from "lucide-react";
 import { useNavigate ,Link } from "react-router-dom";
+import { API_BASE } from "../../config";
 
 /* SAME Animated Background as Login */
 const AnimatedBackground = () => {
@@ -138,7 +139,7 @@ const SignupCard = () => {
     setStatus(null);
 
     try {
-      const res = await fetch("https://learn-flex-2.onrender.com/user/signup", {
+      const res = await fetch(`${API_BASE}/user/signup`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

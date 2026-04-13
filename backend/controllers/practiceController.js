@@ -20,6 +20,12 @@ const normalizeAnswer = (value = "") => {
   const text = String(value).trim();
   if (!text) return "";
 
+  // If it's a simple single-digit MCQ key (1, 2, 3, 4), return it immediately
+  // This prevents numericMatch from incorrectly extracting numbers from option text
+  if (/^[1-4]$/.test(text)) {
+    return text;
+  }
+
   const numericMatch = text.match(/-?\d+(?:\.\d+)?/);
   if (numericMatch) {
     return numericMatch[0];
@@ -30,7 +36,18 @@ const normalizeAnswer = (value = "") => {
 
 const isAnswerCorrect = (userAnswer, correctAnswer) => {
   if (correctAnswer === null || correctAnswer === undefined || correctAnswer === "") return false;
-  return normalizeAnswer(userAnswer) === normalizeAnswer(correctAnswer);
+  
+  const normUser = normalizeAnswer(userAnswer);
+  const normCorrect = normalizeAnswer(correctAnswer);
+  
+  const match = normUser === normCorrect;
+  
+  // Debug log for mismatches if they occur during runtime (optional based on environment)
+  // if (!match && userAnswer && userAnswer !== "null") {
+  //   console.log(`[DEBUG] Answer mismatch: User="${userAnswer}" (norm:${normUser}) vs Correct="${correctAnswer}" (norm:${normCorrect})`);
+  // }
+  
+  return match;
 };
 
 // Map DB subject_id to frontend keys
@@ -95,9 +112,16 @@ export const getPracticeMeta = async (req, res) => {
     const examName = req.query.examName ? String(req.query.examName).trim() : null;
     let examId = null;
     
+    console.log(`[DEBUG] getPracticeMeta called with examName: "${examName}"`);
+
     if (examName) {
-      const examRes = await sql`SELECT exam_id FROM "Exam" WHERE REPLACE(exam_name, ' ', '') ILIKE REPLACE(${examName}, ' ', '') LIMIT 1`;
-      if (examRes.length > 0) examId = examRes[0].exam_id;
+      const examRes = await sql`SELECT exam_id, exam_name FROM "Exam" WHERE REPLACE(exam_name, ' ', '') ILIKE REPLACE(${examName}, ' ', '') LIMIT 1`;
+      if (examRes.length > 0) {
+        examId = examRes[0].exam_id;
+        console.log(`[DEBUG] Found examId: ${examId} for name: ${examRes[0].exam_name}`);
+      } else {
+        console.log(`[DEBUG] No exam found for name: ${examName}`);
+      }
     }
 
     let stats;
@@ -131,7 +155,34 @@ export const getPracticeMeta = async (req, res) => {
       };
     });
 
-    return res.json({ subjects: details });
+    let marking = { correctMarks: 4, negativeMarks: -1 };
+    
+    // Primary identification: DB match
+    if (examId) {
+      try {
+        const markingRes = await sql`SELECT correct_marks, wrong_marks FROM "Exam_Marking" WHERE exam_id = ${examId} LIMIT 1`;
+        if (markingRes.length > 0) {
+          marking.correctMarks = Number(markingRes[0].correct_marks);
+          marking.negativeMarks = Number(markingRes[0].wrong_marks);
+          console.log(`[DEBUG] Using DB marking: +${marking.correctMarks}/${marking.negativeMarks}`);
+        } else {
+          console.log(`[DEBUG] No marking record found in DB for examId: ${examId}`);
+        }
+      } catch (e) {
+        console.error("[DEBUG] Error fetching marking from DB:", e);
+      }
+    }
+
+    // Secondary identification: Name fallback (Critical for UPSC)
+    if (examName && examName.toUpperCase().includes("UPSC")) {
+       if (marking.correctMarks === 4 && marking.negativeMarks === -1) {
+         marking.correctMarks = 1;
+         marking.negativeMarks = -0.33;
+         console.log(`[DEBUG] Using Hardcoded UPSC Fallback: +1/-0.33`);
+       }
+    }
+
+    return res.json({ subjects: details, marking });
   } catch (err) {
     console.error("DB Error in getPracticeMeta:", err);
     return res.status(500).json({ msg: "Failed to load practice metadata" });
@@ -292,16 +343,48 @@ export const createPracticeSession = async (req, res) => {
     const session = {
       sessionId,
       subject,
+      examId, // Store the exam link
       selectedTopics: ["General"],
       questionCount: mappedQuestions.length,
       timeLimitMinutes,
       scoringMode: "+4/-1",
+      correctMarks: 4,
+      negativeMarks: -1,
       startedAt: new Date(now).toISOString(),
       expiresAt,
       questions: mappedQuestions,
       submittedAt: null,
       result: null
     };
+
+    console.log(`[DEBUG] createPracticeSession called with examName: "${examName}"`);
+
+    // Try to get marks from DB
+    try {
+      if (examId) {
+        const markingRes = await sql`SELECT correct_marks, wrong_marks FROM "Exam_Marking" WHERE exam_id = ${examId} LIMIT 1`;
+        if (markingRes.length > 0) {
+          session.correctMarks = Number(markingRes[0].correct_marks);
+          session.negativeMarks = Number(markingRes[0].wrong_marks);
+          session.scoringMode = `+${session.correctMarks}/${session.negativeMarks}`;
+          console.log(`[DEBUG] Using DB marking for session: ${session.scoringMode}`);
+        } else {
+          console.log(`[DEBUG] No marking record found in DB for session examId: ${examId}`);
+        }
+      }
+      
+      // Secondary identification: Name fallback (Critical for UPSC)
+      if (examName && examName.toUpperCase().includes("UPSC")) {
+        if (session.correctMarks === 4 && session.negativeMarks === -1) {
+          session.correctMarks = 1;
+          session.negativeMarks = -0.33;
+          session.scoringMode = "+1/-0.33";
+          console.log(`[DEBUG] Using Hardcoded UPSC Fallback for session: +1/-0.33`);
+        }
+      }
+    } catch (e) {
+      console.error("[DEBUG] Failed to fetch marking info, using defaults", e);
+    }
 
     sessions.set(sessionId, session);
     return res.json(serializeSession(session));
@@ -336,6 +419,9 @@ export const submitPracticeSession = async (req, res) => {
   let wrong = 0;
   let evaluated = 0;
   let score = 0;
+
+  const correctMarks = session.correctMarks !== undefined ? session.correctMarks : 4;
+  const negativeMarks = session.negativeMarks !== undefined ? session.negativeMarks : -1;
 
   const byTopic = {};
   const questionResults = [];
@@ -372,11 +458,11 @@ export const submitPracticeSession = async (req, res) => {
         isCorrect = isAnswerCorrect(userAnswer, correctAnswer);
         if (isCorrect) {
           correct += 1;
-          marksAwarded = 4;
+          marksAwarded = correctMarks;
           byTopic[question.topic].correct += 1;
         } else {
           wrong += 1;
-          marksAwarded = -1;
+          marksAwarded = negativeMarks;
         }
       }
     }
@@ -396,8 +482,10 @@ export const submitPracticeSession = async (req, res) => {
     });
   }
 
-  const maxScore = evaluated * 4;
-  const percentage = maxScore ? Number(((score / maxScore) * 100).toFixed(2)) : 0;
+  const maxScore = evaluated * correctMarks;
+  const scoreRaw = score;
+  const finalScore = Number(scoreRaw.toFixed(2));
+  const percentage = maxScore ? Number(((finalScore / maxScore) * 100).toFixed(2)) : 0;
   const unanswered = Math.max(evaluated - (correct + wrong), 0);
   const unevaluated = session.questions.length - evaluated;
 
@@ -405,16 +493,18 @@ export const submitPracticeSession = async (req, res) => {
     sessionId: session.sessionId,
     subject: session.subject,
     selectedTopics: session.selectedTopics,
-    scoringMode: "+4/-1",
+    scoringMode: session.scoringMode || "+4/-1",
     totalQuestions: session.questionCount,
-    score,
-    maxScore,
+    score: finalScore,
+    maxScore: Number(maxScore.toFixed(2)),
     percentage,
     attempted,
     correct,
     wrong,
     unanswered,
     unevaluated,
+    correctMarks,
+    negativeMarks,
     submittedAt: new Date().toISOString(),
     byTopic: Object.values(byTopic),
     questionResults
@@ -434,26 +524,31 @@ export const submitPracticeSession = async (req, res) => {
 
       await sql`
         INSERT INTO practice_submissions (
-          submission_id, user_id, subject_id, score, max_score, 
-          percentage, attempted, correct, wrong, started_at, submitted_at
+          submission_id, user_id, subject_id, exam_id, score, max_score, 
+          percentage, attempted, correct, wrong, started_at, submitted_at,
+          correct_marks, wrong_marks
         ) VALUES (
-          ${dbSessionId}, ${userId}, ${subjectId}, ${score}, ${maxScore}, 
+          ${dbSessionId}, ${userId}, ${subjectId}, ${session.examId || null}, ${score}, ${maxScore}, 
           ${percentage}, ${attempted}, ${correct}, ${wrong}, 
-          ${session.startedAt}, ${result.submittedAt}
+          ${session.startedAt}, ${result.submittedAt},
+          ${correctMarks}, ${negativeMarks}
         )
       `;
 
       let qOrder = 1;
       for (const qr of result.questionResults) {
          try {
-           console.log("DEBUG: qr.questionId =", qr.questionId, "typeof", typeof qr.questionId);
+           if (!qr.isCorrect && qr.userAnswer && qr.userAnswer !== "null") {
+             console.log(`[SCORING_DEBUG] Incorrect: QID=${qr.questionId} User="${qr.userAnswer}" vs Correct="${qr.correctAnswer}"`);
+           }
+           
            await sql`
              INSERT INTO practice_submission_answers (
                submission_id, question_id, user_answer, correct_answer, 
                is_correct, marks_awarded, question_order
              ) VALUES (
                ${dbSessionId}::text, ${qr.questionId || null}::text, ${qr.userAnswer || null}::text, ${qr.correctAnswer || null}::text, 
-               ${qr.isCorrect || false}::boolean, ${qr.marksAwarded || 0}::integer, ${qOrder++}::integer
+               ${qr.isCorrect || false}::boolean, ${qr.marksAwarded || 0}::double precision, ${qOrder++}::integer
              )
            `;
          } catch (answerErr) {
@@ -483,20 +578,36 @@ export const getPracticeHistory = async (req, res) => {
   const userId = String(req.user?.id || req.user?._id || "guest");
   if (userId === "guest") return res.json({ history: historyFallback.get(userId) || [] });
 
+  const examName = req.query.examName ? String(req.query.examName).trim() : null;
+  const subject  = req.query.subject ? String(req.query.subject).trim() : null;
+  let examId = null;
+
   try {
+    if (examName) {
+      const examRes = await sql`SELECT exam_id FROM "Exam" WHERE REPLACE(exam_name, ' ', '') ILIKE REPLACE(${examName}, ' ', '') LIMIT 1`;
+      if (examRes.length > 0) examId = examRes[0].exam_id;
+    }
+
     const submissionsRows = await sql`
       SELECT s.submission_id, ps.subject_name as subject,
              s.started_at, s.submitted_at, s.score, s.max_score, 
-             s.percentage, s.attempted, s.correct, s.wrong
+             s.percentage, s.attempted, s.correct, s.wrong,
+             COALESCE(s.correct_marks, 4) as correct_marks,
+             COALESCE(s.wrong_marks, -1) as wrong_marks
       FROM practice_submissions s
       JOIN "Subject" ps ON s.subject_id = ps.subject_id
       WHERE s.user_id = ${userId}
+      ${examId ? sql`AND s.exam_id = ${examId}` : sql``}
+      ${subject ? sql`AND ps.subject_name ILIKE ${subject}` : sql``}
       ORDER BY s.submitted_at DESC
       LIMIT 30
     `;
 
     const history = [];
     for (const row of submissionsRows) {
+      const cMarks = Number(row.correct_marks);
+      const wMarks = Number(row.wrong_marks);
+
       const answerRows = await sql`
         SELECT a.question_id as qno, a.question_id as "questionId", 
                a.user_answer as "userAnswer", a.correct_answer as "correctAnswer",
@@ -511,19 +622,19 @@ export const getPracticeHistory = async (req, res) => {
         userId,
         subject: row.subject,
         selectedTopics: ["General"],
-        questionCount: row.max_score / 4,
-        scoringMode: "+4/-1",
+        questionCount: cMarks > 0 ? row.max_score / cMarks : row.max_score / 4,
+        scoringMode: `+${cMarks}/${wMarks}`,
         score: row.score,
         maxScore: row.max_score,
         percentage: Number(row.percentage),
         attempted: row.attempted,
         correct: row.correct,
         wrong: row.wrong,
-        unanswered: Math.max((row.max_score / 4) - (row.correct + row.wrong), 0),
+        unanswered: Math.max((cMarks > 0 ? row.max_score / cMarks : row.max_score / 4) - (row.correct + row.wrong), 0),
         startedAt: row.started_at,
         submittedAt: row.submitted_at,
         timeLimitMinutes: 15,
-        byTopic: [{ topic: "General", score: row.score, total: row.max_score / 4, attempted: row.attempted, correct: row.correct }],
+        byTopic: [{ topic: "General", score: row.score, total: cMarks > 0 ? row.max_score / cMarks : row.max_score / 4, attempted: row.attempted, correct: row.correct }],
         questionResults: answerRows
       });
     }

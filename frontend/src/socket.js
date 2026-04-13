@@ -1,6 +1,7 @@
 import { io } from "socket.io-client";
+import { API_BASE } from "./config";
 
-const socket = io("https://learn-flex-2.onrender.com/", {
+const socket = io(API_BASE, {
   withCredentials: true,
 });
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Trophy, Star, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { API_BASE } from "../config";
 
 const MEDAL = {
   1: { icon: "🥇", bg: "bg-amber-50",  border: "border-amber-200" },
@@ -48,7 +49,7 @@ const Leaderboard = () => {
     if (!quizId) { setLoading(false); return; }
     const fetchLeaderboard = async () => {
       try {
-        const res = await fetch(`https://learn-flex-2.onrender.com/leaderboard/${quizId}`,{
+        const res = await fetch(`${API_BASE}/leaderboard/${quizId}`,{
           credentials:"include",
           headers: { "Content-Type": "application/json" },
         });

@@ -4,6 +4,7 @@ import Navbar from "../components/DailyChallenge/Navbar.jsx";
 import QuizQuestion from "../components/DailyChallenge/QuizQuestion.jsx";
 import ResultScreen from "../components/DailyChallenge/Result.jsx";
 import { useParams } from "react-router-dom";
+import { API_BASE } from "../config";
 
 const MOCK = [
   { id: 1, question: "Which data structure uses LIFO ordering?", option1: "Queue", option2: "Stack", option3: "Deque", option4: "Heap", correct: 1, subject_name: "Data Structures", difficulty: "Easy" },
@@ -43,7 +44,7 @@ export default function LearnFlex() {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await fetch(`https://learn-flex-2.onrender.com/dc/dailyChallenge/${exam_id}`, {
+        const res = await fetch(`${API_BASE}/dc/dailyChallenge/${exam_id}`, {
           method: "GET",
           credentials: "include",
         });
@@ -118,7 +119,7 @@ export default function LearnFlex() {
         attempt_at: new Date().toISOString(),
       }));
 
-      const res = await fetch("https://learn-flex-2.onrender.com/dc/attempt", {
+      const res = await fetch(`${API_BASE}/dc/attempt`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
