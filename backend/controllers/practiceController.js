@@ -698,19 +698,31 @@ export const getPracticeQuestionImage = async (req, res) => {
     const sessionId = String(req.params.sessionId || "");
     const questionId = String(req.params.questionId || "");
 
+    // 1. Try to get from active memory sessions first
     const session = sessions.get(sessionId);
-    if (!session) {
-      return res.status(404).json({ msg: "Practice session not found" });
+    if (session) {
+      const question = session.questions.find((item) => String(item.id) === questionId);
+      if (question && question.originalImageUrl) {
+        return res.redirect(question.originalImageUrl);
+      }
     }
 
-    const question = session.questions.find((item) => String(item.id) === questionId);
-    if (!question || !question.hasImage) {
-      return res.status(404).json({ msg: "Question image not found" });
+    // 2. Fallback: Lookup in database (for historical reviews / Activity Log)
+    // We use TRIM and casting to ensure matching between text/uuid
+    const dbQuestion = await sql`
+      SELECT "Image" as "imageUrl" 
+      FROM "Questions" 
+      WHERE TRIM("Ques_id"::text) = TRIM(${questionId}::text)
+      LIMIT 1
+    `;
+
+    if (dbQuestion.length > 0 && dbQuestion[0].imageUrl) {
+      return res.redirect(dbQuestion[0].imageUrl);
     }
 
-    // Since we fetch directly from Cloudinary via DB, redirect the frontend locally
-    return res.redirect(question.originalImageUrl);
-  } catch {
+    return res.status(404).json({ msg: "Question image not found" });
+  } catch (err) {
+    console.error("[DEBUG] Error serving practice image:", err);
     return res.status(404).json({ msg: "Question image not found" });
   }
 };
