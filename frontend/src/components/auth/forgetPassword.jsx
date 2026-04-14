@@ -184,7 +184,7 @@ export default function ForgotPasswordOTP() {
     setEmailErr('')
     setSending(true)
     try {
-      const res = await fetch(`${API_BASE}/user/forgetpassword`, {
+      const res = await fetch(`https://learn-flex-puce.vercel.app/user/forgetpassword`, {
         method: 'POST',
         body: JSON.stringify({ email }),
         headers: { 'Content-Type': 'application/json' }
