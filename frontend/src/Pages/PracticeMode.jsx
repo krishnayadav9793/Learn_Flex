@@ -3,7 +3,7 @@ import {
   ArrowLeft, BookOpen, Brain, CheckCircle2, Clock3, PlayCircle, Send,
   Target, TimerReset, BarChart3, ChevronLeft, ChevronRight, RotateCcw,
   Award, TrendingUp, AlertCircle, Zap, Menu, X, Trophy, History, MousePointer2,
-  Calendar, LayoutGrid, Lock, FileSearch, Info
+  Calendar, LayoutGrid, Lock, FileSearch, Info, ZoomIn
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE } from "../config";
@@ -62,6 +62,62 @@ const Spinner = () => (
     <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.3 0 0 5.3 0 12h4z" />
   </svg>
 );
+
+/* ── Image Lightbox Component ── */
+const ImageLightbox = ({ src, onClose }) => {
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handleKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-8"
+      style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)" }}
+      onClick={onClose}
+    >
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-all duration-200 z-10"
+        aria-label="Close image"
+      >
+        <X className="w-5 h-5" />
+      </button>
+
+      {/* Hint */}
+      <p className="absolute bottom-5 left-1/2 -translate-x-1/2 text-white/40 text-xs font-medium tracking-wide select-none pointer-events-none">
+        Tap anywhere or press Esc to close
+      </p>
+
+      {/* Image */}
+      <div
+        className="relative max-w-[95vw] max-h-[88vh] rounded-2xl overflow-hidden shadow-2xl border border-white/10"
+        onClick={(e) => e.stopPropagation()}
+        style={{ animation: "lbFadeIn 0.2s ease forwards" }}
+      >
+        <img
+          src={src}
+          alt="Expanded question image"
+          className="block max-w-full max-h-[88vh] object-contain"
+          draggable={false}
+        />
+      </div>
+
+      <style>{`
+        @keyframes lbFadeIn {
+          from { opacity: 0; transform: scale(0.93); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+    </div>
+  );
+};
 
 const FluidRangeInput = React.memo(({ value, min, max, onChange, disabled, step = 1 }) => {
   const [localValue, setLocalValue] = useState(value);
@@ -329,6 +385,7 @@ export default function PracticeMode() {
   const [answers, setAnswers]                     = useState({});
   const [marking, setMarking]                     = useState({ correctMarks: 4, negativeMarks: -1 });
   const [showHistory, setShowHistory] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState(null);
   
   const getExamContent = () => {
     const name = examName?.toUpperCase() || "";
@@ -654,7 +711,15 @@ export default function PracticeMode() {
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
         .slide-down { animation: slideDown 0.2s ease forwards; }
+        .question-image-btn { cursor: zoom-in; }
+        .question-image-btn:hover .img-zoom-overlay { opacity: 1; }
+        .img-zoom-overlay { opacity: 0; transition: opacity 0.2s ease; }
       `}</style>
+
+      {/* ── Lightbox ── */}
+      {lightboxSrc && (
+        <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+      )}
 
       <div className="max-w-[1400px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8 space-y-4">
 
@@ -1068,13 +1133,33 @@ export default function PracticeMode() {
                       {currentQuestion.statement}
                     </p>
                     {currentQuestion.imageUrl && (
-                      <div className="mt-4 rounded-xl border border-slate-200 overflow-hidden bg-white shadow-sm">
-                        <img
-                          src={`${API_BASE}${currentQuestion.imageUrl}`}
-                          alt={`Question ${currentQuestion.qno}`}
-                          className="w-full max-h-[320px] sm:max-h-[480px] object-contain"
-                          loading="lazy"
-                        />
+                      <div className="mt-4">
+                        {/* Clickable image wrapper */}
+                        <button
+                          type="button"
+                          onClick={() => setLightboxSrc(`${API_BASE}${currentQuestion.imageUrl}`)}
+                          className="question-image-btn relative block w-full rounded-xl border border-slate-200 overflow-hidden bg-white shadow-sm hover:shadow-md hover:border-[#0b2a4a]/30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#0b2a4a]/30"
+                          aria-label="Click to expand image"
+                        >
+                          <img
+                            src={`${API_BASE}${currentQuestion.imageUrl}`}
+                            alt={`Question ${currentQuestion.qno}`}
+                            className="w-full max-h-[320px] sm:max-h-[480px] object-contain"
+                            loading="lazy"
+                            draggable={false}
+                          />
+                          {/* Hover overlay with zoom icon */}
+                          <div className="img-zoom-overlay absolute inset-0 bg-[#0b2a4a]/30 flex items-center justify-center rounded-xl">
+                            <div className="bg-white/90 backdrop-blur-sm rounded-full p-3 shadow-lg border border-white/60">
+                              <ZoomIn className="w-6 h-6 text-[#0b2a4a]" />
+                            </div>
+                          </div>
+                          {/* Always-visible hint badge */}
+                          <div className="absolute bottom-2 right-2 inline-flex items-center gap-1 bg-black/50 backdrop-blur-sm text-white text-[10px] font-semibold px-2 py-1 rounded-lg pointer-events-none">
+                            <ZoomIn className="w-3 h-3" />
+                            Tap to expand
+                          </div>
+                        </button>
                       </div>
                     )}
                   </div>

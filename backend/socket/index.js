@@ -11,6 +11,34 @@ export function initIO(io) {
         socket.on("submit", (data) => {
             handleSubmit(io,socket,data)
         })
+        socket.on("cancel_search",()=>{
+            for (const [examId, arr] of queue.entries()) {
+                const filtered = arr.filter(p => p.socket.id !== socket.id);
+                queue.set(examId, filtered);
+            }
+            for (const roomId in rooms) {
+                const room = rooms[roomId];
+
+                const playerIndex = room.players.findIndex(
+                    p => p.socketId === socket.id
+                );
+
+                if (playerIndex !== -1) {
+                    console.log(`⚠️ Player left room: ${roomId}`);
+                    const opponent = room.players.find(
+                        p => p.socketId !== socket.id
+                    );
+
+                    if (opponent) {
+                        io.to(opponent.socketId).emit("opponent_left", {
+                            message: "Opponent disconnected"
+                        });
+                    }
+                    delete rooms[roomId];
+                    break;
+                }
+            }
+        })
         // socket.emit("match_found",)
         socket.on("disconnect", () => {
             console.log("❌ Disconnected:", socket.id);

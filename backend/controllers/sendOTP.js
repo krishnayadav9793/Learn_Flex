@@ -71,7 +71,7 @@ export async function sendOTP(req,res){
                                                         Your OTP Code
                                                     </p>
                                                     <div style="font-size: 42px; font-weight: 800; color: #667eea; letter-spacing: 8px; font-family: 'Courier New', monospace;">
-                                                        {{${OTP}}
+                                                        ${OTP}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -168,7 +168,8 @@ export async function sendOTP(req,res){
             `
         })
         return res.json({OTP:OTP});
-    }catch(e){
+    }
+    catch(e){
         console.log("error in sending mail",e)
         return res.status(500)
     }

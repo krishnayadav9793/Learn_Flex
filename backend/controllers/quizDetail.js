@@ -8,7 +8,7 @@ const quizLists = async (req, res) => {
                 "time_limit",
                 test_id,
                 exam_id,
-                "Start_Time" AT TIME ZONE 'Asia/Kolkata' as "Start_Time",
+                "Start_Time" ,
                 "totalQuestions",
                 quizname,
                 "description"
