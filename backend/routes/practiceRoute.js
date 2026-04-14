@@ -9,7 +9,8 @@ import {
   getActiveSession,
   submitPracticeSession,
   getSubmissionDetails,
-  updateSessionAnswers
+  updateSessionAnswers,
+  discardActiveSession
 } from "../controllers/practiceController.js";
 
 const practiceRoute = Router();
@@ -22,6 +23,7 @@ practiceRoute.post("/session", protect, createPracticeSession);
 practiceRoute.get("/session/:sessionId", protect, getPracticeSession);
 practiceRoute.put("/session/:sessionId/answers", protect, updateSessionAnswers);
 practiceRoute.post("/session/:sessionId/submit", protect, submitPracticeSession);
+practiceRoute.delete("/active", protect, discardActiveSession);
 practiceRoute.get("/image/:sessionId/:questionId", getPracticeQuestionImage);
 
 export default practiceRoute;

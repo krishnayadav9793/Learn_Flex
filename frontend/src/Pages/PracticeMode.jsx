@@ -383,7 +383,10 @@ export default function PracticeMode() {
   const [questionIndex, setQuestionIndex]         = useState(0);
   const [remainingSeconds, setRemainingSeconds]   = useState(0);
   const [answers, setAnswers]                     = useState({});
-  const [marking, setMarking]                     = useState({ correctMarks: 4, negativeMarks: -1 });
+  const [marking, setMarking]                     = useState({ 
+    correctMarks: examName?.toUpperCase().includes("UPSC") ? 1 : 4, 
+    negativeMarks: examName?.toUpperCase().includes("UPSC") ? -0.33 : -1 
+  });
   const [showHistory, setShowHistory] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState(null);
   
@@ -486,6 +489,22 @@ export default function PracticeMode() {
     } catch {}
   }, [examName, subject]);
 
+  // INSTANT SYNC: Cap question count by available questions
+  useEffect(() => {
+    if (availableBySelectedTopics > 0 && questionCount > availableBySelectedTopics) {
+      setQuestionCount(availableBySelectedTopics);
+    }
+  }, [availableBySelectedTopics, questionCount]);
+
+  // INSTANT SYNC: Update marking scheme when exam changes
+  useEffect(() => {
+    if (examName?.toUpperCase().includes("UPSC")) {
+      setMarking({ correctMarks: 1, negativeMarks: -0.33 });
+    } else {
+      setMarking({ correctMarks: 4, negativeMarks: -1 });
+    }
+  }, [examName]);
+
   useEffect(() => {
     const fetchMeta = async () => {
       setLoadingMeta(true); setError("");
@@ -502,16 +521,6 @@ export default function PracticeMode() {
           setMarking(data.marking);
         }
         
-        // Critical client-side fallback for UPSC
-        if (examName && examName.toUpperCase().includes("UPSC")) {
-          setMarking(prev => {
-            if (prev.correctMarks === 4 && prev.negativeMarks === -1) {
-              return { correctMarks: 1, negativeMarks: -0.33 };
-            }
-            return prev;
-          });
-        }
-
         if (subjectList.length) {
           // Only set default subject if there is no active session already loaded
           setSubject(prev => prev || subjectList[0].key);
@@ -651,10 +660,22 @@ export default function PracticeMode() {
     resetSessionView();
     setShowHistory(true);
   };
-  const discardSession = () => {
-    if (window.confirm("Are you sure you want to end this session? Your progress will not be saved.")) {
-      resetSessionView();
+  const discardSession = async (silent = false) => {
+    if (!silent && !window.confirm("Are you sure you want to end this session? Your progress will not be saved.")) {
+      return;
     }
+    
+    // Call backend to discard the session from server memory
+    try {
+      await fetch(`${API_BASE}/practice/active`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+    } catch (err) {
+      console.error("Failed to discard session on backend:", err);
+    }
+    
+    resetSessionView();
   };
 
   const handleReviewResult = async (submissionId) => {
@@ -726,7 +747,13 @@ export default function PracticeMode() {
         {/* ── Top bar ── */}
         <div className="flex items-center justify-between gap-2">
           <button
-            onClick={() => navigate("/HomePage")}
+            onClick={async () => {
+              if (session && !result) {
+                // If there's an active session, discard it automatically on back click
+                await discardSession(true); // true = silent discard
+              }
+              navigate("/HomePage");
+            }}
             className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-[#0b2a4a] border border-slate-200 hover:border-[#0b2a4a]/30 bg-white hover:bg-[#0b2a4a]/5 shadow-sm transition-all duration-200"
           >
             <ArrowLeft className="w-4 h-4" />

@@ -6,11 +6,10 @@ import { Server } from "socket.io";
 import http from "http";
 
 import authRoute from "./routes/authRoute.js";
-import leaderRoutes from "./routes/leaderBoardRoute.js";
-import quizRoute from "./routes/quizRoute.js";
 import practiceRoute from "./routes/practiceRoute.js";
 import ExamRoute from "./routes/ExamRoute.js";
 import dailyRouter from "./routes/DailyChallenge.js";
+import quizRoute from "./routes/quizRoute.js";
 import { initIO } from "./socket/index.js";
 import leaderBoardrouter from "./routes/leaderBoardRoute.js";
 import { connectNeon } from "./util/neonConnect.js";
@@ -42,12 +41,11 @@ app.use(cookieParser());
 
 
 app.use("/user", authRoute);
-app.use("/lb", leaderRoutes);
+app.use("/leaderboard", leaderBoardrouter);
 app.use("/quiz", quizRoute);
 app.use("/practice", practiceRoute);
 app.use("/exam", ExamRoute);
 app.use("/dc", dailyRouter);
-app.use("/leaderboard", leaderBoardrouter)
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.includes("your_jwt_secret")) {
   process.env.JWT_SECRET = "demo-jwt-secret";

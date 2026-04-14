@@ -430,6 +430,24 @@ export const getActiveSession = (req, res) => {
   return res.json(serializeSession(activeSession));
 };
 
+export const discardActiveSession = (req, res) => {
+  const userId = String(req.user?.id || req.user?._id || "guest");
+  if (userId === "guest") return res.status(404).json({ msg: "No session for guests" });
+
+  const activeSessionEntry = Array.from(sessions.entries()).find(([id, s]) => 
+    s.userId === userId && !s.submittedAt
+  );
+
+  if (activeSessionEntry) {
+    const [sessionId] = activeSessionEntry;
+    sessions.delete(sessionId);
+    console.log(`[DEBUG] Discarded session: ${sessionId} for user: ${userId}`);
+    return res.json({ msg: "Active session discarded successfully" });
+  }
+
+  return res.status(404).json({ msg: "No active session found to discard" });
+};
+
 export const submitPracticeSession = async (req, res) => {
   const sessionId = req.params.sessionId;
   const session = sessions.get(sessionId);
@@ -547,58 +565,48 @@ export const submitPracticeSession = async (req, res) => {
 
   if (userId !== "guest") {
     try {
-      const subjectIdRes = await sql`SELECT subject_id FROM "Subject" WHERE subject_name ILIKE ${session.subject} LIMIT 1`;
-      const subjectId = subjectIdRes.length ? subjectIdRes[0].subject_id : (DB_SUBJECT_MAP[normalizeSubject(session.subject)] || 1);
+      await sql.begin(async (sql) => {
+        const subjectIdRes = await sql`SELECT subject_id FROM "Subject" WHERE subject_name ILIKE ${session.subject} LIMIT 1`;
+        const subjectId = subjectIdRes.length ? subjectIdRes[0].subject_id : (DB_SUBJECT_MAP[normalizeSubject(session.subject)] || 1);
 
-      const dbSessionId = session.sessionId;
-      const dbExamId = session.examId || null;
+        const dbSessionId = session.sessionId;
+        const dbExamId = session.examId || null;
 
-      console.log(`[DEBUG] Attempting Postgres insert for submission: ${dbSessionId}, Exam: ${dbExamId}, User: ${userId}`);
+        console.log(`[DEBUG] Transaction Start: submission ${dbSessionId}, User ${userId}`);
 
-      await sql`
-        INSERT INTO practice_submissions (
-          submission_id, user_id, subject_id, exam_id, score, max_score, 
-          percentage, attempted, correct, wrong, started_at, submitted_at,
-          correct_marks, wrong_marks
-        ) VALUES (
-          ${dbSessionId}, ${userId}, ${subjectId}, ${dbExamId}, ${score}, ${maxScore}, 
-          ${percentage}, ${attempted}, ${correct}, ${wrong}, 
-          ${session.startedAt}, ${result.submittedAt},
-          ${correctMarks}, ${negativeMarks}
-        )
-      `;
+        await sql`
+          INSERT INTO practice_submissions (
+            submission_id, user_id, subject_id, exam_id, score, max_score, 
+            percentage, attempted, correct, wrong, started_at, submitted_at,
+            correct_marks, wrong_marks
+          ) VALUES (
+            ${dbSessionId}, ${userId}, ${subjectId}, ${dbExamId}, ${score}, ${maxScore}, 
+            ${percentage}, ${attempted}, ${correct}, ${wrong}, 
+            ${session.startedAt}, ${result.submittedAt},
+            ${correctMarks}, ${negativeMarks}
+          )
+        `;
 
-      let qOrder = 1;
-      for (const qr of result.questionResults) {
-         try {
-           if (!qr.isCorrect && qr.userAnswer && qr.userAnswer !== "null") {
-             console.log(`[SCORING_DEBUG] Incorrect: QID=${qr.questionId} User="${qr.userAnswer}" vs Correct="${qr.correctAnswer}"`);
-           }
-           
-           await sql`
-             INSERT INTO practice_submission_answers (
-               submission_id, question_id, user_answer, marked_option, correct_answer, 
-               is_correct, marks_awarded, question_order
-             ) VALUES (
-               ${dbSessionId}, ${String(qr.questionId) || null}, ${qr.userAnswer || null}, ${qr.userAnswer || null}, ${qr.correctAnswer || null}, 
-               ${qr.isCorrect || false}, ${qr.marksAwarded || 0}, ${qOrder++}
-             )
-           `;
-         } catch (answerErr) {
-           console.error("FATAL: Failed to insert answer for question", qr.questionId, "Error:", answerErr);
-           try {
-             const fs = await import("fs");
-             fs.writeFileSync("last_db_error.txt", String(answerErr.message || answerErr) + "\n" + JSON.stringify(qr));
-           } catch(e) {}
-           throw answerErr;
-         }
-      }
-      
-      await sql`UPDATE "User_Profile" SET total_solved = total_solved + ${evaluated} WHERE "User_id" = ${userId}`;
-      console.log(`[DEBUG] Session ${dbSessionId} successfully saved to Postgres for user ${userId}`);
+        let qOrder = 1;
+        for (const qr of result.questionResults) {
+          await sql`
+            INSERT INTO practice_submission_answers (
+              submission_id, question_id, user_answer, marked_option, correct_answer, 
+              is_correct, marks_awarded, question_order
+            ) VALUES (
+              ${dbSessionId}, ${String(qr.questionId).trim() || null}, ${qr.userAnswer || null}, ${qr.userAnswer || null}, ${qr.correctAnswer || null}, 
+              ${qr.isCorrect || false}, ${qr.marksAwarded || 0}, ${qOrder++}
+            )
+          `;
+        }
+        
+        await sql`UPDATE "User_Profile" SET total_solved = total_solved + ${evaluated} WHERE "User_id" = ${userId}`;
+      });
+      console.log(`[DEBUG] Session ${session.sessionId} successfully committed to Postgres.`);
       
     } catch (err) {
-      console.error("[DEBUG] Failed to save practice session to Postgres", err);
+      console.error("[DEBUG] Transaction Failed: rolling back and using fallback.", err);
+      // Fallback logic if DB is completely unreachable
       pushFallbackHistory(userId, result);
     }
   } else {
@@ -735,19 +743,19 @@ export const getSubmissionDetails = async (req, res) => {
         COALESCE(a.user_answer, a.marked_option) as "userAnswer",
         a.is_correct as "isCorrect",
         a.marks_awarded as "marksAwarded",
-        q."Ques_id" as id,
-        q."Ques_id" as qno,
-        q."Question_Statement" as statement,
+        a.question_id as id,
+        a.question_id as qno,
+        COALESCE(q."Question_Statement", 'Question content is no longer available in the database pool.') as statement,
         q."Image" as "imageUrl",
         a.correct_answer as "correctAnswer",
         jsonb_build_array(
-          jsonb_build_object('key', '1', 'text', q."Option_1"),
-          jsonb_build_object('key', '2', 'text', q."Option_2"),
-          jsonb_build_object('key', '3', 'text', q."Option_3"),
-          jsonb_build_object('key', '4', 'text', q."Option_4")
+          jsonb_build_object('key', '1', 'text', COALESCE(q."Option_1", 'Option 1')),
+          jsonb_build_object('key', '2', 'text', COALESCE(q."Option_2", 'Option 2')),
+          jsonb_build_object('key', '3', 'text', COALESCE(q."Option_3", 'Option 3')),
+          jsonb_build_object('key', '4', 'text', COALESCE(q."Option_4", 'Option 4'))
         ) as options
       FROM practice_submission_answers a
-      JOIN "Questions" q ON TRIM(a.question_id::text) = TRIM(q."Ques_id"::text)
+      LEFT JOIN "Questions" q ON TRIM(a.question_id::text) = TRIM(q."Ques_id"::text)
       WHERE a.submission_id = ${submissionId}
       ORDER BY a.question_order ASC
     `;
