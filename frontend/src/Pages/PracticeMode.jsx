@@ -455,7 +455,10 @@ export default function PracticeMode() {
           });
         }
 
-        if (subjectList.length) setSubject(subjectList[0].key);
+        if (subjectList.length) {
+          // Only set default subject if there is no active session already loaded
+          setSubject(prev => prev || subjectList[0].key);
+        }
       } catch { setError("Unable to load practice metadata."); }
       finally { setLoadingMeta(false); }
     };
@@ -480,6 +483,52 @@ export default function PracticeMode() {
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, [session]);
+
+  // AUTO-RESUME: Check for active session on mount
+  useEffect(() => {
+    const checkActiveSession = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/practice/active`, { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          setSession(data);
+          setResult(null);
+          setAnswers(data.answers || {});
+          setQuestionIndex(0);
+          setRemainingSeconds(Math.max(0, Math.floor((new Date(data.expiresAt).getTime() - Date.now()) / 1000)));
+          setShowConfigDrawer(false);
+          // Sync subject from session - use a functional update or direct if needed
+          if (data.subject) {
+            console.log(`[DEBUG] Resuming session with subject: ${data.subject}`);
+            setSubject(data.subject);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to check active session:", err);
+      }
+    };
+    checkActiveSession();
+  }, []);
+
+  // AUTO-SAVE: Debounced sync of answers to backend
+  useEffect(() => {
+    if (!session || result || isSessionLocked || submitting) return;
+    
+    const timeout = setTimeout(async () => {
+      try {
+        await fetch(`${API_BASE}/practice/session/${session.sessionId}/answers`, {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answers }),
+        });
+      } catch (err) {
+        console.warn("Auto-save failed", err);
+      }
+    }, 2000); // 2 second debounce
+
+    return () => clearTimeout(timeout);
+  }, [answers, session, result, isSessionLocked, submitting]);
 
   const startPractice = async () => {
     setError("");
@@ -958,7 +1007,7 @@ export default function PracticeMode() {
                     <LayoutGrid className="w-4 h-4 text-slate-400" />
                     <span className="text-[10px] uppercase font-black text-slate-400 tracking-tighter">MAP</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 flex-wrap sm:flex-nowrap">
                     {session.questions?.map((q, i) => {
                       const qr      = questionResultMap[q.id];
                       const answered = !!answers[q.id];
@@ -975,7 +1024,7 @@ export default function PracticeMode() {
                     })}
                   </div>
                   
-                  <div className="ml-auto flex items-center gap-3 pl-4 border-l border-slate-200">
+                  <div className="ml-auto flex items-center gap-3 pl-4 border-l border-slate-200 flex-shrink-0">
                     <div className={`flex items-center gap-2 rounded-2xl px-3 py-1.5 text-[11px] font-black tracking-tight ${
                       isSessionLocked
                         ? "bg-[#0b2a4a] text-white shadow-lg shadow-[#0b2a4a]/20"

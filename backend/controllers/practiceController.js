@@ -27,8 +27,9 @@ const normalizeAnswer = (value = "") => {
     return text;
   }
 
-  const numericMatch = text.match(/-?\d+(?:\.\d+)?/);
+  const numericMatch = text.match(/^-?\d+(?:\.\d+)?$/);
   if (numericMatch) {
+    // Return the number itself as a string, but we'll compare numerically later if both match this
     return numericMatch[0];
   }
 
@@ -41,14 +42,17 @@ const isAnswerCorrect = (userAnswer, correctAnswer) => {
   const normUser = normalizeAnswer(userAnswer);
   const normCorrect = normalizeAnswer(correctAnswer);
   
-  const match = normUser === normCorrect;
+  // Strict string match first
+  if (normUser === normCorrect) return true;
+
+  // Numerical comparison fallback
+  const numUser = Number(normUser);
+  const numCorrect = Number(normCorrect);
+  if (!isNaN(numUser) && !isNaN(numCorrect) && numUser === numCorrect) {
+    return true;
+  }
   
-  // Debug log for mismatches if they occur during runtime (optional based on environment)
-  // if (!match && userAnswer && userAnswer !== "null") {
-  //   console.log(`[DEBUG] Answer mismatch: User="${userAnswer}" (norm:${normUser}) vs Correct="${correctAnswer}" (norm:${normCorrect})`);
-  // }
-  
-  return match;
+  return false;
 };
 
 // Map DB subject_id to frontend keys
@@ -91,14 +95,16 @@ const toClientQuestion = (question, sessionId) => ({
 const serializeSession = (session) => ({
   sessionId: session.sessionId,
   subject: session.subject,
+  examId: session.examId || null, // Critical for consistent resumption
   selectedTopics: session.selectedTopics,
   questionCount: session.questionCount,
   timeLimitMinutes: session.timeLimitMinutes,
-  scoringMode: "+4/-1",
+  scoringMode: session.scoringMode || "+4/-1",
   startedAt: session.startedAt,
   expiresAt: session.expiresAt,
   submittedAt: session.submittedAt || null,
   questions: session.questions.map((question) => toClientQuestion(question, session.sessionId)),
+  answers: session.answers || {}, // Include persistence state
   result: session.result || null
 });
 
@@ -210,7 +216,7 @@ export const createPracticeSession = async (req, res) => {
     
     // Support excluding previously seen questions
     const excludeIdsRaw = Array.isArray(req.body.excludeIds) ? req.body.excludeIds : [];
-    const excludeIds = excludeIdsRaw.map(Number).filter(id => Number.isInteger(id) && id > 0);
+    const excludeIds = excludeIdsRaw.map(id => String(id).trim()).filter(id => id.length > 0);
 
     let dbQuestions = [];
     
@@ -235,7 +241,7 @@ export const createPracticeSession = async (req, res) => {
           FROM "Questions"
           WHERE subject_id = ${subjectId}
             AND (${examId || null}::uuid IS NULL OR "Exam_id" = ${examId || null}::uuid)
-            AND "Ques_id" != ALL(${excludeIds})
+            AND "Ques_id"::text != ALL(${excludeIds}::text[])
         ) AS unique_questions
         ORDER BY RANDOM()
         LIMIT ${requestedCount}
@@ -269,8 +275,8 @@ export const createPracticeSession = async (req, res) => {
           FROM "Questions"
           WHERE subject_id = ${subjectId}
             AND (${examId || null}::uuid IS NULL OR "Exam_id" = ${examId || null}::uuid)
-            AND "Ques_id" = ANY(${excludeIds})
-            ${excludeFromExtra.length > 0 ? sql`AND "Ques_id" != ALL(${excludeFromExtra})` : sql``}
+            AND "Ques_id"::text = ANY(${excludeIds}::text[])
+            ${excludeFromExtra.length > 0 ? sql`AND "Ques_id"::text != ALL(${excludeFromExtra.map(String)}::text[])` : sql``}
         ) AS unique_extra
         ORDER BY RANDOM()
         LIMIT ${remainingCount}
@@ -354,6 +360,7 @@ export const createPracticeSession = async (req, res) => {
       startedAt: new Date(now).toISOString(),
       expiresAt,
       questions: mappedQuestions,
+      answers: {}, // Initialize empty answers for persistence
       submittedAt: null,
       result: null
     };
@@ -415,15 +422,19 @@ export const getActiveSession = (req, res) => {
   );
 
   if (!activeSession) {
+    console.log(`[DEBUG] No active session found for user: ${userId}`);
     return res.status(404).json({ msg: "No active session found" });
   }
 
+  console.log(`[DEBUG] Resuming session: ${activeSession.sessionId} for user: ${userId}`);
   return res.json(serializeSession(activeSession));
 };
 
 export const submitPracticeSession = async (req, res) => {
-  const session = sessions.get(req.params.sessionId);
+  const sessionId = req.params.sessionId;
+  const session = sessions.get(sessionId);
   if (!session) {
+    console.warn(`[DEBUG] submitPracticeSession: Session ${sessionId} not found in Map!`);
     return res.status(404).json({ msg: "Practice session not found" });
   }
 
@@ -540,6 +551,9 @@ export const submitPracticeSession = async (req, res) => {
       const subjectId = subjectIdRes.length ? subjectIdRes[0].subject_id : (DB_SUBJECT_MAP[normalizeSubject(session.subject)] || 1);
 
       const dbSessionId = session.sessionId;
+      const dbExamId = session.examId || null;
+
+      console.log(`[DEBUG] Attempting Postgres insert for submission: ${dbSessionId}, Exam: ${dbExamId}, User: ${userId}`);
 
       await sql`
         INSERT INTO practice_submissions (
@@ -547,7 +561,7 @@ export const submitPracticeSession = async (req, res) => {
           percentage, attempted, correct, wrong, started_at, submitted_at,
           correct_marks, wrong_marks
         ) VALUES (
-          ${dbSessionId}, ${userId}, ${subjectId}, ${session.examId || null}, ${score}, ${maxScore}, 
+          ${dbSessionId}, ${userId}, ${subjectId}, ${dbExamId}, ${score}, ${maxScore}, 
           ${percentage}, ${attempted}, ${correct}, ${wrong}, 
           ${session.startedAt}, ${result.submittedAt},
           ${correctMarks}, ${negativeMarks}
@@ -566,7 +580,7 @@ export const submitPracticeSession = async (req, res) => {
                submission_id, question_id, user_answer, marked_option, correct_answer, 
                is_correct, marks_awarded, question_order
              ) VALUES (
-               ${dbSessionId}, ${qr.questionId || null}, ${qr.userAnswer || null}, ${qr.userAnswer || null}, ${qr.correctAnswer || null}, 
+               ${dbSessionId}, ${String(qr.questionId) || null}, ${qr.userAnswer || null}, ${qr.userAnswer || null}, ${qr.correctAnswer || null}, 
                ${qr.isCorrect || false}, ${qr.marksAwarded || 0}, ${qOrder++}
              )
            `;
@@ -581,12 +595,14 @@ export const submitPracticeSession = async (req, res) => {
       }
       
       await sql`UPDATE "User_Profile" SET total_solved = total_solved + ${evaluated} WHERE "User_id" = ${userId}`;
+      console.log(`[DEBUG] Session ${dbSessionId} successfully saved to Postgres for user ${userId}`);
       
     } catch (err) {
-      console.error("Failed to save practice session to Postgres", err);
+      console.error("[DEBUG] Failed to save practice session to Postgres", err);
       pushFallbackHistory(userId, result);
     }
   } else {
+    console.log("[DEBUG] Guest session submitted, using fallback history");
     pushFallbackHistory(userId, result);
   }
 
@@ -624,8 +640,8 @@ export const getPracticeHistory = async (req, res) => {
 
     const history = [];
     for (const row of submissionsRows) {
-      const cMarks = Number(row.correct_marks);
-      const wMarks = Number(row.wrong_marks);
+      const cMarks = Number(row.correct_marks || 4);
+      const wMarks = Number(row.wrong_marks || -1);
 
       const answerRows = await sql`
         SELECT a.question_id as qno, a.question_id as "questionId", 
@@ -637,13 +653,15 @@ export const getPracticeHistory = async (req, res) => {
         ORDER BY a.question_order ASC
       `;
 
+      const qCount = answerRows.length > 0 ? answerRows.length : Math.round(row.max_score / cMarks);
+
       history.push({
         userId,
         submissionId: row.submission_id,
         sessionId: row.submission_id,
         subject: row.subject,
         selectedTopics: ["General"],
-        questionCount: cMarks > 0 ? row.max_score / cMarks : row.max_score / 4,
+        questionCount: qCount,
         scoringMode: `+${cMarks}/${wMarks}`,
         score: row.score,
         maxScore: row.max_score,
@@ -651,11 +669,11 @@ export const getPracticeHistory = async (req, res) => {
         attempted: row.attempted,
         correct: row.correct,
         wrong: row.wrong,
-        unanswered: Math.max((cMarks > 0 ? row.max_score / cMarks : row.max_score / 4) - (row.correct + row.wrong), 0),
+        unanswered: Math.max(qCount - (row.correct + row.wrong), 0),
         startedAt: row.started_at,
         submittedAt: row.submitted_at,
         timeLimitMinutes: 15,
-        byTopic: [{ topic: "General", score: row.score, total: cMarks > 0 ? row.max_score / cMarks : row.max_score / 4, attempted: row.attempted, correct: row.correct }],
+        byTopic: [{ topic: "General", score: row.score, total: qCount, attempted: row.attempted, correct: row.correct }],
         questionResults: answerRows
       });
     }
@@ -720,11 +738,16 @@ export const getSubmissionDetails = async (req, res) => {
         q."Ques_id" as id,
         q."Ques_id" as qno,
         q."Question_Statement" as statement,
-        q."Option_1", q."Option_2", q."Option_3", q."Option_4",
-        q."Image",
-        a.correct_answer as "correctAnswer"
+        q."Image" as "imageUrl",
+        a.correct_answer as "correctAnswer",
+        jsonb_build_array(
+          jsonb_build_object('key', '1', 'text', q."Option_1"),
+          jsonb_build_object('key', '2', 'text', q."Option_2"),
+          jsonb_build_object('key', '3', 'text', q."Option_3"),
+          jsonb_build_object('key', '4', 'text', q."Option_4")
+        ) as options
       FROM practice_submission_answers a
-      JOIN "Questions" q ON TRIM(a.question_id) = TRIM(q."Ques_id"::text)
+      JOIN "Questions" q ON TRIM(a.question_id::text) = TRIM(q."Ques_id"::text)
       WHERE a.submission_id = ${submissionId}
       ORDER BY a.question_order ASC
     `;
@@ -784,12 +807,8 @@ export const getSubmissionDetails = async (req, res) => {
 
 
     const questions = details.map((row, idx) => {
-       const options = [];
-       if (row.Option_1) options.push({ key: "1", text: row.Option_1 });
-       if (row.Option_2) options.push({ key: "2", text: row.Option_2 });
-       if (row.Option_3) options.push({ key: "3", text: row.Option_3 });
-       if (row.Option_4) options.push({ key: "4", text: row.Option_4 });
-
+       const options = Array.isArray(row.options) ? row.options : [];
+       
        return {
          id: String(row.id),
          index: idx + 1,
@@ -798,9 +817,9 @@ export const getSubmissionDetails = async (req, res) => {
          statement: row.statement,
          options,
          questionType: options.length > 0 ? "mcq" : "numeric",
-         hasImage: !!row.Image,
-         imageUrl: row.Image ? `/practice/image/${encodeURIComponent(submissionId)}/${encodeURIComponent(row.id)}` : null,
-         originalImageUrl: row.Image
+         hasImage: !!row.imageUrl,
+         imageUrl: row.imageUrl ? `/practice/image/${encodeURIComponent(submissionId)}/${encodeURIComponent(row.id)}` : null,
+         originalImageUrl: row.imageUrl
        };
     });
 
@@ -850,4 +869,22 @@ export const getSubmissionDetails = async (req, res) => {
       submissionId 
     });
   }
+};
+
+export const updateSessionAnswers = (req, res) => {
+  const session = sessions.get(req.params.sessionId);
+  if (!session) {
+    return res.status(404).json({ msg: "Practice session not found" });
+  }
+
+  if (session.submittedAt) {
+    return res.status(400).json({ msg: "Cannot update answers for a submitted session" });
+  }
+
+  const { answers } = req.body;
+  if (answers && typeof answers === "object") {
+    session.answers = { ...session.answers, ...answers };
+  }
+
+  return res.json({ success: true, answers: session.answers });
 };
