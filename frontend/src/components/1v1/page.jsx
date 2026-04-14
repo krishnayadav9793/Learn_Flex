@@ -764,7 +764,7 @@ export default function CompetitionPage({ onQuizStart }) {
               </div>
               <button
                 className="btn-secondary"
-                onClick={() => {  navigate('/homepage'); }}
+                onClick={() => { socket.emit("cancel_search"); navigate('/homepage'); }}
                 style={{ marginTop: '12px', minWidth: '180px' }}
               >
                 Cancel Search
