@@ -33,7 +33,7 @@ export async function otpRateLimit(req, res, next) {
             const minutesLeft = Math.ceil((retryAfter - Date.now()) / 60000);
 
             return res.status(429).json({
-                msg: `OTP limit reached. Try again in ${minutesLeft} minute(s).`,
+                msg: `OTP limit reached. Try again after 1 hours`,
                 retryAfter: retryAfter.toISOString(),
             });
         }

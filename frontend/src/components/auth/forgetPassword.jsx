@@ -191,6 +191,7 @@ export default function ForgotPasswordOTP() {
       })
       const response = await res.json()
       if (response.msg === 'user not exsist') { setEmailErr(response.msg); setSending(false); return }
+      if (response.msg === 'OTP limit reached. Try again after 1 hours') { setEmailErr(response.msg); setSending(false); return }
       setOriginalOTP(response?.OTP)
     } catch (e) {
       setEmailErr(e?.message || 'Failed to send. Try again.')
