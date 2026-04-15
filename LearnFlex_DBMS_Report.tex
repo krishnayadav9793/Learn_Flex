@@ -1,0 +1,534 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{setspace}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{listings}
+
+\geometry{margin=1in}
+\setstretch{1.15}
+\setlength{\parskip}{6pt}
+\setlength{\parindent}{0pt}
+
+\definecolor{navyblue}{RGB}{11,36,71}
+\definecolor{lightborder}{RGB}{170,180,195}
+\definecolor{lightgray}{RGB}{245,247,250}
+\definecolor{codebg}{RGB}{248,248,248}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=navyblue,
+  urlcolor=navyblue,
+  pdftitle={LearnFlex DBMS Project Report},
+  pdfauthor={LearnFlex Team}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{LearnFlex}
+\rhead{DBMS Project Report}
+\cfoot{\thepage}
+
+\titleformat{\section}{\large\bfseries\color{navyblue}}{\thesection}{0.75em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{navyblue}}{\thesubsection}{0.75em}{}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  breaklines=true,
+  columns=fullflexible
+}
+
+\newcommand{\projecttitle}{LearnFlex -- A Helping Platform for JEE, NEET, UPSC and Similar Competitive Exams}
+
+\newcommand{\screenshotbox}[2]{
+  \begin{figure}[H]
+    \centering
+    \fbox{
+      \parbox[c][#2][c]{0.9\textwidth}{
+        \centering
+        \vspace*{0.3cm}
+        {\large\bfseries Screenshot Placeholder}\\[0.2cm]
+        {#1}\\[0.2cm]
+        Insert application screenshot here before final submission.
+        \vspace*{0.3cm}
+      }
+    }
+    \caption{#1}
+  \end{figure}
+}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries \projecttitle \par}
+  \vspace{1cm}
+  {\Large Technical Report for DBMS Project \par}
+  \vspace{1.5cm}
+  {\large Prepared using the implemented frontend and backend codebase of LearnFlex \par}
+  \vspace{2cm}
+
+  \begin{tabular}{>{\bfseries}p{4cm}p{9cm}}
+    Project Domain: & Educational Technology / Competitive Exam Preparation \\
+    Frontend Stack: & React 19, Vite, Tailwind CSS, React Router, Socket.io Client \\
+    Backend Stack: & Node.js, Express 5, Socket.io, JWT, Nodemailer \\
+    Database Stack: & PostgreSQL on Neon, MongoDB support, in-memory session state for live flows \\
+    Major Modules: & Authentication, Daily Challenge, Weekly Quiz, Practice Mode, Leaderboard, Profile Analytics, 1v1 Battle \\
+  \end{tabular}
+
+  \vfill
+  {\large Academic Year: 2025--2026 \par}
+  \vspace{0.3cm}
+  {\large Date: 15 April 2026 \par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Abstract}
+LearnFlex is a web-based learning platform designed to support preparation for competitive examinations such as JEE, NEET, UPSC, and similar tests. The system combines structured question practice, scheduled quizzes, daily challenges, performance analytics, and real-time 1v1 competition to improve engagement and consistency in exam preparation. From a DBMS perspective, LearnFlex is centered around a relational model implemented on PostgreSQL, where exam metadata, questions, submissions, challenge attempts, user profiles, and leaderboard information are organized through interrelated tables.
+
+This report presents the technical design of LearnFlex with special focus on the database layer. The report is based on the actual backend SQL queries and route/controller design present in the project. It discusses the motivation behind the platform, system objectives, architecture, inferred relational schema, key SQL operations, normalization, redundancy control, and future improvements. Screenshot placeholders are also provided so that project evidence can be inserted before final submission.
+
+\section{Introduction}
+Students preparing for national-level competitive examinations often use disconnected resources: one platform for practice, another for mock tests, another for progress analysis, and informal social tools for competition. This fragmentation leads to poor continuity, low motivation, and insufficient personalized feedback. LearnFlex was conceived as an integrated platform that addresses these issues through a single application.
+
+The project aims to create a technically sound and user-friendly system in which a learner can sign in, select an exam, solve daily challenges, attempt weekly quizzes, practice subject-wise questions, review historical performance, and compete in live quiz battles. The DBMS component is crucial because the platform depends on consistent storage of questions, users, attempts, scoring rules, and subject-wise analytics. Without a structured database design, operations such as ranking, history retrieval, challenge generation, and exam-specific evaluation would become error-prone and inefficient.
+
+\section{Problem Statement}
+The core problem addressed by LearnFlex is the lack of a unified digital ecosystem for structured exam preparation. Existing study methods frequently suffer from:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item fragmented practice resources,
+  \item weak progress tracking,
+  \item absence of adaptive or exam-specific scoring,
+  \item poor motivation due to limited competition and gamification,
+  \item difficulty in analyzing subject-wise strengths and weaknesses.
+\end{itemize}
+
+LearnFlex solves this by integrating practice, assessment, ranking, and performance history on top of a centralized relational database and a responsive modern web interface.
+
+\section{Objectives}
+The primary objectives of the LearnFlex project are as follows:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item To provide a unified platform for multi-exam preparation.
+  \item To manage questions, users, submissions, and scoring rules in a structured relational database.
+  \item To support exam-specific modules such as daily challenge and weekly test.
+  \item To maintain user activity history, heatmaps, rating, and solved-question statistics.
+  \item To enable real-time peer competition through 1v1 battle mode.
+  \item To reduce redundancy in stored educational data through normalized schema design.
+  \item To create a scalable base for future AI-assisted study recommendations.
+\end{itemize}
+
+\section{Project Overview and Major Features}
+From the implemented frontend and backend, LearnFlex provides the following major features:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Authentication:} user signup, login, password reset through OTP/email flow, and JWT-based protected routes.
+  \item \textbf{Exam-aware dashboard:} the homepage and profile use selected exam context to filter content.
+  \item \textbf{Daily Challenge:} exam-specific daily question set generated from the question bank and stored in relational tables.
+  \item \textbf{Weekly Quiz / Mega Mock:} scheduled tests with question mapping and leaderboard generation.
+  \item \textbf{Practice Mode:} configurable practice sessions with subject filtering, timing, scoring, and review history.
+  \item \textbf{Leaderboard:} rank calculation based on quiz submissions and answer correctness.
+  \item \textbf{Profile Analytics:} heatmap-style consistency data and aggregate profile metrics.
+  \item \textbf{1v1 Real-time Battle:} Socket.io-based competitive mode using question fetch and live result handling.
+\end{enumerate}
+
+\screenshotbox{Homepage / Dashboard with exam selection and feature access}{2.1in}
+
+\section{System Architecture}
+LearnFlex follows a full-stack web architecture with presentation, service, real-time communication, and database layers.
+
+\subsection{Frontend Layer}
+The frontend is built using React 19 with Vite. Routing is handled using React Router. The interface includes dedicated pages for home, profile, leaderboard, weekly quiz, daily challenge, practice mode, and 1v1 competition. Tailwind CSS is used for rapid styling and responsive layout design.
+
+\subsection{Backend Layer}
+The backend uses Express 5 with route-controller separation. Core routes observed in the codebase include:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \texttt{/user} for signup, login, profile, OTP, and password reset,
+  \item \texttt{/exam} for exam and subject-related data,
+  \item \texttt{/quiz} for weekly test list, questions, and submission,
+  \item \texttt{/practice} for practice metadata, session creation, submission, and history,
+  \item \texttt{/dc} for daily challenge retrieval and attempt recording,
+  \item \texttt{/leaderboard} and \texttt{/lb} for rank-related views.
+\end{itemize}
+
+\subsection{Database Layer}
+The project uses PostgreSQL hosted on Neon for relational storage. MongoDB packages are also included in the backend dependency list, suggesting support for document-oriented storage or future flexible data use. However, the implemented DBMS-centric flows visible in the current code are strongly driven by PostgreSQL queries through the \texttt{postgres} client.
+
+\subsection{Real-time Layer}
+The 1v1 battle mode uses Socket.io on both client and server. Matchmaking and live quiz flow are maintained using socket events and in-memory structures such as rooms, queues, and player maps.
+
+\section{Technology Stack}
+\begin{longtable}{p{4cm}p{10cm}}
+\toprule
+\textbf{Layer} & \textbf{Technology} \\
+\midrule
+Frontend & React 19, Vite 7, Tailwind CSS 4, React Router, Lucide React, heatmap libraries \\
+Backend & Node.js, Express 5, JWT, bcrypt, cookie-parser, cors, nodemailer \\
+Database & PostgreSQL (Neon), MongoDB support, in-memory maps for temporary session/battle state \\
+Realtime & Socket.io and Socket.io Client \\
+Scheduling & node-cron for daily challenge generation \\
+AI / Integration & Google Generative AI package included for AI-driven assistance \\
+Deployment Support & Vercel configuration present for frontend deployment \\
+\bottomrule
+\end{longtable}
+
+\section{Database Design Based on Backend SQL}
+\subsection{Method Used for Schema Identification}
+The repository does not contain explicit \texttt{CREATE TABLE} scripts in the visible project files. Therefore, the relational schema described in this report is inferred from the SQL queries used in controllers, middleware, and scheduled jobs. This is still a reliable method because insert, join, and select statements reveal table names, attribute names, foreign-key relationships, and business rules.
+
+\subsection{Core Tables Identified}
+The following major relational tables are clearly used in the implemented backend:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \texttt{"User"}
+  \item \texttt{"User\_Profile"}
+  \item \texttt{"Exam"}
+  \item \texttt{"Exam\_Marking"}
+  \item \texttt{"Subject"}
+  \item \texttt{"Questions"}
+  \item \texttt{"Weekly\_Test"}
+  \item \texttt{"Weekly\_test\_ques"}
+  \item \texttt{"Weekly\_Test\_Submission"}
+  \item \texttt{"DailyChallenge"}
+  \item \texttt{"DailyChallengeQuestions"}
+  \item \texttt{"DailyChallengeAttempt"}
+  \item \texttt{practice\_submissions}
+  \item \texttt{practice\_submission\_answers}
+  \item \texttt{"OTPRateLimit"}
+  \item \texttt{"submission\_log"}
+\end{itemize}
+
+\subsection{Inferred Relation Descriptions}
+\begin{longtable}{p{3.2cm}p{3.2cm}p{8cm}}
+\toprule
+\textbf{Table} & \textbf{Probable Key} & \textbf{Purpose} \\
+\midrule
+\texttt{"User"} & \texttt{id} & Stores basic authentication identity such as name, email, password. \\
+\texttt{"User\_Profile"} & \texttt{"User\_id"} & Stores aggregate profile statistics such as \texttt{rating} and \texttt{total\_solved}. \\
+\texttt{"Exam"} & \texttt{exam\_id} & Stores exam categories like JEE, NEET, UPSC. \\
+\texttt{"Exam\_Marking"} & \texttt{exam\_id} & Stores evaluation rules like correct marks, wrong marks, unattempted marks. \\
+\texttt{"Subject"} & \texttt{subject\_id} & Stores subject names and likely exam linkage. \\
+\texttt{"Questions"} & \texttt{"Ques\_id"} & Stores question statement, options, answer, image, exam linkage, subject linkage. \\
+\texttt{"Weekly\_Test"} & \texttt{test\_id} & Stores quiz metadata like time limit, total questions, quiz name, description. \\
+\texttt{"Weekly\_test\_ques"} & composite & Maps weekly tests to the question bank. \\
+\texttt{"Weekly\_Test\_Submission"} & row-based submission record & Stores each marked answer for a user in a weekly quiz. \\
+\texttt{"DailyChallenge"} & \texttt{challenge\_id} & Stores one daily challenge per exam and date. \\
+\texttt{"DailyChallengeQuestions"} & composite & Maps daily challenges to chosen questions. \\
+\texttt{"DailyChallengeAttempt"} & row-based attempt record & Stores each user answer in the daily challenge. \\
+\texttt{practice\_submissions} & \texttt{submission\_id} & Stores summary of practice sessions including score and timing. \\
+\texttt{practice\_submission\_answers} & row-based answer record & Stores detailed per-question answers for a practice session. \\
+\texttt{"OTPRateLimit"} & email/timestamp logic & Controls password-reset OTP frequency. \\
+\texttt{"submission\_log"} & log row & Provides date-wise submission activity for heatmap generation. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Probable Entity Relationships}
+The SQL queries reveal the following relationships:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item One \texttt{Exam} has many \texttt{Subject} rows.
+  \item One \texttt{Exam} has one or more marking rules in \texttt{Exam\_Marking}.
+  \item One \texttt{Exam} has many \texttt{Questions}.
+  \item One \texttt{Subject} has many \texttt{Questions}.
+  \item One \texttt{Weekly\_Test} maps to many questions through \texttt{Weekly\_test\_ques}.
+  \item One user can create many \texttt{Weekly\_Test\_Submission}, \texttt{DailyChallengeAttempt}, and \texttt{practice\_submissions} records.
+  \item One \texttt{practice\_submissions} row has many \texttt{practice\_submission\_answers}.
+  \item One \texttt{DailyChallenge} has many \texttt{DailyChallengeQuestions}.
+\end{itemize}
+
+\screenshotbox{Practice Mode configuration and question solving interface}{2.4in}
+
+\section{Important SQL Operations Observed in the Project}
+The backend uses SQL not only for CRUD operations but also for analytics, ranking, and challenge generation. Representative operations are discussed below.
+
+\subsection{Authentication and User Management}
+The signup flow checks whether a user already exists and then inserts a hashed password into the \texttt{"User"} table. Login uses a select query by email, while protected routes join \texttt{"User"} and \texttt{"User\_Profile"} to build the authenticated user context.
+
+\begin{lstlisting}
+SELECT * FROM "User" WHERE email = $email;
+
+INSERT INTO "User" ("email","password","name")
+VALUES ($email, $hashedPassword, $name);
+\end{lstlisting}
+
+\subsection{Question Retrieval}
+Questions are filtered by subject and exam in practice mode. The implementation also attempts to avoid duplicates by using \texttt{DISTINCT ON} over cleaned question content or image.
+
+\begin{lstlisting}
+SELECT DISTINCT ON (
+  COALESCE(
+    NULLIF(SUBSTRING(REGEXP_REPLACE("Question_Statement", '\W+', '', 'g'), 1, 50), ''),
+    "Image"
+  )
+) ...
+FROM "Questions"
+WHERE subject_id = $subjectId
+\end{lstlisting}
+
+This is an important DBMS-oriented choice because it reduces repetitive question delivery and improves data quality from the learner's perspective.
+
+\subsection{Practice Session Storage}
+Practice mode stores both summary and detail records:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item summary data in \texttt{practice\_submissions},
+  \item question-level answers in \texttt{practice\_submission\_answers}.
+\end{itemize}
+
+This separation is a good design decision because summary metrics can be queried quickly while detailed review remains available when needed.
+
+\subsection{Leaderboard Generation}
+The leaderboard query uses a common table expression (\texttt{WITH submission\_stats AS ...}) and computes:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item correct answer count,
+  \item wrong answer count,
+  \item attempted count,
+  \item not attempted count,
+  \item rating,
+  \item rank using the window function \texttt{RANK()}.
+\end{itemize}
+
+This demonstrates practical DBMS usage for analytics and ranking.
+
+\subsection{Daily Challenge Generation}
+A scheduled job inserts a new row into \texttt{"DailyChallenge"} and then maps selected question IDs into \texttt{"DailyChallengeQuestions"}. The challenge retrieval query joins six major tables, showing a proper relational design.
+
+\section{DBMS Concepts Used in LearnFlex}
+\subsection{Data Modeling}
+LearnFlex is based on a relational data model where entities such as users, exams, subjects, questions, and submissions are represented in separate tables. This improves maintainability, makes relationships explicit, and supports complex joins for reporting and analytics.
+
+\subsection{Normalization}
+The project reflects several normalization ideas:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{First Normal Form (1NF):} attributes are stored as atomic values such as email, name, marks, and individual options.
+  \item \textbf{Second Normal Form (2NF):} mapping tables like \texttt{"Weekly\_test\_ques"} and \texttt{"DailyChallengeQuestions"} separate many-to-many relationships.
+  \item \textbf{Third Normal Form (3NF):} exam scoring rules are extracted into \texttt{"Exam\_Marking"} instead of duplicating marking attributes in every submission or question row.
+\end{itemize}
+
+Further, user profile statistics are kept in a separate \texttt{"User\_Profile"} table rather than being repeatedly stored in answer tables.
+
+\subsection{Redundancy Control}
+Redundancy is reduced in multiple ways:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Question data is stored once in \texttt{"Questions"} and reused in daily challenge, weekly quiz, practice, and battle mode.
+  \item Exam marking rules are centralized in \texttt{"Exam\_Marking"}.
+  \item Practice session answers are separated from submission summary, avoiding repeated storage of aggregate metrics.
+  \item Many-to-many mappings are resolved through bridge tables instead of duplicating question content.
+\end{itemize}
+
+The \texttt{DISTINCT ON} logic in practice mode also shows an application-level effort to suppress duplicate content presentation even when source data may contain near-duplicate entries.
+
+\subsection{Integrity and Consistency}
+Although full DDL is not visible, the query structure strongly suggests the use of referential integrity by exam IDs, subject IDs, user IDs, question IDs, test IDs, and challenge IDs. The design is intended to preserve consistency across:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item user-to-profile mapping,
+  \item exam-to-subject mapping,
+  \item subject/exam-to-question mapping,
+  \item test/challenge-to-question mapping,
+  \item user-to-submission/attempt mapping.
+\end{itemize}
+
+\subsection{Transactions}
+Weekly quiz submission uses a transaction block through \texttt{sql.begin(...)}. This is good DBMS practice because all answer inserts for a quiz attempt should succeed together or fail together.
+
+\subsection{Query Processing and Analytics}
+The project uses SQL aggregation, \texttt{COUNT}, \texttt{SUM}, \texttt{GROUP BY}, \texttt{LEFT JOIN}, common table expressions, and window ranking functions. These are strong indicators that the system is not merely storing data, but also deriving insight from it.
+
+\screenshotbox{Weekly quiz list, quiz attempt page, or leaderboard output}{2.3in}
+
+\section{Module-wise Technical Explanation}
+\subsection{Authentication Module}
+The authentication subsystem includes signup, login, JWT verification, OTP rate limiting, email verification, and password reset. Passwords are hashed using bcrypt, authentication state is stored via cookies, and protected middleware joins user identity with profile statistics.
+
+\subsection{Exam and Subject Analysis Module}
+The homepage and profile page fetch exam and subject-based analytics. Subject statistics combine attempts from daily challenge and weekly quiz submissions using a unified query with \texttt{UNION ALL}. This creates a consolidated performance view for the learner.
+
+\subsection{Practice Mode Module}
+Practice mode is one of the most technically rich modules in the system. It:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item fetches available subjects and question counts,
+  \item applies exam-specific marking rules,
+  \item creates a temporary practice session,
+  \item evaluates answers with custom normalization logic,
+  \item stores both session summary and detailed answers,
+  \item updates user profile statistics,
+  \item retrieves historical attempts and submission details.
+\end{itemize}
+
+\subsection{Daily Challenge Module}
+The daily challenge module generates an exam-specific challenge each day and tracks user attempts at the question level. The feature supports consistency and encourages routine study habits.
+
+\subsection{Weekly Quiz and Leaderboard Module}
+Weekly tests provide longer and more formal evaluation. The leaderboard query ranks users by correct answers and uses wrong answers as a tie-breaker, which is meaningful for competitive-exam environments.
+
+\subsection{1v1 Battle Module}
+This module is implemented using Socket.io and in-memory structures. It is appropriate for real-time matchmaking and temporary match state. However, a future improvement would be to persist room or result summaries for analytics and replay.
+
+\section{Sample Inferred ER Discussion}
+An ER interpretation of the project can be described as:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{User} creates \textbf{Practice Submission}, \textbf{Weekly Test Submission}, and \textbf{Daily Challenge Attempt}.
+  \item \textbf{Exam} contains many \textbf{Subjects} and many \textbf{Questions}.
+  \item \textbf{Question} belongs to one \textbf{Subject} and one \textbf{Exam}.
+  \item \textbf{Weekly Test} contains many \textbf{Questions} through a bridge table.
+  \item \textbf{Daily Challenge} contains many \textbf{Questions} through a bridge table.
+  \item \textbf{User Profile} extends \textbf{User} with aggregated statistics.
+\end{itemize}
+
+If an ER diagram is added separately to the project report, it should emphasize bridge tables and one-to-many foreign-key relationships because these are central to the schema.
+
+\section{Performance, Scalability, and Practical Design Choices}
+Several implementation choices in LearnFlex are practically useful from a DBMS and systems perspective:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item PostgreSQL on Neon gives a managed relational backend suitable for structured academic data.
+  \item Separate summary/detail storage improves read efficiency for dashboards and histories.
+  \item Window functions and aggregation are pushed into SQL rather than computed inefficiently on the client.
+  \item Daily challenge generation through cron reduces repeated runtime computation.
+  \item In-memory storage is used for temporary live state where persistence is not always necessary.
+\end{itemize}
+
+At the same time, some future optimization opportunities remain:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item indexes on \texttt{user\_id}, \texttt{exam\_id}, \texttt{subject\_id}, \texttt{test\_id}, \texttt{challenge\_date}, and \texttt{submission\_id},
+  \item stronger explicit foreign-key constraints if not already present in the live schema,
+  \item materialized analytics views for heavy leaderboard or profile traffic,
+  \item persistence for live battle summaries.
+\end{itemize}
+
+\section{Security Considerations}
+LearnFlex already incorporates several security-related practices:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item password hashing using bcrypt,
+  \item JWT verification for protected APIs,
+  \item cookie-based authentication,
+  \item OTP rate limiting using the \texttt{"OTPRateLimit"} table,
+  \item server-side scoring and validation instead of trusting frontend values.
+\end{itemize}
+
+Potential future security improvements include:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item stricter database constraints and unique indexes,
+  \item audit logging for important user actions,
+  \item role-based administration for question management,
+  \item secure secret rotation and environment validation,
+  \item answer encryption or delayed reveal for highly competitive exams.
+\end{itemize}
+
+\section{Testing and Validation Perspective}
+Based on the implemented code, the project can be validated through the following scenarios:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item user registration and login,
+  \item protected route access only after authentication,
+  \item daily challenge fetch and attempt insertion,
+  \item weekly quiz retrieval and transactional answer submission,
+  \item leaderboard generation after multiple user submissions,
+  \item practice session creation, scoring, and history retrieval,
+  \item profile heatmap and aggregate stats display,
+  \item 1v1 battle matchmaking and result generation.
+\end{enumerate}
+
+\screenshotbox{Profile page with heatmap and subject-wise analytics}{2.2in}
+
+\section{Limitations of the Current Version}
+Every practical project has boundaries, and identifying them is part of a good technical report. The current LearnFlex implementation shows the following limitations:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item explicit database schema migration files are not included in the visible repository,
+  \item some live features depend on in-memory storage and may not survive server restarts,
+  \item some fallback behaviors suggest a transition from older data models,
+  \item MongoDB is listed in dependencies but its active role is not strongly visible in the current code paths,
+  \item practice session state is partly stored in server memory before final persistence,
+  \item advanced recommendation or adaptive difficulty logic is still limited.
+\end{itemize}
+
+\section{Future Scope}
+LearnFlex has strong potential for extension into a large-scale intelligent learning system. Possible future enhancements include:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item AI-generated study plans based on weak subjects and prior attempts,
+  \item adaptive question recommendation using performance history,
+  \item full admin panel for question insertion, editing, tagging, and moderation,
+  \item persistent storage of real-time battle history,
+  \item improved analytics dashboards using SQL views or OLAP-friendly summaries,
+  \item support for chapter/topic hierarchy beyond the current general-topic pattern,
+  \item push notifications and streak reminders,
+  \item mobile application integration,
+  \item plagiarism-resistant test modes with timer hardening and anti-cheat support.
+\end{itemize}
+
+\section{Conclusion}
+LearnFlex is a strong DBMS project because it applies relational database concepts to a real and meaningful domain: competitive-exam preparation. The system does not merely store users and questions; it organizes exams, subjects, marking policies, attempt logs, quizzes, daily challenges, and historical analytics into a coherent platform. The backend SQL demonstrates use of joins, transactions, aggregation, ranking, and normalized entity separation. The frontend complements this with a modern learning experience that is interactive and motivating.
+
+From a technical and academic point of view, LearnFlex successfully illustrates how DBMS principles such as normalization, reduced redundancy, data integrity, and structured query processing can be used to build a practical educational platform. With better schema migration documentation, stronger persistence for live systems, and richer AI support, the project can evolve into a production-grade learning ecosystem.
+
+\section{Appendix: Key Tables and Attributes (Inferred)}
+\begin{longtable}{p{4cm}p{9cm}}
+\toprule
+\textbf{Table} & \textbf{Observed Attributes in Queries} \\
+\midrule
+\texttt{"User"} & \texttt{id}, \texttt{name}, \texttt{email}, \texttt{password} \\
+\texttt{"User\_Profile"} & \texttt{"User\_id"}, \texttt{total\_solved}, \texttt{rating} \\
+\texttt{"Exam"} & \texttt{exam\_id}, \texttt{exam\_name} \\
+\texttt{"Exam\_Marking"} & \texttt{exam\_id}, \texttt{correct\_marks}, \texttt{wrong\_marks}, \texttt{unattempted\_marks} \\
+\texttt{"Subject"} & \texttt{subject\_id}, \texttt{subject\_name}, possibly \texttt{exam\_id} \\
+\texttt{"Questions"} & \texttt{"Ques\_id"}, \texttt{"Question\_Statement"}, \texttt{"Option\_1"}, \texttt{"Option\_2"}, \texttt{"Option\_3"}, \texttt{"Option\_4"}, \texttt{"Answer"}, \texttt{"Image"}, \texttt{"Exam\_id"}, \texttt{subject\_id} \\
+\texttt{"Weekly\_Test"} & \texttt{test\_id}, \texttt{exam\_id}, \texttt{"time\_limit"}, \texttt{"Start\_Time"}, \texttt{"totalQuestions"}, \texttt{quizname}, \texttt{"description"} \\
+\texttt{"Weekly\_test\_ques"} & \texttt{test\_id}, \texttt{ques\_id} \\
+\texttt{"Weekly\_Test\_Submission"} & \texttt{ques\_id}, \texttt{user\_id}, \texttt{answer\_marked}, \texttt{test\_id} \\
+\texttt{"DailyChallenge"} & \texttt{challenge\_id}, \texttt{exam\_id}, \texttt{challenge\_date}, \texttt{time\_limit} \\
+\texttt{"DailyChallengeQuestions"} & \texttt{challenge\_id}, \texttt{ques\_id} \\
+\texttt{"DailyChallengeAttempt"} & \texttt{user\_id}, \texttt{challenge\_id}, \texttt{ques\_id}, \texttt{marked\_option}, \texttt{attempt\_at} \\
+\texttt{practice\_submissions} & \texttt{submission\_id}, \texttt{user\_id}, \texttt{subject\_id}, \texttt{exam\_id}, \texttt{score}, \texttt{max\_score}, \texttt{percentage}, \texttt{attempted}, \texttt{correct}, \texttt{wrong}, \texttt{started\_at}, \texttt{submitted\_at}, \texttt{correct\_marks}, \texttt{wrong\_marks} \\
+\texttt{practice\_submission\_answers} & \texttt{submission\_id}, \texttt{question\_id}, \texttt{user\_answer}, \texttt{marked\_option}, \texttt{correct\_answer}, \texttt{is\_correct}, \texttt{marks\_awarded}, \texttt{question\_order} \\
+\texttt{"OTPRateLimit"} & \texttt{email}, \texttt{requested\_at} \\
+\texttt{"submission\_log"} & \texttt{user\_id}, \texttt{submission\_date}, \texttt{count} \\
+\bottomrule
+\end{longtable}
+
+\section{Appendix: Suggested Screenshot Insertions}
+Suggested screenshots to insert into the placeholders:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item home page with selected exam,
+  \item practice mode setup screen,
+  \item practice question screen with timer,
+  \item weekly quiz list,
+  \item leaderboard,
+  \item daily challenge page,
+  \item profile heatmap and analytics,
+  \item 1v1 battle page.
+\end{itemize}
+
+\end{document}
