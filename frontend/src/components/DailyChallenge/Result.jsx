@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useEffect, useState } from "react";
+// import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function ResultScreen({ score, total, onRetry }) {
@@ -18,9 +18,9 @@ export default function ResultScreen({ score, total, onRetry }) {
     const t = setTimeout(() => setAnimated(true), 100);
     return () => clearTimeout(t);
   }, []);
-  const navigate = useNavigate();
-  const pct = Math.round((score / total) * 100);
-  const [animated, setAnimated] = useState(false);
+  // const navigate = useNavigate();
+  // const pct = Math.round((score / total) * 100);
+  // const [animated, setAnimated] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setAnimated(true), 100);
