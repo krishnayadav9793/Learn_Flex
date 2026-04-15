@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function ResultScreen({ score, total, onRetry }) {
@@ -11,6 +12,14 @@ export default function ResultScreen({ score, total, onRetry }) {
   const pct = Number.isFinite(rawPct) ? Math.round(rawPct * 10) / 10 : 0; // 1 decimal place
   const pctDisplay = Number.isInteger(pct) ? pct : pct.toFixed(1);
 
+  const [animated, setAnimated] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setAnimated(true), 100);
+    return () => clearTimeout(t);
+  }, []);
+  const navigate = useNavigate();
+  const pct = Math.round((score / total) * 100);
   const [animated, setAnimated] = useState(false);
 
   useEffect(() => {
@@ -46,14 +55,8 @@ export default function ResultScreen({ score, total, onRetry }) {
           accentBorder: "#C4D9EC",
         };
 
-  // Format score display — show decimals only if not a whole number
-  const formatNum = (n) => {
-    const num = Number(n);
-    return Number.isInteger(num) ? num : num.toFixed(1);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#D6E6F4] via-[#EAF3FB] to-[#F7F9FC] flex items-center justify-center p-4 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#D6E6F4] via-[#EAF3FB] to-[#F7F9FC] flex items-center justify-center p-6">
       <style>{`
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(20px); }
@@ -64,27 +67,30 @@ export default function ResultScreen({ score, total, onRetry }) {
           70%  { transform: scale(1.08); }
           100% { opacity: 1; transform: scale(1); }
         }
-        .anim-fade-up { animation: fadeUp 0.5s ease both; }
-        .anim-pop-in  { animation: popIn 0.5s cubic-bezier(.34,1.56,.64,1) both; }
+        @keyframes barFill {
+          from { width: 0%; }
+        }
+        .anim-fade-up   { animation: fadeUp 0.5s ease both; }
+        .anim-pop-in    { animation: popIn 0.5s cubic-bezier(.34,1.56,.64,1) both; }
       `}</style>
 
       <div
-        className="relative bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-10 text-center w-full max-w-[22rem] sm:max-w-sm overflow-hidden mx-auto"
+        className="relative bg-white rounded-[2rem] p-10 text-center max-w-sm w-full overflow-hidden"
         style={{
           boxShadow: "0 32px 80px -12px rgba(11,36,71,0.18), 0 0 0 1px #D6E6F4",
           animation: "fadeUp 0.45s ease both",
         }}
       >
         {/* Top accent bar */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0B2447] via-[#7AB8D9] to-[#D6E6F4] rounded-t-[1.5rem] sm:rounded-t-[2rem]" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0B2447] via-[#7AB8D9] to-[#D6E6F4] rounded-t-[2rem]" />
 
-        {/* Decorative blobs */}
-        <div className="absolute -top-12 -right-12 w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-[#EAF3FB] opacity-50 pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-[#D6E6F4] opacity-40 pointer-events-none" />
+        {/* Soft decorative blobs */}
+        <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-[#EAF3FB] opacity-50 pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-[#D6E6F4] opacity-40 pointer-events-none" />
 
         {/* Emoji */}
         <div
-          className="relative text-5xl sm:text-6xl mb-3"
+          className="relative text-6xl mb-3"
           style={{ animation: "popIn 0.55s 0.2s cubic-bezier(.34,1.56,.64,1) both" }}
         >
           {tier.emoji}
@@ -92,13 +98,13 @@ export default function ResultScreen({ score, total, onRetry }) {
 
         {/* Title */}
         <h1
-          className="relative text-2xl sm:text-3xl font-black text-[#0B2447] tracking-tight mb-1 anim-fade-up"
+          className="relative text-3xl font-black text-[#0B2447] tracking-tight mb-1 anim-fade-up"
           style={{ animationDelay: "0.25s" }}
         >
           {tier.label}
         </h1>
         <p
-          className="relative text-xs sm:text-sm text-slate-400 font-medium mb-6 sm:mb-8 anim-fade-up"
+          className="relative text-sm text-slate-400 font-medium mb-8 anim-fade-up"
           style={{ animationDelay: "0.3s" }}
         >
           {tier.sub}
@@ -106,39 +112,35 @@ export default function ResultScreen({ score, total, onRetry }) {
 
         {/* Score card */}
         <div
-          className="relative rounded-2xl px-6 sm:px-8 py-5 sm:py-7 mb-4 sm:mb-6 anim-fade-up"
+          className="relative rounded-2xl px-8 py-7 mb-6 anim-fade-up"
           style={{
             background: tier.accentLight,
             border: `2px solid ${tier.accentBorder}`,
             animationDelay: "0.35s",
           }}
         >
-          <p className="text-4xl sm:text-5xl font-black leading-none text-[#0B2447] tabular-nums">
-            {formatNum(safeScore)}
-            <span className="text-lg sm:text-xl text-slate-300 font-bold"> / {formatNum(safeTotal)}</span>
+          <p className="text-5xl font-black leading-none text-[#0B2447]">
+            {score}
+            <span className="text-xl text-slate-300 font-bold"> / {total}</span>
           </p>
-          <p className="mt-1 text-[10px] sm:text-xs font-bold text-[#7AB8D9] uppercase tracking-[0.18em]">
-            {pctDisplay}% Score
+          <p className="mt-1 text-xs font-bold text-[#7AB8D9] uppercase tracking-[0.18em]">
+            {pct}% Score
           </p>
         </div>
 
         {/* Stat chips */}
         <div
-          className="flex gap-2 sm:gap-3 mb-4 sm:mb-6 anim-fade-up"
+          className="flex gap-3 mb-6 anim-fade-up"
           style={{ animationDelay: "0.4s" }}
         >
-          <div className="flex-1 bg-[#EAF3FB] border border-[#D6E6F4] rounded-2xl py-3 sm:py-4">
-            <p className="text-xl sm:text-2xl font-black text-[#0B2447] tabular-nums">
-              {formatNum(safeScore)}
-            </p>
+          <div className="flex-1 bg-[#EAF3FB] border border-[#D6E6F4] rounded-2xl py-4">
+            <p className="text-2xl font-black text-[#0B2447]">{score}</p>
             <p className="text-[9px] font-bold text-[#7AB8D9] uppercase tracking-widest mt-0.5">
               Correct
             </p>
           </div>
-          <div className="flex-1 bg-[#F7F9FC] border border-[#D6E6F4] rounded-2xl py-3 sm:py-4">
-            <p className="text-xl sm:text-2xl font-black text-slate-300 tabular-nums">
-              {formatNum(safeTotal - safeScore)}
-            </p>
+          <div className="flex-1 bg-[#F7F9FC] border border-[#D6E6F4] rounded-2xl py-4">
+            <p className="text-2xl font-black text-slate-300">{total - score}</p>
             <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">
               Missed
             </p>
@@ -147,7 +149,7 @@ export default function ResultScreen({ score, total, onRetry }) {
 
         {/* Progress bar */}
         <div
-          className="h-2 bg-[#EAF3FB] rounded-full overflow-hidden mb-6 sm:mb-8 anim-fade-up"
+          className="h-2 bg-[#EAF3FB] rounded-full overflow-hidden mb-8 anim-fade-up"
           style={{ animationDelay: "0.45s" }}
         >
           <div
@@ -159,28 +161,20 @@ export default function ResultScreen({ score, total, onRetry }) {
           />
         </div>
 
-        {/* Buttons */}
-        <div
-          className="flex flex-col gap-2 sm:gap-3 anim-fade-up"
-          style={{ animationDelay: "0.5s" }}
+  
+        <button
+          onClick={onRetry}
+          className="w-full bg-[#0B2447] hover:bg-[#163a6b] text-white font-bold text-sm py-4 rounded-2xl shadow-lg shadow-blue-900/20 transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
         >
-          <button
-            onClick={onRetry}
-            className="w-full bg-[#0B2447] hover:bg-[#163a6b] active:scale-95 text-white font-bold text-xs sm:text-sm py-3.5 sm:py-4 rounded-2xl transition-all duration-200 flex items-center justify-center gap-2"
-            style={{ boxShadow: "0 8px 24px -4px rgba(11,36,71,0.3)" }}
-          >
-            <span>Retake Challenge</span>
-            <span className="text-base leading-none">↺</span>
-          </button>
+          <span>Retake Challenge</span>
+          <span className="text-base leading-none">↺</span>
+        </button>
 
-          <button
-            onClick={() => navigate("/HomePage")}
-            className="w-full text-[10px] sm:text-xs font-bold text-slate-400 hover:text-[#0B2447] transition-colors uppercase tracking-widest flex items-center justify-center gap-1.5 py-2"
-          >
-            <span>←</span>
-            <span>Back to Dashboard</span>
-          </button>
-        </div>
+        <button onClick={()=>navigate("/HomePage")} className="mt-4 text-xs font-bold text-slate-400 hover:text-[#0B2447] transition-colors uppercase tracking-widest flex items-center justify-center gap-1.5 w-full">
+          <span>←</span>
+          <span>Back to Dashboard</span>
+        </button>
+
       </div>
     </div>
   );

@@ -204,7 +204,7 @@ const SignupCard = () => {
               <input
                 type="text"
                 required
-                placeholder="John Doe"
+                placeholder="Rohit Sharma"
                 className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0b2a4a]/10 focus:border-[#0b2a4a] transition-all shadow-sm"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
